@@ -4,6 +4,7 @@ from server_listener import ServerListener
 
 class Client:
     def __init__(self):
+        log("Client init...")
         self.socket: socket.socket = None
         self.server_listener = ServerListener(self)
         self.server_listener.start()
@@ -13,8 +14,6 @@ class Client:
         log("Client init done")
 
     def connected(self):
-        assert self.socket is not None, "socket none"
-
         self.send({
             "model": "log_in",
             "username": self.username,
@@ -22,10 +21,13 @@ class Client:
         })
 
     def send(self, packet: dict):
-        assert self.socket is not None, "socket none"
+        try:
+            packet_str = json.dumps(packet)
+            header = f"{len(packet_str):<{HEADER_SIZE}}"
+            self.socket.send(bytes(header + packet_str, encoding="utf-8"))
 
-        packet_str = json.dumps(packet)
-        header = f"{len(packet_str):<{HEADER_SIZE}}"
+            log(f"Sent packet: {packet}")
 
-        self.socket.send(bytes(header + packet_str, encoding="utf-8"))
-        log(f"Sent packet: {packet}")
+        except BaseException as ex:
+            log(f"UNHANDLED {type(ex).__name__} on sending packet", LOG_ERROR, traceback_print=True)
+

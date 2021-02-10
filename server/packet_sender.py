@@ -16,12 +16,12 @@ class PacketSender(threading.Thread):
                 self.send(connection, packet)
 
             except BaseException as ex:
-                log(f"Unhandled exception on handling packet: {ex}", LogLevel.ERROR)
+                log(f"UNHANDLED {type(ex).__name__} on sending packet", LOG_ERROR, traceback_print=True)
                 continue
 
     def send(self, connection, packet):
         packet_str = json.dumps(packet)
         header = f"{len(packet_str):<{HEADER_SIZE}}"
+        connection.send(bytes(header + "test" + packet_str, encoding="utf-8"))
 
-        connection.send(bytes(header + packet_str, encoding="utf-8"))
         log(f"Sent packet: {packet}")

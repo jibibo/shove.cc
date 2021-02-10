@@ -18,92 +18,77 @@ class ServerListener(threading.Thread):
                 self.connect()
 
             if self.attempts == CONNECT_ATTEMPTS:
-                log("Maximum attempts reached")
+                log("Maximum connect attempts reached", LOG_INFO)
                 break
 
         self.client.server_listener = None
-        log("Set server_listener to None")
+        log("Thread exiting run()")
 
     def connect(self):
         self.client.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         host, port = self.address
-        log(f"Connecting to {host}:{port}, attempt {self.attempts}", LogLevel.INFO)
+        log(f"Connecting to {host}:{port}, attempt {self.attempts}", LOG_INFO)
 
         try:
             self.client.socket.connect(SERVER_ADDRESS)
 
         except ConnectionRefusedError as ex:
-            log(f"Failed to connect to server: {ex.strerror}", LogLevel.INFO)
+            log(f"Failed to connect to server: {ex.strerror}", LOG_INFO)
+
+        except BaseException as ex:
+            log(f"UNHANDLED {type(ex).__name__} on connecting", LOG_ERROR, traceback_print=True)
 
         else:
-            log(f"Connected! Now receiving packets", LogLevel.INFO)
+            log(f"Connected! Now receiving packets", LOG_INFO)
             self.client.connected()
             self.attempts = 0
 
             while True:
-                try:
-                    self.receive_and_handle_packets()
+                try:  # receive and convert header + packet
+                    packet = self.receive_and_convert_packet()
+
+                except InvalidPacket as ex:
+                    log(f"Invalid packet: {ex.details}", LOG_WARN)
+                    continue
 
                 except LostConnection as ex:
-                    log(f"Lost connection to server: {ex.reason}", LogLevel.INFO)
+                    log(f"Lost connection to server: {ex.reason}", LOG_INFO)
                     break
 
                 except BaseException as ex:
-                    log(f"Unhandled {type(ex).__name__} on receive and handle: {ex}", LogLevel.ERROR)
+                    log(f"UNHANDLED {type(ex).__name__} on receiving/converting packet", LOG_ERROR, traceback_print=True)
                     break
 
-        self.client.socket = None
+                try:  # handle the converted packet
+                    self.handle_packet(packet)
+                    log(f"Handled packet: {packet}")
 
-    def receive_and_handle_packets(self):
-        try:  # receive header
+                except BaseException as ex:
+                    log(f"UNHANDLED {type(ex).__name__} on handling packet", LOG_ERROR, traceback_print=True)
+                    break
+
+        self.client.socket = None  # setting this to None every connect() required?
+
+    def receive_and_convert_packet(self) -> dict:
+        try:
             header_bytes = self.client.socket.recv(HEADER_SIZE)
-
-        except OSError as ex:
-            raise LostConnection(ex.strerror)
-
-        except ConnectionResetError as ex:
-            raise LostConnection(ex.strerror)
-
-        except BaseException:
-            log("Unhandled exception on receiving header", LogLevel.ERROR)
-            raise
-
-        try:  # convert header
             header = int(header_bytes)
-
-        except ValueError as ex:
-            log(f"Exception on converting header: {ex}", LogLevel.WARN)
-            return
-
-        log(f"Received header: {header}")
-
-        try:  # receive packet
+            log(f"Received header: {header}")
             packet_bytes = self.client.socket.recv(header)
-
-        except ConnectionResetError as ex:
-            raise LostConnection(ex.strerror)
-
-        except BaseException:
-            log("Unhandled exception on receiving packet", LogLevel.ERROR)
-            raise
-
-        try:  # convert packet
             packet_str = str(packet_bytes, encoding="utf-8")
+            log(f"Received packet, raw: {packet_str}")
             packet = json.loads(packet_str)
+            return packet
 
-        except json.JSONDecodeError as ex:
-            log(f"Exception on converting packet: {ex}", LogLevel.WARN)
-            return
+        except ValueError as ex:  # includes JSONDecodeError
+            raise InvalidPacket(f"{type(ex).__name__}: {ex}")
 
-        except BaseException:
-            log("Unhandled exception on converting packet", LogLevel.ERROR)
-            raise
-
-        log(f"Received packet: {packet}")
-        self.handle_packet(packet)  # todo try except
+        except (OSError, ConnectionResetError) as ex:
+            raise LostConnection(ex.strerror)
 
     def handle_packet(self, packet: dict):
-        assert "model" in packet.keys(), "no model set"
+        if "model" not in packet.keys():
+            raise InvalidPacket(f"No model set")
 
         model = packet["model"]
 
@@ -113,4 +98,4 @@ class ServerListener(threading.Thread):
         if model == "logged_in":
             return
 
-        raise UnknownPacketModel
+        raise InvalidPacket(f"Invalid model '{model}'")

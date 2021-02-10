@@ -7,17 +7,18 @@ from table import Table
 
 class Server:
     def __init__(self):
-        self.connection_acceptor = None
-        self.client_listeners = []
+        log("Server init...")
+        self.client_listener_threads = []
         self.connections_players = {}
         self.incoming_packets = Queue()  # (packet, connection)
         self.outgoing_packets = Queue()  # (packet, connection)
         self.tables = []
 
         self.reset_tables()
-        self.start_connection_acceptor()
-        self.start_packet_handler()
+        self.tables[0].add_bots(2)
         self.start_packet_sender()
+        self.start_packet_handler()
+        self.start_connection_acceptor()
 
         log("Server init done")
 
@@ -31,31 +32,27 @@ class Server:
 
         return player
 
-    def incoming(self, packet, connection):
-        self.incoming_packets.put((packet, connection))
-
-    def outgoing(self, packet, connection):
-        self.outgoing_packets.put((packet, connection))
-
     def print_tables(self):
         lines = ["Tables"]
         lines.extend([table for table in self.tables])
+        log("\n".join(lines), LOG_INFO)
 
-        log("\n".join(lines), LogLevel.INFO)
-
-    def reset_tables(self, n_tables=5):
+    def reset_tables(self, n_tables=2):
+        log("Resetting tables", LOG_INFO)
+        self.tables = []  # todo handle removing clients from table
         for i in range(1, n_tables + 1):
             self.tables.append(Table(self, name=f"Table {i}"))
 
-        log("Reset tables", LogLevel.INFO)
+    def send_multiple(self, connections: list, packet):
+        for connection in connections:
+            self.outgoing_packets.put((connection, packet))
+
+    def send_single(self, connection, packet):
+        self.outgoing_packets.put((connection, packet))
 
     def start_connection_acceptor(self):
-        if self.connection_acceptor is not None:
-            log("Client acceptor already set, ignoring call", LogLevel.WARN)
-            return
-
-        self.connection_acceptor = ConnectionAcceptor(self)
-        self.connection_acceptor.start()
+        connection_acceptor_thread = ConnectionAcceptor(self)
+        connection_acceptor_thread.start()
 
     def start_packet_handler(self):
         packet_handler = PacketHandler(self)

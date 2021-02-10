@@ -10,66 +10,45 @@ class ClientListener(threading.Thread):
         super().__init__(name=f"ClientListener/{address[0]}:{address[1]}", daemon=True)
 
     def run(self):
-        log("Now listening")
-        self.server.outgoing(self.connection, {
+        self.server.send_single(self.connection, {
             "model": "connected"
         })
 
+        log("Ready")
+
         while True:
             try:
-                self.receive()
+                packet = self.receive_and_convert_packet()
+                self.server.incoming_packets.put((self.connection, packet))
+
+            except InvalidPacket as ex:
+                log(f"Invalid packet received", LOG_WARN, traceback_print=True)
+                continue
 
             except LostConnection as ex:
-                log(f"Lost connection: {ex.reason}", LogLevel.INFO)
+                log(f"Lost connection: {ex.reason}", LOG_INFO)
                 break
 
             except BaseException as ex:
-                log(f"Unhandled {type(ex).__name__} on receive: {ex}", LogLevel.ERROR)
-                break
+                log(f"UNHANDLED {type(ex).__name__} on receiving/converting packet", LOG_ERROR, traceback_print=True)
+                continue
 
-        self.server.client_listeners.remove(self)
+        self.server.client_listener_threads.remove(self)
+        log("Thread exiting run()")
 
-    def receive(self):
-        try:  # receive header
+    def receive_and_convert_packet(self) -> dict:
+        try:
             header_bytes = self.connection.recv(HEADER_SIZE)
-
-        except ConnectionResetError as ex:
-            raise LostConnection(ex.strerror)
-
-        except BaseException as ex:
-            log("Unhandled exception on receiving header", LogLevel.ERROR)
-            raise ex
-
-        try:  # convert header
             header = int(header_bytes)
-
-        except ValueError:
-            log(f"Invalid header received: {header}", LogLevel.ERROR)
-            return
-
-        except BaseException as ex:
-            log("Unhandled exception on converting header", LogLevel.ERROR)
-            raise ex
-
-        log(f"Received header: {header}")
-
-        try:  # receive packet
+            log(f"Received header: {header}")
             packet_bytes = self.connection.recv(header)
+            packet_str = str(packet_bytes, encoding="utf-8")
+            log(f"Received packet, raw: {packet_str}")
+            packet = json.loads(packet_str)
+            return packet
+
+        except ValueError as ex:  # includes JSONDecodeError
+            raise InvalidPacket(ex)
 
         except ConnectionResetError as ex:
             raise LostConnection(ex.strerror)
-
-        except BaseException as ex:
-            log("Unhandled exception on receiving packet", LogLevel.ERROR)
-            raise ex
-
-        try:  # convert packet
-            packet_str = str(packet_bytes, encoding="utf-8")
-            packet = json.loads(packet_str)
-
-        except BaseException as ex:
-            log("Unhandled exception on converting packet", LogLevel.ERROR)
-            raise ex
-
-        log(f"Received packet: {packet}")
-        self.server.incoming(self.connection, packet)

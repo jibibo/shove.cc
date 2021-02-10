@@ -14,17 +14,19 @@ class PacketHandler(threading.Thread):
 
             try:
                 self.handle(connection, packet)
+                log(f"Handled packet: {packet}")
 
-            except UnknownPacketModel:
-                log(f"Unknown packet model: {packet['model']}", LogLevel.WARN)
+            except InvalidPacket as ex:
+                log(f"Invalid packet", LOG_WARN, traceback_print=True)
                 continue
 
             except BaseException as ex:
-                log(f"Unhandled exception on handling packet: {ex}", LogLevel.ERROR)
+                log(f"UNHANDLED {type(ex).__name__} on handling packet", LOG_ERROR, traceback_print=True)
                 continue
 
     def handle(self, connection, packet):
-        assert "model" in packet.keys(), "no model set"
+        if "model" not in packet.keys():
+            raise InvalidPacket(f"No model set")
 
         model = packet["model"]
 
@@ -36,27 +38,28 @@ class PacketHandler(threading.Thread):
             player = self.server.get_player(packet["username"])
 
             if not player:
-                self.server.outgoing(connection, {
+                self.server.send_single(connection, {
                     "model": "invalid_username"
                 })
                 return
 
             if player["password"] != packet["password"]:
-                self.server.outgoing(connection, {
+                self.server.send_single(connection, {
                     "model": "invalid_password"
                 })
                 return
 
             if player["username"] in self.server.connections_players.values():
-                self.server.outgoing(connection, {
+                self.server.send_single(connection, {
                     "model": "already_connected"
                 })
                 return
 
-            self.server.outgoing(connection, {
+            self.server.connections_players[connection] = player
+            self.server.send_single(connection, {
                 "model": "logged_in",
                 "username": packet["username"]
             })
             return
 
-        raise UnknownPacketModel
+        raise InvalidPacket(f"Invalid model: {model}")

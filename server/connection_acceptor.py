@@ -10,12 +10,12 @@ class ConnectionAcceptor(threading.Thread):
         super().__init__(name=f"ConnectionAcceptor", daemon=True)
 
     def run(self):
-        log(f"Started on {SERVER_HOST}:{SERVER_PORT}", LogLevel.INFO)
         self.socket.listen(SERVER_BACKLOG)
+        log(f"Ready on {SERVER_HOST}:{SERVER_PORT}", LOG_INFO)
 
         while True:
             connection, address = self.socket.accept()
             log(f"{address[0]}:{address[1]} connected")
             client_listener = ClientListener(self.server, connection, address)
             client_listener.start()
-            self.server.client_listeners.append(client_listener)
+            self.server.client_listener_threads.append(client_listener)
