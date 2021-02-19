@@ -1,4 +1,5 @@
 import itertools
+from server_util import *
 from .card import Card
 from .lookup_table import LookupTable
 
@@ -122,64 +123,43 @@ class Evaluator:
         return LookupTable.RANK_CLASS_TO_STRING[class_int]
 
     @staticmethod
-    def get_five_card_rank_percentage(hand_rank):
+    def get_five_card_rank_percentile(hand_rank):
         """
         Scales the hand rank score to the [0.0, 1.0] range.
         """
 
         return float(hand_rank) / float(LookupTable.MAX_HIGH_CARD)
 
-    def hand_summary(self, board, hands):
+    def get_winners(self, board, players) -> tuple:  # todo cleanup
         """
-        Gives a summary of the hand with ranks as time proceeds.
-        Requires that the board is in chronological order for the
-        analysis to make sense.
+        Returns (winners, best hand) based on each player's hand rank
         """
 
-        assert len(board) == 5, "Invalid board length"
-        for hand in hands:
-            assert len(hand) == 2, "Invalid hand length"
+        assert len(board) == 5, f"Invalid board length ({len(board)})"
 
-        line_length = 10
-        stages = ["FLOP", "TURN", "RIVER"]
+        for player in players:
+            assert len(player["cards"]) == 2, f"Invalid hand length ({len(player['cards'])})"
 
-        for i in range(len(stages)):
-            print(f"{'='* line_length} {stages[i]} {'=' * line_length}")
+        best_rank = 7463  # rank one worse than worst hand todo why one worse
+        best_hand = ""
+        winners = []
 
-            best_rank = 7463  # rank one worse than worst hand todo why one worse
-            winners = []
+        for player in players:
+            rank = self.evaluate(player["cards"], board)
+            rank_class = self.get_rank_class(rank)
+            class_string = self.class_to_string(rank_class)
+            percentile = self.get_five_card_rank_percentile(rank)
+            log(f"{player} has {class_string}, top {round(percentile * 100, 1)}%")
 
-            for player, hand in enumerate(hands):
-                # evaluate current board position
-                rank = self.evaluate(hand, board[:(i + 3)])
-                rank_class = self.get_rank_class(rank)
-                class_string = self.class_to_string(rank_class)
-                percentage = self.get_five_card_rank_percentage(rank)
-                print(f"Player {player + 1} hand = {class_string}, percentage = {percentage}")
+            # detect if player is a winner
+            if rank == best_rank:
+                winners.append(player)
+                best_rank = rank
+                best_hand = class_string
 
-                # detect winner
-                if rank == best_rank:
-                    winners.append(player)
-                    best_rank = rank
-                elif rank < best_rank:
-                    winners = [player]
-                    best_rank = rank
+            elif rank < best_rank:
+                winners = [player]
+                best_rank = rank
+                best_hand = class_string
 
-            # if we're not on the river
-            if stages[i] != "RIVER":
-                if len(winners) == 1:
-                    print(f"Player {winners[0] + 1} hand is currently winning")
-                else:
-                    winners_formatted = [w + 1 for w in winners]
-                    print(f"Players {winners_formatted} are tied")
-
-            # otherwise on all other streets
-            else:
-                print("=" * line_length) + " HAND OVER " + ("=" * line_length)
-                winning_class_str = self.class_to_string(self.get_rank_class(self.evaluate(hands[winners[0]], board)))
-                if len(winners) == 1:
-                    print(f"Player {winners[0] + 1} wins with a {winning_class_str}")
-
-                else:
-                    winners_formatted = [w + 1 for w in winners]
-                    print(f"Players {winners_formatted} win with a {winning_class_str}")
+        return winners, best_hand

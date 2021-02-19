@@ -4,12 +4,15 @@ import json
 import os
 import traceback
 import threading
+import sys
 import random
 from queue import Queue
+from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Dict, List
 
 
-class InvalidPacket(BaseException):
+class InvalidPacket(Exception):
     def __init__(self, details):
         self.details = str(details)
 
@@ -17,12 +20,12 @@ class InvalidPacket(BaseException):
         return self.details
 
 
-class LostConnection(BaseException):
+class LostConnection(Exception):
     def __init__(self, reason):
         self.reason = reason
 
 
-class StopServer(BaseException):
+class StopServer(Exception):
     pass
 
 
@@ -30,11 +33,6 @@ LOG_DEBUG = 0, "DEBUG"
 LOG_INFO = 1, "INFO"
 LOG_WARN = 2, "WARN"
 LOG_ERROR = 3, "ERROR"
-
-STATE_WAITING = "WAITING"
-STATE_STARTED = "STARTED"
-STATE_ENDING = "ENDING"
-
 
 LOGGING_LEVEL = LOG_DEBUG
 HEADER_SIZE = 10
@@ -45,16 +43,18 @@ SERVER_PORT = 12345
 PRINT_LOCK = threading.Semaphore(value=1)  # how does this work
 
 
-def log(message, level=LOG_DEBUG, traceback_print=False):
+def log(message, level=LOG_DEBUG, exception: BaseException=None):
     if level[0] < LOGGING_LEVEL[0]:  # not high enough log level
         return
 
     thread_name = threading.current_thread().getName()
 
     PRINT_LOCK.acquire()
+
     now_str = datetime.now().strftime("%H:%M:%S")
     print(f"[{now_str}][{level[1]:<5}][Server/{thread_name}] {message}")
-    if traceback_print:
-        traceback.print_exc()
+
+    if exception:
+        traceback.print_exception(type(exception), exception, exception.__traceback__)
 
     PRINT_LOCK.release()

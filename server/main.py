@@ -1,9 +1,9 @@
-from util_server import *
+from server_util import *
 from server import Server
 
 
 def handle_console_input(server, input_str):
-    log(f"Handling console input: '{input_str}'", LOG_DEBUG)
+    log(f"Handling console input... '{input_str}'", LOG_DEBUG)
 
     if not input_str:
         raise StopServer
@@ -27,29 +27,44 @@ def handle_console_input(server, input_str):
                     n_bots += 1
 
         print(f"Players: {len(players)} (bots: {n_bots})")
-        [print(player) for player in players]
+        [print(player.data) for player in players]
 
         return True
 
+    if input_split[0] in ["start", "s"]:
+        server.tables[0].try_to_start_game()
+        return True
 
-def main():
-    threading.current_thread().setName("Main")
-    log("Starting server", LOG_INFO)
-    server = Server()
 
-    log("Console input ready", LOG_INFO)
+def listen_for_console_input(server):
+    log("Console input listener ready", LOG_INFO)
     while True:
         input_str = input()
 
         try:
             success = handle_console_input(server, input_str)
             if not success:
-                log("Command unsuccessful", LOG_INFO)
+                log("Command failed", LOG_INFO)
 
         except StopServer:
+            log("StopServer was caught")
             break
 
-    log("Stopped server and threads", LOG_INFO)
+    log("Console input listener stopped", LOG_INFO)
+
+
+def main():
+    try:
+        threading.current_thread().setName("Main")
+
+        server = Server()
+
+        listen_for_console_input(server)
+
+    except Exception as ex:
+        log(f"UNHANDLED {type(ex).__name__} on main()", LOG_ERROR, ex)
+
+    log("Stopped main thread", LOG_INFO)
 
 
 if __name__ == "__main__":

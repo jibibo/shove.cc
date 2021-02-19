@@ -1,59 +1,62 @@
-from util_server import *
+from server_util import *
 from player import Player
 from table_handler import TableHandler
-from deuces_custom.deck import Deck
+from base_game import BaseGame
+from connected_client import ConnectedClient
 
 
 class Table:
     MIN_PLAYERS = 2
 
-    def __init__(self, server, name, seats=10):
+    def __init__(self, server):
         self.server = server
-        self.name = name
-
-        self.dealer_seat = 0  # not set
-        self.small_blind_seat = 0
-        self.big_blind_seat = 0
-        self.action_seat = 0
-
-        self.deck = Deck()
-        self.seats_players = {}
+        self.name = f"Table {len(server.tables) + 1}"
+        self.started = False
         self.events = Queue()
-        self.event_handler = TableHandler(self)
-        self.game_over = False
-        self.state = STATE_WAITING
+        self.game: BaseGame = server.default_game(self)
+        self.n_seats = 10
+        self.seats_players = dict.fromkeys(range(1, self.n_seats + 1))
 
-        self.event_handler.start()
-
-        for i in range(1, seats + 1):
-            self.seats_players[i] = None
+        TableHandler(self).start()
 
         log(f"Created table {self}", LOG_INFO)
 
     def __repr__(self):
         return f"'{self.name}' with {self.n_taken_seats()}/{self.n_total_seats()} players"
 
-    def action_on_next_player(self):
-        pass
-
     def add_bot(self, seat=None) -> int:
-        return self.add_player(Player.create_bot(), seat)
+        bot_player = Player(is_bot=True)
+        seat = self.add_player(bot_player, seat)
+        return seat
 
     def add_bots(self, amount=1):
         added_bots = 0
 
+        seats = []
         for _ in range(amount):
-            if self.add_bot():
+            seat = self.add_bot()
+            if seat:
+                seats.append(seat)
                 added_bots += 1
 
-        log(f"Added {added_bots}/{amount} bots")
+        log(f"Added {added_bots}/{amount} bots to seats {seats}")
 
-    def add_player(self, player, seat=None) -> int:  # returns set seat
-        if self.state == STATE_STARTED:
-            log("Game already started")  # todo add to a queue to join next round
+    def add_player(self, client_or_bot, seat=None) -> int:
+        """sets and returns player's seat, 0 or exception raised if fail"""
+
+        if self.started:
+            log("Can't add player: game already started")  # todo add to a queue to join next round
             return 0
 
-        assert player, "no player given"
+        assert client_or_bot, "no player given"
+
+        if isinstance(client_or_bot, ConnectedClient):
+            assert client_or_bot.player, "Client is not logged in"
+            player = client_or_bot.player
+
+        else:
+            assert client_or_bot.is_bot, "Neither connected client nor bot player provided"
+            player = client_or_bot
 
         empty_seats = self.get_empty_seats()
 
@@ -69,54 +72,18 @@ class Table:
                 seat = random.choice(empty_seats)
 
         else:
-            log(f"No seat given, choosing random seat")
             seat = random.choice(empty_seats)
+            log(f"No seat given, chose random seat {seat}")
 
-        self.seats_players[seat] = player
-        log(f"Put player {player['username']} in seat {seat}", LOG_INFO)
+        self.put_player_in_seat(player, seat)
         self.events.put("player_added")
         return seat
-
-    def attempt_start(self):
-        log(f"Attempting to start...")
-
-        if not self.attempt_update_state(STATE_STARTED):
-            return
-
-        if self.n_taken_seats() >= Table.MIN_PLAYERS:
-            self.on_start()
-
-    def attempt_update_state(self, new_state) -> bool:
-        log("Attempting to update state...")
-
-        if (self.state == STATE_WAITING and new_state == STATE_STARTED) or \
-                (self.state == STATE_STARTED and new_state == STATE_ENDING) or \
-                (self.state == STATE_ENDING and new_state == STATE_WAITING):
-            old = self.state
-            self.state = new_state
-            log(f"Updated state from {old} to {new_state}")
-            return True
-
-        log(f"Can't update state to {new_state} (currently: {self.state})")
-        return False
-
-    def check_game_over(self) -> bool:
-        return bool(self.game_over)
-
-    def deal_player_cards(self):
-        log("Dealing cards to players...")
-
-        for seat, player in self.get_taken_seats_players().items():
-            player["cards"] = self.deck.draw(2)
-
-    def do_next_turn(self):
-        pass
 
     def get_empty_seats(self) -> list:
         empty_seats = []
 
         for seat, player in self.seats_players.items():
-            if not player:
+            if player is None:
                 empty_seats.append(seat)
 
         return empty_seats
@@ -146,30 +113,13 @@ class Table:
         return len(self.get_taken_seats())
 
     def n_total_seats(self) -> int:
-        return len(self.seats_players.items())
+        total_seats = len(self.seats_players.items())
+        return total_seats
 
-    def on_start(self):
-        self.update_dealer_and_blind_seats()
-        self.place_blinds()
-
-        self.reset_deck()
-        self.deal_player_cards()
-
-        log(f"Game started at table '{self.name}'")
-
-        # while not game over etc:
-        self.action_on_next_player()
-
-    def place_blinds(self):
-        assert self.n_taken_seats() >= 2, "need 2 or more players to place blinds"
-
-        self.seats_players[self.small_blind_seat]["bet"] = 1
-        self.seats_players[self.big_blind_seat]["bet"] = 2
-
-        log(f"Placed blinds - SB: 1, BB: 2", LOG_INFO)
-
-    def reset_deck(self):
-        self.deck.shuffle()
+    def put_player_in_seat(self, player: Player, seat: int):
+        player["seat"] = seat
+        self.seats_players[seat] = player  # todo should just be a list of players
+        log(f"Put player {player} in seat {seat}", LOG_INFO)
 
     def send_player(self, target_player: dict, packet):
         for connection, player in self.server.connections_players:
@@ -177,58 +127,24 @@ class Table:
                 self.server.send_single(connection, packet)
 
     def send_players(self, packet):
-        for _, target_player in self.seats_players:
+        for _, target_player in self.get_taken_seats_players().items():
             self.send_player(target_player, packet)
 
-    def update_dealer_and_blind_seats(self):
-        if self.n_taken_seats() < 2:
-            log(f"Ignoring update dealer/blinds call with < 2 players", LOG_ERROR)
+    def try_to_start_game(self):
+        log(f"Trying to start game...")
+
+        if self.started:
+            log("Game already started")
             return
 
-        # todo players new to table always pay big blind, exclude from list
-
-        taken_seats = self.get_taken_seats()
-
-        if not self.dealer_seat:  # dealer/blind seats not set
-            new_dealer_index = random.randint(0, len(taken_seats) - 1)
-            new_dealer_seat = taken_seats[new_dealer_index]
-
-            if self.n_taken_seats() == 2:
-                self.dealer_seat = new_dealer_seat
-                self.small_blind_seat = new_dealer_seat
-                self.big_blind_seat = taken_seats[(new_dealer_index + 1) % len(taken_seats)]
-
-            else:
-                self.dealer_seat = new_dealer_seat
-                self.small_blind_seat = taken_seats[(new_dealer_index + 1) % len(taken_seats)]
-                self.big_blind_seat = taken_seats[(new_dealer_index + 2) % len(taken_seats)]
-
-            log(f"Placed D, SB, BB buttons: {self.dealer_seat}, {self.small_blind_seat}, {self.big_blind_seat}")
+        if self.n_taken_seats() < Table.MIN_PLAYERS:
+            log(f"Not enough players to start: {self.n_taken_seats()}/{self.MIN_PLAYERS}")
             return
 
-        old_dealer_seat = self.dealer_seat
-        new_dealer_seat = 0
-        new_dealer_index = None  # can be 0
-        for i, taken_seat in enumerate(taken_seats):
-            if taken_seat > old_dealer_seat:
-                new_dealer_index = i
-                new_dealer_seat = taken_seat
-                break
+        self.started = True  # temporary todo SHOULD ONLY BE TRUE AFTER GAME STARTED (or a retry will never occur)
 
-        if not new_dealer_seat:  # happens if dealer seat was the last taken seat
-            new_dealer_index = 0
-            new_dealer_seat = taken_seats[0]  # new seat is the first taken seat
+        try:
+            self.game.start()
 
-        assert new_dealer_seat and new_dealer_index is not None, f"what, {new_dealer_seat} {new_dealer_index}"
-
-        if self.n_taken_seats() == 2:
-            self.dealer_seat = new_dealer_seat
-            self.small_blind_seat = new_dealer_seat
-            self.big_blind_seat = taken_seats[(new_dealer_index + 1) % len(taken_seats)]
-
-        else:
-            self.dealer_seat = new_dealer_seat
-            self.small_blind_seat = taken_seats[(new_dealer_index + 1) % len(taken_seats)]
-            self.big_blind_seat = taken_seats[(new_dealer_index + 2) % len(taken_seats)]
-
-        log(f"Moved D button - {old_dealer_seat} -> {new_dealer_seat}, SB, BB: {self.small_blind_seat}, {self.big_blind_seat}")
+        except Exception as ex:
+            log(f"UNHANDLED {type(ex).__name__} on game start", LOG_ERROR, ex)

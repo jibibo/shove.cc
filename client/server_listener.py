@@ -1,4 +1,4 @@
-from util_client import *
+from client_util import *
 
 
 class ServerListener(threading.Thread):

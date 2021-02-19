@@ -1,4 +1,4 @@
-from util_server import *
+from server_util import *
 
 
 class DeleteTable(BaseException):
@@ -17,24 +17,21 @@ class TableHandler(threading.Thread):
             event = self.table.events.get()
 
             try:
-                self.handle(event)
+                self.handle_event(event)
 
             except DeleteTable:
                 log(f"Deleting table '{self.name}'")  # todo implement
                 break
 
-        log("Thread exiting run()")
+        log("Stopped")
 
-    def handle(self, event):
+    def handle_event(self, event: str):
         log(f"Handling event...: {event}")
 
         if event == "player_added":
-            if self.table.state != STATE_WAITING:
-                return
-
-            self.table.attempt_start()
+            self.table.try_to_start_game()
             return
 
-        if event == "started":
-            self.table.send_players({"model": "started"})
+        if event.startswith("game"):
+            self.table.game.handle_event(event)
             return

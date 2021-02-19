@@ -1,65 +1,67 @@
-from util_server import *
+from server_util import *
+from player import Player
 
 
 class PacketHandler(threading.Thread):
     def __init__(self, server):
         self.server = server
+        self.packets_handled = 0
         super().__init__(name=f"PacketHandler", daemon=True)
 
     def run(self):
         log("Ready")
 
         while True:
-            connection, packet = self.server.incoming_packets.get()
+            client, packet = self.server.received_client_packets.get()
 
             try:
-                self.handle(connection, packet)
-                log(f"Handled packet: {packet}")
+                self.packets_handled += 1
+                log(f"Handling packet #{self.packets_handled}... {packet}")
+                response_packet = self.handle_packet(client, packet)
+
+                if response_packet:
+                    self.server.outgoing_client_packets.put((client, response_packet))
 
             except InvalidPacket as ex:
-                log(f"Invalid packet", LOG_WARN, traceback_print=True)
+                log(f"Invalid packet handled: {ex.details}", LOG_WARN, ex)
                 continue
 
-            except BaseException as ex:
-                log(f"UNHANDLED {type(ex).__name__} on handling packet", LOG_ERROR, traceback_print=True)
+            except Exception as ex:
+                log(f"UNHANDLED {type(ex).__name__} on handling packet", LOG_ERROR, ex)
                 continue
 
-    def handle(self, connection, packet):
+    @staticmethod
+    def handle_packet(connected_client, packet) -> dict:
         if "model" not in packet.keys():
             raise InvalidPacket(f"No model set")
 
         model = packet["model"]
 
         if model == "join_table":
-            log(packet["table_name"])
-            return
+            log("todo")
+            return {}
 
         if model == "log_in":
-            player = self.server.get_player(packet["username"])
+            # player = self.server.get_player(packet["username"])
+            #
+            # if not player:
+            #     return {
+            #         "model": "error",
+            #         "details": "invalid username"
+            #     }
+            #
+            # if player["password"] != packet["password"]:
+            #     return {
+            #         "model": "error",
+            #         "details": "invalid password"
+            #     }
 
-            if not player:
-                self.server.send_single(connection, {
-                    "model": "invalid_username"
-                })
-                return
+            player = Player.create_from_username(packet["username"])
+            connected_client.logged_in(player)
 
-            if player["password"] != packet["password"]:
-                self.server.send_single(connection, {
-                    "model": "invalid_password"
-                })
-                return
-
-            if player["username"] in self.server.connections_players.values():
-                self.server.send_single(connection, {
-                    "model": "already_connected"
-                })
-                return
-
-            self.server.connections_players[connection] = player
-            self.server.send_single(connection, {
+            return {
                 "model": "logged_in",
                 "username": packet["username"]
-            })
-            return
+            }
 
-        raise InvalidPacket(f"Invalid model: {model}")
+        raise InvalidPacket(f"Invalid model")

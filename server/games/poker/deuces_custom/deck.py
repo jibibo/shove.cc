@@ -1,12 +1,9 @@
-from util_server import *
+from server_util import *
 
 from .card import Card
 
 
-FULL_DECK = []
-for suit in Card.CHAR_SUIT_TO_INT_SUIT.keys():
-    for rank in Card.STR_RANKS:
-        FULL_DECK.append(Card.new(rank + suit))
+FULL_DECK = [Card.new(rank + suit) for rank in Card.STR_RANKS for suit in Card.CHAR_SUIT_TO_INT_SUIT.keys()]
 
 
 class Deck:
@@ -18,9 +15,6 @@ class Deck:
 
     def __init__(self):
         self.cards = FULL_DECK.copy()
-        self.shuffle()
-
-        log("Deck init done")
 
     def shuffle(self):
         random.shuffle(self.cards)
@@ -29,14 +23,13 @@ class Deck:
     def draw(self, n_cards=1) -> list:  # exhaustive
         assert n_cards >= 1, "n_cards must be >= 1"
 
-        if n_cards == 1:
-            return [self.cards.pop(0)]
-
+        cards_left = n_cards
         drawn_cards = []
-        for i in range(n_cards):
-            drawn_cards.extend(self.draw())
+        while cards_left:
+            drawn_cards.append(self.cards.pop(0))
+            cards_left -= 1
 
-        log(f"Drawn cards: {Card.get_pretty_str(drawn_cards)}")
+        log(f"Drawn {n_cards} card(s): {Card.get_pretty_str(drawn_cards)}")
         return drawn_cards
 
     def __str__(self):

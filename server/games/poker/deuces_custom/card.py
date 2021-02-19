@@ -198,4 +198,4 @@ class Card:  # todo can easily be made OOP
         #     else:
         #         output += Card.int_to_pretty_str(c) + " "
 
-        return ",".join([Card.int_to_pretty_str(card_int) for card_int in card_int_list])
+        return " ".join([Card.int_to_pretty_str(card_int) for card_int in card_int_list])

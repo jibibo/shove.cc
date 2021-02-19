@@ -1,40 +1,42 @@
-from util_server import *
+from server_util import *
 
 
-class ClientListener(threading.Thread):
+class ConnectedClient:
     def __init__(self, server, connection, address):
         self.server = server
         self.connection: socket.socket = connection
         self.address = address
-
-        super().__init__(name=f"ClientListener/{address[0]}:{address[1]}", daemon=True)
-
-    def run(self):
-        self.server.send_single(self.connection, {
+        self.player = None  # todo make this Account with money, name, password; each game has unique player class
+        self.send({
             "model": "connected"
         })
+        log(f"{self.address[0]}:{self.address[1]} connected")
+        threading.Thread(target=self.listen, name=f"ClientListener/{self.address[0]}:{self.address[1]}", daemon=True)
 
-        log("Ready")
+    def listen(self):
+        log("Listener ready")
 
         while True:
             try:
                 packet = self.receive_and_convert_packet()
-                self.server.incoming_packets.put((self.connection, packet))
+                self.server.received_client_packets.put((self, packet))
 
             except InvalidPacket as ex:
-                log(f"Invalid packet received", LOG_WARN, traceback_print=True)
+                log(f"Invalid packet received: {ex.details}", LOG_WARN, ex)
                 continue
 
             except LostConnection as ex:
                 log(f"Lost connection: {ex.reason}", LOG_INFO)
                 break
 
-            except BaseException as ex:
-                log(f"UNHANDLED {type(ex).__name__} on receiving/converting packet", LOG_ERROR, traceback_print=True)
+            except Exception as ex:
+                log(f"UNHANDLED {type(ex).__name__} on receiving/converting packet", LOG_ERROR, ex)
                 continue
 
-        self.server.client_listener_threads.remove(self)
-        log("Thread exiting run()")
+        log("Listener stopped")
+
+    def logged_in(self, player):
+        self.player = player
 
     def receive_and_convert_packet(self) -> dict:
         try:
@@ -52,3 +54,6 @@ class ClientListener(threading.Thread):
 
         except ConnectionResetError as ex:
             raise LostConnection(ex.strerror)
+
+    def send(self, packet: dict):
+        self.server.outgoing_packets.put((self.connection, packet))
