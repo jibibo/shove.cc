@@ -9,6 +9,7 @@ class Player:
         "active": False,
         "all_in": False,
         "bet": 0,
+        "blind_placement_skip_bet": False,
         "cards": [],
         "chips": 100,
         "folded": False,
@@ -57,9 +58,21 @@ class Player:
         self["chips"] -= real_amount  # todo check for all in etc
         self["bet"] += real_amount
 
-        log(f"{self} bet {real_amount}, {self['chips']} chips left")
+        log(f"{self} bet {real_amount}, {self['chips']} chips left", LOG_INFO)
 
         return real_amount
+
+    def bot_action(self, table):
+        log(f"Processing bot action for {self}")
+        highest_bet_this_street = table.highest_bet_this_street
+        to_call = highest_bet_this_street - self["bet"]
+        if to_call:
+            self.bet(to_call)
+        else:
+            self.check()
+
+    def check(self):
+        log(f"{self} checked", LOG_INFO)
 
     @staticmethod
     def create_from_username(username):  # todo get from existing db
@@ -68,9 +81,8 @@ class Player:
 
         return Player(data)
 
-    def bot_action(self, table):
-        pass
-        # todo check hand and act on that
+    # def fold(self):
+    #     pass
 
     def won_chips(self, amount):
         self["chips"] += amount

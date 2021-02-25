@@ -60,7 +60,7 @@ class Poker(BaseGame):
             self.pot += player["bet"]
             player["bet"] = 0
 
-        # lowest_bet = 0
+        # lowest_bet = 0  # todo broken
         #
         # player_bets_remaining = {player: player["bet"] for player in self.players}
         #
@@ -123,8 +123,31 @@ class Poker(BaseGame):
             player["cards"] = drawn_cards
             log(f"Dealt cards to {player}: {Card.get_pretty_str(drawn_cards)}", LOG_INFO)
 
-    def get_active_players(self):
-        return [player for player in self.players if player["active"]]
+    def get_next_active_player(self):  # todo optimize?
+        dealer = self.get_player_in_seat(self.dealer_seat)
+        all_players = self.players
+
+        while all_players[-1] != dealer:  # while the dealer is not the last in list of players
+            all_players.append(all_players.pop(0))
+            log("Moved a player to the end of the list")
+
+        active_players_left = []
+        for player in all_players:
+            if not player["active"]:
+                continue
+
+            if not dealer["bet"] and player["blind_placement_skip_bet"]:
+                continue  # player not eligible for betting if skipped by placing blind
+
+            active_players_left.append(player)
+
+        if not active_players_left:
+            log("No active players left")
+            return
+
+        next_active_player = active_players_left[0]
+        log(f"Next active player: {next_active_player}")
+        return next_active_player
 
     def get_not_folded_players(self):
         return [player for player in self.players if not player["folded"]]
@@ -185,7 +208,9 @@ class Poker(BaseGame):
         big_blind_player = self.get_player_in_seat(self.big_blind_seat)
 
         small_blind_player.bet(1)
+        small_blind_player["blind_placement_skip_bet"] = True
         big_blind_player.bet(2)
+        big_blind_player["blind_placement_skip_bet"] = True
 
         self.highest_bet_this_street = 2
 
@@ -216,8 +241,15 @@ class Poker(BaseGame):
         self.place_blinds()
         self.deal_player_cards()
 
-        # self.update_action_seat()
-        # self.action_on_next_player()
+        next_active_player = self.get_next_active_player()
+        while next_active_player:
+            next_active_player.bot_action(self)
+
+        # todo whenever player does turn, set next_player_index to active_players.index(player) + 1
+        # take into account folded players and all inned ones
+        # if checked and bet == highest_bet, player has checked already and doesnt need to re-call/etc
+        # after posting blinds, set next active player {under the gun), take into account heads-up blinds
+        # take into account players who placed blinds (if street == PREFLOP)
 
         self.add_bets_to_pots()
         self.street = STREET_FLOP
@@ -225,9 +257,6 @@ class Poker(BaseGame):
         self.on_showdown()
         log("Game ended!", LOG_INFO)
         self.table.started = False
-
-    def update_action_seat(self):
-        pass
 
     def update_dealer_and_blind_seats(self):
         # if self.n_taken_seats() < 2:  # safety check

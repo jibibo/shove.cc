@@ -149,7 +149,7 @@ class Evaluator:
             rank_class = self.get_rank_class(rank)
             class_string = self.class_to_string(rank_class)
             percentile = self.get_five_card_rank_percentile(rank)
-            log(f"{player} has {class_string}, top {round(percentile * 100, 1)}%")
+            log(f"{player} has {class_string}, top {round(percentile * 100, 1)}%", LOG_INFO)
 
             # detect if player is a winner
             if rank == best_rank:
