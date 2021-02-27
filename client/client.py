@@ -4,7 +4,7 @@ from server_listener import ServerListener
 
 class Client:
     def __init__(self):
-        log("Client init...")
+        log("Client init")
         self.socket: socket.socket = None
         self.server_listener = ServerListener(self)
         self.server_listener.start()
