@@ -1,6 +1,6 @@
 from server_util import *
 from player import Player
-from table_handler import TableHandler
+from table_handler_thread import TableHandlerThread
 from base_game import BaseGame
 from connected_client import ConnectedClient
 
@@ -10,19 +10,21 @@ class Table:
 
     def __init__(self, server):
         self.server = server
-        self.name = f"Table {len(server.tables) + 1}"
-        self.started = False
+        self.name = f"{len(server.tables) + 1}"
         self.events = Queue()
-        self.game: BaseGame = server.default_game(self)
+        self.game: BaseGame = server.get_default_game()(table=self)
         self.n_seats = 10
         self.seats_players = dict.fromkeys(range(1, self.n_seats + 1))
 
-        TableHandler(self).start()
+        TableHandlerThread(self).start()
 
-        log(f"Created table {self}", LOG_INFO)
+        Log.info(f"Created table {self}")
 
     def __repr__(self):
-        return f"'{self.name}' with {self.n_taken_seats()}/{self.n_total_seats()} players"
+        return f"<Table '{self.name}', {self.n_taken_seats()}/{self.n_total_seats()} players>"
+
+    def __str__(self):
+        return f"'{self.name}'"
 
     def add_bot(self, seat=None) -> int:
         bot_player = Player(bot_number=self.server.get_next_bot_number())
@@ -39,13 +41,13 @@ class Table:
                 seats.append(seat)
                 added_bots += 1
 
-        log(f"Added {added_bots}/{amount} bots to seats {seats}")
+        Log.info(f"Added {added_bots}/{amount} bots to seats {seats}")
 
     def add_player(self, client_or_bot, seat=None) -> int:
-        """sets and returns player's seat, 0 or exception raised if fail"""
+        """sets and returns player's seat, 0 or AssertionError if fail"""
 
-        if self.started:
-            log("Can't add player: game already started")  # todo add to a queue to join next round
+        if self.game.running:
+            Log.warn("Can't add player: game running")  # todo add to a queue to join next round
             return 0
 
         assert client_or_bot, "no player given"
@@ -61,19 +63,19 @@ class Table:
         empty_seats = self.get_empty_seats()
 
         if not empty_seats:
-            log("No seats empty, ignoring call", LOG_WARN)
+            Log.warn("No seats empty, ignoring call")
             return 0
 
         if seat:
             if seat in empty_seats:
-                log(f"Given seat {seat} is available")
+                Log.trace(f"Given seat {seat} is available")
             else:
-                log(f"Given seat {seat} is taken, choosing random seat", LOG_WARN)
+                Log.warn(f"Given seat {seat} is taken, choosing random seat")
                 seat = random.choice(empty_seats)
 
         else:
             seat = random.choice(empty_seats)
-            log(f"No seat given, chose random seat {seat}")
+            Log.trace(f"No seat given, chose random seat {seat}")
 
         self.put_player_in_seat(player, seat)
         self.events.put("player_added")
@@ -119,7 +121,7 @@ class Table:
     def put_player_in_seat(self, player: Player, seat: int):
         player["seat"] = seat
         self.seats_players[seat] = player  # todo should just be a list of players
-        log(f"Put player {player} in seat {seat}", LOG_INFO)
+        Log.info(f"Put player {player} in seat {seat}")
 
     def send_player(self, target_player: dict, packet):
         for connection, player in self.server.connections_players:
@@ -131,20 +133,18 @@ class Table:
             self.send_player(target_player, packet)
 
     def try_to_start_game(self):
-        log(f"Trying to start game...")
+        Log.info(f"Trying to start game")
 
-        if self.started:
-            log("Game already started")
+        if self.game.running:
+            Log.info("Game already started")
             return
 
         if self.n_taken_seats() < Table.MIN_PLAYERS:
-            log(f"Not enough players to start: {self.n_taken_seats()}/{self.MIN_PLAYERS}")
+            Log.info(f"Not enough players to start: {self.n_taken_seats()}/{self.MIN_PLAYERS}")
             return
-
-        self.started = True  # temporary todo SHOULD ONLY BE TRUE AFTER GAME STARTED (or a retry will never occur)
 
         try:
             self.game.start()
 
         except Exception as ex:
-            log(f"UNHANDLED {type(ex).__name__} on game start", LOG_ERROR, ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on game start", ex)

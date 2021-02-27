@@ -1,17 +1,17 @@
 from server_util import *
 
 
-class DeleteTable(BaseException):
+class DeleteTable(Exception):
     pass
 
 
-class TableHandler(threading.Thread):
+class TableHandlerThread(threading.Thread):
     def __init__(self, table):
         self.table = table
-        super().__init__(name=f"TabHand/{table.name}", daemon=True)
+        super().__init__(name=f"TableHandler/{table.name}", daemon=True)
 
     def run(self):
-        log("Ready")
+        Log.debug("Ready")
 
         while True:
             event = self.table.events.get()
@@ -20,15 +20,15 @@ class TableHandler(threading.Thread):
                 self.handle_event(event)
 
             except DeleteTable:
-                log(f"Deleting table '{self.name}'")  # todo implement
+                Log.trace(f"Deleting table '{self.name}'")  # todo implement
                 break
 
-        log("Stopped")
+        Log.debug("Stopped")
 
     def handle_event(self, event: str):
-        log(f"Handling event...: {event}")
+        Log.trace(f"Handling event: {event}")
 
-        if event == "player_added":
+        if event in ["player_added", "start"]:
             self.table.try_to_start_game()
             return
 

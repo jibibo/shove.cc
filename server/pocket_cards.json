@@ -1,0 +1,678 @@
+{
+    "AA": {
+        "times_dealt": 780,
+        "times_won": 671
+    },
+    "AKs": {
+        "times_dealt": 560,
+        "times_won": 375
+    },
+    "AKo": {
+        "times_dealt": 1721,
+        "times_won": 1148
+    },
+    "AQs": {
+        "times_dealt": 533,
+        "times_won": 358
+    },
+    "AQo": {
+        "times_dealt": 1679,
+        "times_won": 1103
+    },
+    "AJs": {
+        "times_dealt": 554,
+        "times_won": 375
+    },
+    "AJo": {
+        "times_dealt": 1627,
+        "times_won": 1040
+    },
+    "ATs": {
+        "times_dealt": 540,
+        "times_won": 350
+    },
+    "ATo": {
+        "times_dealt": 1617,
+        "times_won": 1020
+    },
+    "A9s": {
+        "times_dealt": 525,
+        "times_won": 324
+    },
+    "A9o": {
+        "times_dealt": 1594,
+        "times_won": 1009
+    },
+    "A8s": {
+        "times_dealt": 520,
+        "times_won": 332
+    },
+    "A8o": {
+        "times_dealt": 1623,
+        "times_won": 972
+    },
+    "A7s": {
+        "times_dealt": 589,
+        "times_won": 383
+    },
+    "A7o": {
+        "times_dealt": 1606,
+        "times_won": 936
+    },
+    "A6s": {
+        "times_dealt": 520,
+        "times_won": 335
+    },
+    "A6o": {
+        "times_dealt": 1596,
+        "times_won": 942
+    },
+    "A5s": {
+        "times_dealt": 563,
+        "times_won": 327
+    },
+    "A5o": {
+        "times_dealt": 1543,
+        "times_won": 935
+    },
+    "A4s": {
+        "times_dealt": 552,
+        "times_won": 335
+    },
+    "A4o": {
+        "times_dealt": 1627,
+        "times_won": 941
+    },
+    "A3s": {
+        "times_dealt": 525,
+        "times_won": 329
+    },
+    "A3o": {
+        "times_dealt": 1598,
+        "times_won": 937
+    },
+    "A2s": {
+        "times_dealt": 516,
+        "times_won": 302
+    },
+    "A2o": {
+        "times_dealt": 1555,
+        "times_won": 852
+    },
+    "KK": {
+        "times_dealt": 794,
+        "times_won": 656
+    },
+    "KQs": {
+        "times_dealt": 513,
+        "times_won": 327
+    },
+    "KQo": {
+        "times_dealt": 1549,
+        "times_won": 975
+    },
+    "KJs": {
+        "times_dealt": 552,
+        "times_won": 342
+    },
+    "KJo": {
+        "times_dealt": 1632,
+        "times_won": 1015
+    },
+    "KTs": {
+        "times_dealt": 562,
+        "times_won": 352
+    },
+    "KTo": {
+        "times_dealt": 1641,
+        "times_won": 974
+    },
+    "K9s": {
+        "times_dealt": 526,
+        "times_won": 334
+    },
+    "K9o": {
+        "times_dealt": 1680,
+        "times_won": 990
+    },
+    "K8s": {
+        "times_dealt": 511,
+        "times_won": 287
+    },
+    "K8o": {
+        "times_dealt": 1682,
+        "times_won": 953
+    },
+    "K7s": {
+        "times_dealt": 561,
+        "times_won": 330
+    },
+    "K7o": {
+        "times_dealt": 1700,
+        "times_won": 942
+    },
+    "K6s": {
+        "times_dealt": 559,
+        "times_won": 327
+    },
+    "K6o": {
+        "times_dealt": 1635,
+        "times_won": 890
+    },
+    "K5s": {
+        "times_dealt": 514,
+        "times_won": 295
+    },
+    "K5o": {
+        "times_dealt": 1565,
+        "times_won": 888
+    },
+    "K4s": {
+        "times_dealt": 521,
+        "times_won": 312
+    },
+    "K4o": {
+        "times_dealt": 1687,
+        "times_won": 909
+    },
+    "K3s": {
+        "times_dealt": 543,
+        "times_won": 277
+    },
+    "K3o": {
+        "times_dealt": 1660,
+        "times_won": 908
+    },
+    "K2s": {
+        "times_dealt": 549,
+        "times_won": 301
+    },
+    "K2o": {
+        "times_dealt": 1568,
+        "times_won": 829
+    },
+    "QQ": {
+        "times_dealt": 816,
+        "times_won": 645
+    },
+    "QJs": {
+        "times_dealt": 567,
+        "times_won": 367
+    },
+    "QJo": {
+        "times_dealt": 1702,
+        "times_won": 1030
+    },
+    "QTs": {
+        "times_dealt": 519,
+        "times_won": 328
+    },
+    "QTo": {
+        "times_dealt": 1612,
+        "times_won": 936
+    },
+    "Q9s": {
+        "times_dealt": 531,
+        "times_won": 301
+    },
+    "Q9o": {
+        "times_dealt": 1589,
+        "times_won": 885
+    },
+    "Q8s": {
+        "times_dealt": 531,
+        "times_won": 298
+    },
+    "Q8o": {
+        "times_dealt": 1625,
+        "times_won": 910
+    },
+    "Q7s": {
+        "times_dealt": 565,
+        "times_won": 325
+    },
+    "Q7o": {
+        "times_dealt": 1527,
+        "times_won": 809
+    },
+    "Q6s": {
+        "times_dealt": 558,
+        "times_won": 300
+    },
+    "Q6o": {
+        "times_dealt": 1619,
+        "times_won": 808
+    },
+    "Q5s": {
+        "times_dealt": 572,
+        "times_won": 310
+    },
+    "Q5o": {
+        "times_dealt": 1623,
+        "times_won": 832
+    },
+    "Q4s": {
+        "times_dealt": 521,
+        "times_won": 265
+    },
+    "Q4o": {
+        "times_dealt": 1632,
+        "times_won": 840
+    },
+    "Q3s": {
+        "times_dealt": 492,
+        "times_won": 271
+    },
+    "Q3o": {
+        "times_dealt": 1639,
+        "times_won": 795
+    },
+    "Q2s": {
+        "times_dealt": 530,
+        "times_won": 271
+    },
+    "Q2o": {
+        "times_dealt": 1609,
+        "times_won": 817
+    },
+    "JJ": {
+        "times_dealt": 867,
+        "times_won": 657
+    },
+    "JTs": {
+        "times_dealt": 560,
+        "times_won": 322
+    },
+    "JTo": {
+        "times_dealt": 1723,
+        "times_won": 1011
+    },
+    "J9s": {
+        "times_dealt": 551,
+        "times_won": 324
+    },
+    "J9o": {
+        "times_dealt": 1643,
+        "times_won": 864
+    },
+    "J8s": {
+        "times_dealt": 555,
+        "times_won": 313
+    },
+    "J8o": {
+        "times_dealt": 1689,
+        "times_won": 909
+    },
+    "J7s": {
+        "times_dealt": 500,
+        "times_won": 278
+    },
+    "J7o": {
+        "times_dealt": 1657,
+        "times_won": 871
+    },
+    "J6s": {
+        "times_dealt": 541,
+        "times_won": 273
+    },
+    "J6o": {
+        "times_dealt": 1557,
+        "times_won": 782
+    },
+    "J5s": {
+        "times_dealt": 558,
+        "times_won": 294
+    },
+    "J5o": {
+        "times_dealt": 1656,
+        "times_won": 818
+    },
+    "J4s": {
+        "times_dealt": 546,
+        "times_won": 291
+    },
+    "J4o": {
+        "times_dealt": 1640,
+        "times_won": 794
+    },
+    "J3s": {
+        "times_dealt": 596,
+        "times_won": 287
+    },
+    "J3o": {
+        "times_dealt": 1634,
+        "times_won": 785
+    },
+    "J2s": {
+        "times_dealt": 556,
+        "times_won": 287
+    },
+    "J2o": {
+        "times_dealt": 1650,
+        "times_won": 734
+    },
+    "TT": {
+        "times_dealt": 832,
+        "times_won": 630
+    },
+    "T9s": {
+        "times_dealt": 523,
+        "times_won": 294
+    },
+    "T9o": {
+        "times_dealt": 1588,
+        "times_won": 897
+    },
+    "T8s": {
+        "times_dealt": 506,
+        "times_won": 279
+    },
+    "T8o": {
+        "times_dealt": 1531,
+        "times_won": 743
+    },
+    "T7s": {
+        "times_dealt": 524,
+        "times_won": 291
+    },
+    "T7o": {
+        "times_dealt": 1623,
+        "times_won": 808
+    },
+    "T6s": {
+        "times_dealt": 581,
+        "times_won": 296
+    },
+    "T6o": {
+        "times_dealt": 1670,
+        "times_won": 820
+    },
+    "T5s": {
+        "times_dealt": 551,
+        "times_won": 273
+    },
+    "T5o": {
+        "times_dealt": 1620,
+        "times_won": 743
+    },
+    "T4s": {
+        "times_dealt": 512,
+        "times_won": 236
+    },
+    "T4o": {
+        "times_dealt": 1677,
+        "times_won": 769
+    },
+    "T3s": {
+        "times_dealt": 567,
+        "times_won": 264
+    },
+    "T3o": {
+        "times_dealt": 1602,
+        "times_won": 723
+    },
+    "T2s": {
+        "times_dealt": 511,
+        "times_won": 263
+    },
+    "T2o": {
+        "times_dealt": 1619,
+        "times_won": 718
+    },
+    "99": {
+        "times_dealt": 813,
+        "times_won": 597
+    },
+    "98s": {
+        "times_dealt": 561,
+        "times_won": 301
+    },
+    "98o": {
+        "times_dealt": 1650,
+        "times_won": 872
+    },
+    "97s": {
+        "times_dealt": 517,
+        "times_won": 249
+    },
+    "97o": {
+        "times_dealt": 1574,
+        "times_won": 762
+    },
+    "96s": {
+        "times_dealt": 559,
+        "times_won": 273
+    },
+    "96o": {
+        "times_dealt": 1517,
+        "times_won": 703
+    },
+    "95s": {
+        "times_dealt": 535,
+        "times_won": 244
+    },
+    "95o": {
+        "times_dealt": 1580,
+        "times_won": 733
+    },
+    "94s": {
+        "times_dealt": 588,
+        "times_won": 277
+    },
+    "94o": {
+        "times_dealt": 1609,
+        "times_won": 679
+    },
+    "93s": {
+        "times_dealt": 515,
+        "times_won": 240
+    },
+    "93o": {
+        "times_dealt": 1641,
+        "times_won": 710
+    },
+    "92s": {
+        "times_dealt": 555,
+        "times_won": 265
+    },
+    "92o": {
+        "times_dealt": 1606,
+        "times_won": 676
+    },
+    "88": {
+        "times_dealt": 804,
+        "times_won": 560
+    },
+    "87s": {
+        "times_dealt": 566,
+        "times_won": 273
+    },
+    "87o": {
+        "times_dealt": 1726,
+        "times_won": 833
+    },
+    "86s": {
+        "times_dealt": 542,
+        "times_won": 264
+    },
+    "86o": {
+        "times_dealt": 1612,
+        "times_won": 704
+    },
+    "85s": {
+        "times_dealt": 583,
+        "times_won": 273
+    },
+    "85o": {
+        "times_dealt": 1603,
+        "times_won": 728
+    },
+    "84s": {
+        "times_dealt": 502,
+        "times_won": 224
+    },
+    "84o": {
+        "times_dealt": 1640,
+        "times_won": 690
+    },
+    "83s": {
+        "times_dealt": 542,
+        "times_won": 231
+    },
+    "83o": {
+        "times_dealt": 1632,
+        "times_won": 636
+    },
+    "82s": {
+        "times_dealt": 553,
+        "times_won": 268
+    },
+    "82o": {
+        "times_dealt": 1585,
+        "times_won": 611
+    },
+    "77": {
+        "times_dealt": 800,
+        "times_won": 527
+    },
+    "76s": {
+        "times_dealt": 556,
+        "times_won": 288
+    },
+    "76o": {
+        "times_dealt": 1683,
+        "times_won": 770
+    },
+    "75s": {
+        "times_dealt": 542,
+        "times_won": 259
+    },
+    "75o": {
+        "times_dealt": 1572,
+        "times_won": 718
+    },
+    "74s": {
+        "times_dealt": 557,
+        "times_won": 261
+    },
+    "74o": {
+        "times_dealt": 1624,
+        "times_won": 679
+    },
+    "73s": {
+        "times_dealt": 523,
+        "times_won": 207
+    },
+    "73o": {
+        "times_dealt": 1673,
+        "times_won": 667
+    },
+    "72s": {
+        "times_dealt": 532,
+        "times_won": 232
+    },
+    "72o": {
+        "times_dealt": 1615,
+        "times_won": 622
+    },
+    "66": {
+        "times_dealt": 831,
+        "times_won": 536
+    },
+    "65s": {
+        "times_dealt": 535,
+        "times_won": 236
+    },
+    "65o": {
+        "times_dealt": 1624,
+        "times_won": 685
+    },
+    "64s": {
+        "times_dealt": 567,
+        "times_won": 249
+    },
+    "64o": {
+        "times_dealt": 1604,
+        "times_won": 663
+    },
+    "63s": {
+        "times_dealt": 582,
+        "times_won": 251
+    },
+    "63o": {
+        "times_dealt": 1640,
+        "times_won": 655
+    },
+    "62s": {
+        "times_dealt": 538,
+        "times_won": 215
+    },
+    "62o": {
+        "times_dealt": 1722,
+        "times_won": 648
+    },
+    "55": {
+        "times_dealt": 852,
+        "times_won": 536
+    },
+    "54s": {
+        "times_dealt": 548,
+        "times_won": 254
+    },
+    "54o": {
+        "times_dealt": 1664,
+        "times_won": 648
+    },
+    "53s": {
+        "times_dealt": 521,
+        "times_won": 236
+    },
+    "53o": {
+        "times_dealt": 1598,
+        "times_won": 587
+    },
+    "52s": {
+        "times_dealt": 544,
+        "times_won": 205
+    },
+    "52o": {
+        "times_dealt": 1647,
+        "times_won": 631
+    },
+    "44": {
+        "times_dealt": 799,
+        "times_won": 451
+    },
+    "43s": {
+        "times_dealt": 532,
+        "times_won": 214
+    },
+    "43o": {
+        "times_dealt": 1678,
+        "times_won": 662
+    },
+    "42s": {
+        "times_dealt": 529,
+        "times_won": 194
+    },
+    "42o": {
+        "times_dealt": 1603,
+        "times_won": 588
+    },
+    "33": {
+        "times_dealt": 801,
+        "times_won": 445
+    },
+    "32s": {
+        "times_dealt": 556,
+        "times_won": 217
+    },
+    "32o": {
+        "times_dealt": 1609,
+        "times_won": 596
+    },
+    "22": {
+        "times_dealt": 854,
+        "times_won": 456
+    }
+}

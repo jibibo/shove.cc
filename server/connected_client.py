@@ -10,11 +10,11 @@ class ConnectedClient:
         self.send({
             "model": "connected"
         })
-        log(f"{self.address[0]}:{self.address[1]} connected")
-        threading.Thread(target=self.listen, name=f"CliList/{self.address[0]}:{self.address[1]}", daemon=True)
+        Log.info(f"{self.address[0]}:{self.address[1]} connected")
+        threading.Thread(target=self.listen, name=f"ClientListener/{self.address[0]}:{self.address[1]}", daemon=True)
 
     def listen(self):
-        log("Listener ready")
+        Log.debug("Listener ready")
 
         while True:
             try:
@@ -22,18 +22,18 @@ class ConnectedClient:
                 self.server.received_client_packets.put((self, packet))
 
             except InvalidPacket as ex:
-                log(f"Invalid packet received: {ex.details}", LOG_WARN, ex)
+                Log.error(f"Invalid packet received: {ex.details}", ex)
                 continue
 
             except LostConnection as ex:
-                log(f"Lost connection: {ex.reason}", LOG_INFO)
+                Log.info(f"Lost connection: {ex.reason}")
                 break
 
             except Exception as ex:
-                log(f"UNHANDLED {type(ex).__name__} on receiving/converting packet", LOG_ERROR, ex)
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on receiving/converting packet", ex)
                 continue
 
-        log("Listener stopped")
+        Log.debug("Listener stopped")
 
     def logged_in(self, player):
         self.player = player
@@ -42,10 +42,10 @@ class ConnectedClient:
         try:
             header_bytes = self.connection.recv(HEADER_SIZE)
             header = int(header_bytes)
-            log(f"Received header: {header}")
+            Log.trace(f"Received header: {header}")
             packet_bytes = self.connection.recv(header)
             packet_str = str(packet_bytes, encoding="utf-8")
-            log(f"Received packet, raw: {packet_str}")
+            Log.trace(f"Received packet, raw: {packet_str}")
             packet = json.loads(packet_str)
             return packet
 

@@ -31,55 +31,56 @@ class Player:
 
         if self.is_bot:
             self.bot_thread = None
-            self.bot_aggressive_chance = round(random.uniform(0, 0.9), 2)
-            self.bot_fold_chance = round(min(random.uniform(0, 0.5), 1 - self.bot_aggressive_chance), 2)
-            log(f"Bot aggressive/fold chance: {self.bot_aggressive_chance}/{self.bot_fold_chance}")
+            self.bot_aggressive_chance = 0  # round(random.uniform(0, 0.9), 2)
+            self.bot_fold_chance = 0  # round(min(random.uniform(0, 0.5), 1 - self.bot_aggressive_chance), 2)
+            Log.trace(f"Bot aggressive/fold chance: {self.bot_aggressive_chance}/{self.bot_fold_chance}")
             data = Player.DEFAULT_DATA.copy()
             data["username"] = f"Bot#{bot_number}"
 
         self.data = data
 
-        log(f"Created player {self}, is bot = {self.is_bot}")
+        Log.info(f"Created player {self}, is bot = {self.is_bot}")
 
     def __getitem__(self, key):
         try:
             return self.data[key]
 
         except KeyError as ex:
-            log(f"No such key in player data: {key}", LOG_ERROR, ex)
+            Log.error(f"No such key in player data: {key}", ex)
 
     def __repr__(self):
         return f"<Player '{self['username']}', seat {self['seat']}, {self['chips']} chips>"
 
     def __setitem__(self, key, value):
-        assert key in self.data.keys(), "no such key in player data"
+        try:
+            old = self.data[key]
+            self.data[key] = value
+            return old
 
-        old = self.data[key]
-        self.data[key] = value
-
-        return old
+        except KeyError as ex:
+            Log.error(f"No such key in player data: {key}", ex)
 
     def __str__(self):
         return f"'{self['username']}'"
 
-    def action(self, action, requested_chips=0) -> int:  # todo PlaceChipsReason enum
+    def action(self, action, requested_chips=0) -> int:  # todo verify input, like calling with insufficient chips
         if action != ACTION_BLIND:
             self["actions"] += 1
 
         if action == ACTION_CHECK:
-            log(f"{self} checks", LOG_INFO)
+            Log.info(f"{self} checks")
             return 0
 
         if action == ACTION_FOLD:
-            log(f"{self} folds", LOG_INFO)
+            Log.info(f"{self} folds")
             self["folded"] = True
             return 0
 
-        assert requested_chips, "requested chips to place not set, but action does require this"
+        assert requested_chips, "requested chips to place not set, but given action does require this"
 
         if requested_chips > self["chips"]:
             placed_chips = self["chips"]
-            log("Action requested amount that exceeded player's chip count, reduced it", LOG_WARN)
+            Log.warn(f"Reduced requested amount that exceeded player's chip count ({requested_chips})")
         else:
             placed_chips = requested_chips
 
@@ -87,10 +88,10 @@ class Player:
         self["chips"] -= placed_chips
         self["bet"] += placed_chips
 
-        log(f"{self} placed {placed_chips} chip(s) ({action}), {self['chips']} left", LOG_INFO)
+        Log.info(f"{self} placed {placed_chips} chip(s) ({action}), {self['chips']} left")
 
         if requested_chips >= old_chips:
-            log(f"{self} is all-in!")
+            Log.info(f"{self} is all-in!")
             self["all_in"] = True
 
         if requested_chips <= old_chips and action != ACTION_BLIND:
@@ -105,11 +106,8 @@ class Player:
 
         return Player(data)
 
-    def fold(self):
-        pass
-
-    def generate_bot_action(self, to_call, highest_bet, minimum_bet):
-        log(f"{self} processing bot action...")
+    def generate_bot_decision(self, to_call, highest_bet, minimum_bet):
+        Log.trace(f"{self} generating bot decision")
 
         if random.random() < self.bot_aggressive_chance:
             if highest_bet:
@@ -126,10 +124,11 @@ class Player:
         return self.action(ACTION_CHECK)
 
     def new_hand_starting(self):
+        self["chips"] = 100  # temp
         self["actions"] = 0
+        self["cards"] = []
         self["manual_bet_matches"] = False
         self["all_in"] = False
-        self["cards"] = []
         self["folded"] = False
 
     def post_blind(self, blind_amount):
@@ -137,4 +136,4 @@ class Player:
 
     def won_chips(self, amount):
         self["chips"] += amount
-        log(f"{self} won {amount} chips, {self['chips']} total")
+        Log.info(f"{self} won {amount} chips, {self['chips']} total")

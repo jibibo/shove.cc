@@ -17,7 +17,7 @@ class Evaluator:
     def __init__(self):
         self.lookup_table = LookupTable()
 
-        self.hand_size_map = {
+        self.hand_size_map: Dict[int, callable] = {
             5: self._five,
             6: self._six,
             7: self._seven
@@ -41,7 +41,7 @@ class Evaluator:
             prime = Card.prime_product_from_hand(card_int_list)
             return self.lookup_table.unsuited_lookup[prime]
 
-    def _six(self, cards):
+    def _six(self, card_int_list):
         """
         Performs five_card_eval() on all (6 choose 5) = 6 subsets
         of 5 cards in the set of 6 to determine the best ranking,
@@ -50,7 +50,7 @@ class Evaluator:
 
         minimum = LookupTable.MAX_HIGH_CARD
 
-        all_5_card_combos = itertools.combinations(cards, 5)
+        all_5_card_combos = itertools.combinations(card_int_list, 5)
         for combo in all_5_card_combos:
 
             score = self._five(combo)
@@ -59,7 +59,7 @@ class Evaluator:
 
         return minimum
 
-    def _seven(self, cards):
+    def _seven(self, card_int_list):
         """
         Performs five_card_eval() on all (7 choose 5) = 21 subsets
         of 5 cards in the set of 7 to determine the best ranking,
@@ -68,7 +68,7 @@ class Evaluator:
 
         minimum = LookupTable.MAX_HIGH_CARD
 
-        all_5_card_combos = itertools.combinations(cards, 5)
+        all_5_card_combos = itertools.combinations(card_int_list, 5)
         for combo in all_5_card_combos:
             score = self._five(combo)
             if score < minimum:
@@ -140,7 +140,7 @@ class Evaluator:
         for player in players:
             assert len(player["cards"]) == 2, f"Invalid hand length ({len(player['cards'])})"
 
-        best_rank = 7463  # rank one worse than worst hand todo why one worse
+        best_rank = 7463  # rank one worse than worst hand
         best_hand = ""
         winners = []
 
@@ -149,12 +149,12 @@ class Evaluator:
             rank_class = self.get_rank_class(rank)
             class_string = self.class_to_string(rank_class)
             percentile = self.get_five_card_rank_percentile(rank)
-            log(f"{player} has {class_string}, top {round(percentile * 100, 1)}%", LOG_INFO)
+            # todo only make the aggressors cards public, all others get mucked
+            Log.info(f"{player} has {class_string}, top {round(percentile * 100, 2)}%")
 
             # detect if player is a winner
             if rank == best_rank:
                 winners.append(player)
-                best_rank = rank
                 best_hand = class_string
 
             elif rank < best_rank:

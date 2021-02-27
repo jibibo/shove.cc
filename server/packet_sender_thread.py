@@ -1,13 +1,13 @@
 from server_util import *
 
 
-class PacketSender(threading.Thread):
+class PacketSenderThread(threading.Thread):
     def __init__(self, server):
         self.server = server
-        super().__init__(name="PackSend", daemon=True)
+        super().__init__(name="PacketSenderThread", daemon=True)
 
     def run(self):
-        log("Ready")
+        Log.debug("Ready")
 
         while True:
             client, packet = self.server.outgoing_client_packets.get()
@@ -16,7 +16,7 @@ class PacketSender(threading.Thread):
                 self.send(client, packet)
 
             except Exception as ex:
-                log(f"UNHANDLED {type(ex).__name__} on sending packet", LOG_ERROR, ex)
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on sending packet", ex)
                 continue
 
     @staticmethod
@@ -24,4 +24,4 @@ class PacketSender(threading.Thread):
         packet_str = json.dumps(packet)
         header = f"{len(packet_str):<{HEADER_SIZE}}"
         connected_client.connection.send(bytes(header + "test" + packet_str, encoding="utf-8"))
-        log(f"Sent packet: {packet}")
+        Log.debug(f"Sent packet: {packet}")

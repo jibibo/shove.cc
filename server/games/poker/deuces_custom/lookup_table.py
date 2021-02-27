@@ -234,7 +234,7 @@ class LookupTable:
                 rank += 1
 
     @staticmethod
-    def write_table_to_disk(table, path):
+    def write_table_to_disk(table, path):  # todo delete this?
         """
         Writes lookup table to disk
         """
@@ -252,8 +252,9 @@ class LookupTable:
         so no need to sort when done! Perfect.
         """
 
+        # what
         t = (bits | (bits - 1)) + 1
-        next_bit_sequence = t | ((int((t & -t) / (bits & -bits)) >> 1) - 1)  # todo int() required?
+        next_bit_sequence = t | ((int((t & -t) / (bits & -bits)) >> 1) - 1)
         yield next_bit_sequence
 
         while True:
