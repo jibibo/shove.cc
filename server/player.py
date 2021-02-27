@@ -14,7 +14,6 @@ class Player:
         "username": None,
         "password": None,
 
-        "actions": 0,  # todo n_actions, as tracking player's actions over time is a future feature
         "all_in": False,
         "bet": 0,
         "cards": [],
@@ -49,7 +48,7 @@ class Player:
             Log.error(f"No such key in player data: {key}", ex)
 
     def __repr__(self):
-        return f"<Player '{self['username']}', seat {self['seat']}, {self['chips']} chips>"
+        return f"<Player '{self['username']}', seat {self['seat']}, stack: {self['chips']} chips>"
 
     def __setitem__(self, key, value):
         try:
@@ -64,11 +63,9 @@ class Player:
         return f"'{self['username']}'"
 
     def action(self, action, requested_chips=0) -> int:  # todo verify input, like calling with insufficient chips
-        if action != ACTION_BLIND:
-            self["actions"] += 1
-
         if action == ACTION_CHECK:
             Log.info(f"{self} checks")
+            self["manual_bet_matches"] = True
             return 0
 
         if action == ACTION_FOLD:
@@ -88,10 +85,10 @@ class Player:
         self["chips"] -= placed_chips
         self["bet"] += placed_chips
 
-        Log.info(f"{self} placed {placed_chips} chip(s) ({action}), {self['chips']} left")
+        Log.info(f"{self} placed {placed_chips} chip(s) ({action}). Stack: {self['chips']} chips")
 
         if requested_chips >= old_chips:
-            Log.info(f"{self} is all-in!")
+            Log.info(f"{self} is all-in")
             self["all_in"] = True
 
         if requested_chips <= old_chips and action != ACTION_BLIND:
@@ -106,12 +103,15 @@ class Player:
 
         return Player(data)
 
-    def generate_bot_decision(self, to_call, highest_bet, minimum_bet):
-        Log.trace(f"{self} generating bot decision")
+    def decide_bot_action(self, game):
+        last_bet = game.last_bet
+        minimum_bet = game.big_blind_amount
+        to_call = last_bet - self["bet"]
+        Log.trace(f"{self} deciding bot action, to call: {to_call}, last bet: {last_bet}, min bet: {minimum_bet}")
 
         if random.random() < self.bot_aggressive_chance:
-            if highest_bet:
-                return self.action(ACTION_RAISE, 2 * highest_bet)
+            if last_bet:
+                return self.action(ACTION_RAISE, 2 * last_bet)
 
             return self.action(ACTION_BET, minimum_bet)
 
@@ -125,7 +125,6 @@ class Player:
 
     def new_hand_starting(self):
         self["chips"] = 100  # temp
-        self["actions"] = 0
         self["cards"] = []
         self["manual_bet_matches"] = False
         self["all_in"] = False
@@ -134,6 +133,10 @@ class Player:
     def post_blind(self, blind_amount):
         self.action(ACTION_BLIND, blind_amount)
 
-    def won_chips(self, amount):
+    def return_bet_to_player(self, bet):
+        self["chips"] += bet
+        self["bet"] -= bet
+
+    def won_chips(self, amount, hand, percentile):
         self["chips"] += amount
-        Log.info(f"{self} won {amount} chips, {self['chips']} total")
+        Log.info(f"{self} won {amount} chips with {hand} (top {round(percentile * 100, 2)}%). Stack: {self['chips']} chips")

@@ -23,6 +23,7 @@ class LookupTable:
     * 7-5-4-3-2 unsuited (worst hand possible)  => 7462
     """
 
+    MAX_ROYAL_FLUSH = 1
     MAX_STRAIGHT_FLUSH = 10
     MAX_FOUR_OF_A_KIND = 166
     MAX_FULL_HOUSE = 322
@@ -33,28 +34,17 @@ class LookupTable:
     MAX_PAIR = 6185
     MAX_HIGH_CARD = 7462
 
-    MAX_TO_RANK_CLASS = {
-        MAX_STRAIGHT_FLUSH: 1,
-        MAX_FOUR_OF_A_KIND: 2,
-        MAX_FULL_HOUSE: 3,
-        MAX_FLUSH: 4,
-        MAX_STRAIGHT: 5,
-        MAX_THREE_OF_A_KIND: 6,
-        MAX_TWO_PAIR: 7,
-        MAX_PAIR: 8,
-        MAX_HIGH_CARD: 9
-    }
-
-    RANK_CLASS_TO_STRING = {
-        1: "Straight Flush",
-        2: "Four of a Kind",
-        3: "Full House",
-        4: "Flush",
-        5: "Straight",
-        6: "Three of a Kind",
-        7: "Two Pair",
-        8: "Pair",
-        9: "High Card"
+    MAX_RANK_TO_STRING = {
+        MAX_ROYAL_FLUSH: "Royal Flush",
+        MAX_STRAIGHT_FLUSH: "Straight Flush",
+        MAX_FOUR_OF_A_KIND: "Four of a Kind",
+        MAX_FULL_HOUSE: "Full House",
+        MAX_FLUSH: "Flush",
+        MAX_STRAIGHT: "Straight",
+        MAX_THREE_OF_A_KIND: "Three of a Kind",
+        MAX_TWO_PAIR: "Two Pair",
+        MAX_PAIR: "Pair",
+        MAX_HIGH_CARD: "High Card"
     }
 
     def __init__(self):
@@ -207,8 +197,8 @@ class LookupTable:
 
         # 4) Two Pair
         rank = LookupTable.MAX_THREE_OF_A_KIND + 1
-        tpgen = itertools.combinations(backwards_ranks, 2)
-        for tp in tpgen:
+        tp_gen = itertools.combinations(backwards_ranks, 2)
+        for tp in tp_gen:
             pair1, pair2 = tp
             kickers = backwards_ranks[:]
             kickers.remove(pair1)
@@ -224,24 +214,14 @@ class LookupTable:
         for pair_rank in backwards_ranks:
             kickers = backwards_ranks.copy()
             kickers.remove(pair_rank)
-            kgen = itertools.combinations(kickers, 3)
+            k_gen = itertools.combinations(kickers, 3)
 
-            for kickers in kgen:
+            for kickers in k_gen:
                 k1, k2, k3 = kickers
                 product = Card.PRIMES[pair_rank] ** 2 * Card.PRIMES[k1] * \
                     Card.PRIMES[k2] * Card.PRIMES[k3]
                 self.unsuited_lookup[product] = rank
                 rank += 1
-
-    @staticmethod
-    def write_table_to_disk(table, path):  # todo delete this?
-        """
-        Writes lookup table to disk
-        """
-
-        with open(path, "w") as f:
-            for prime_prod, rank in table.items():
-                f.write(f"{prime_prod},{rank}\n")
 
     @staticmethod
     def get_lexographically_next_bit_sequence(bits):
@@ -261,3 +241,40 @@ class LookupTable:
             t = (next_bit_sequence | (next_bit_sequence - 1)) + 1
             next_bit_sequence = t | ((int((t & -t) / (next_bit_sequence & -next_bit_sequence)) >> 1) - 1)
             yield next_bit_sequence
+
+    @staticmethod
+    def rank_to_percentile(hand_rank):
+        """
+        Scales the hand rank score to the [0.0, 1.0] range.
+        """
+
+        return hand_rank / LookupTable.MAX_HIGH_CARD
+
+    @staticmethod
+    def rank_to_string(hand_rank) -> str:
+        """
+        Gets the readable string correlated with the hand rank
+        """
+
+        if hand_rank == 1:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_ROYAL_FLUSH]
+        if hand_rank <= LookupTable.MAX_STRAIGHT_FLUSH:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_STRAIGHT_FLUSH]
+        if hand_rank <= LookupTable.MAX_FOUR_OF_A_KIND:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_FOUR_OF_A_KIND]
+        if hand_rank <= LookupTable.MAX_FULL_HOUSE:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_FULL_HOUSE]
+        if hand_rank <= LookupTable.MAX_FLUSH:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_FLUSH]
+        if hand_rank <= LookupTable.MAX_STRAIGHT:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_STRAIGHT]
+        if hand_rank <= LookupTable.MAX_THREE_OF_A_KIND:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_THREE_OF_A_KIND]
+        if hand_rank <= LookupTable.MAX_TWO_PAIR:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_TWO_PAIR]
+        if hand_rank <= LookupTable.MAX_PAIR:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_PAIR]
+        if hand_rank <= LookupTable.MAX_HIGH_CARD:
+            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_HIGH_CARD]
+
+        raise ValueError(f"Invalid hand rank {hand_rank}")  # todo handle this ex

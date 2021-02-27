@@ -72,10 +72,10 @@ def listen_for_console_input(server):
     Log.info("Console input listener ready")
     while True:
         if server.selected_table:
-            prompt = f"Table '{server.selected_table}' > "
+            prompt = f"Table {server.selected_table}> "
 
         else:
-            prompt = "Server > "
+            prompt = "Server> "
 
         input_str = input(prompt)
 

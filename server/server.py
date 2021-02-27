@@ -17,7 +17,7 @@ class Server:
         self.tables: List[Table] = []
         self.reset_tables()
         self.tables[0].add_bots(2)
-        for i in range(10000):
+        for i in range(40000):
             self.tables[0].events.put("start")
 
         self.connected_clients: List[ConnectedClient] = []
@@ -28,7 +28,7 @@ class Server:
         self.start_packet_handler()
         self.start_connection_acceptor()
 
-        Log.debug("Server init done")
+        Log.info("Server ready")
 
     def get_default_game(self):
         return self.default_game
@@ -60,10 +60,10 @@ class Server:
 
     def print_tables(self):
         lines = ["Tables"]
-        lines.extend([table for table in self.tables])
+        lines.extend([f"{table}" for table in self.tables])
         Log.info("\n".join(lines))
 
-    def reset_tables(self, n_tables=2):
+    def reset_tables(self, n_tables=1):
         Log.info("Resetting tables")
         self.tables = []  # todo handle removing clients from table
         for _ in range(n_tables):
@@ -78,7 +78,12 @@ class Server:
 
     def accept_connections(self):  # todo handle possible exceptions/interruptions and retry
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_socket.bind(("0.0.0.0", SERVER_PORT))
+        try:
+            server_socket.bind(("0.0.0.0", SERVER_PORT))
+        except OSError as ex:
+            Log.fatal(f"Failed to bind to port {SERVER_PORT}", ex)
+            return
+
         server_socket.listen(SERVER_BACKLOG)
         Log.info(f"Ready on port {SERVER_PORT}")
 

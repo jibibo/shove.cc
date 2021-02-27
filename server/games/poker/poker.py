@@ -2,6 +2,7 @@ from server_util import *
 from base_game import BaseGame
 from player import Player
 from .deuces_custom import Card, Deck, Evaluator
+from .pot import Pot
 
 
 # todo it is supposed to be called holdem
@@ -13,7 +14,7 @@ STREET_TURN = "TURN"
 STREET_RIVER = "RIVER"
 
 
-class NoMoreStreets(Exception):
+class StartShowdown(Exception):
     pass
 
 
@@ -24,35 +25,33 @@ class StreetEnded(Exception):
 class Poker(BaseGame):
     def __init__(self, table):
         super().__init__(table)
-        self.small_blind_amount = 1
 
         self.action_seat: int = 0
-        self.big_blind_amount = 2 * self.small_blind_amount
         self.big_blind_seat = 0
         self.community_cards: List[int] = []
         self.dealer_seat = 0
         self.deck: Deck = Deck()
-        self.highest_bet_this_street = 0
+        self.last_aggressor = None
+        self.last_bet = 0
         self.n_hands_played = 0
         self.players = []
-        self.pot = None  # todo temp, actual pot management and splitting soon
-        # self.pots = {}
+        self.pots: List[Pot] = []
+        self.small_blind_amount = 1
         self.small_blind_seat = 0
         self.street = None
+        self.big_blind_amount = 2 * self.small_blind_amount
 
         self.total_elapsed = 0  # testing purposes
 
-    def do_action(self):
+    def action_on_seat(self):
         action_player = self.get_player_in_seat(self.action_seat)
-        to_call = self.highest_bet_this_street - action_player["bet"]
-        Log.info(f"Action on {action_player}, to call: {to_call}")
+        Log.info(f"Action on {action_player}")
 
         if action_player.is_bot:
-            # todo generate action should just access table.game.X instead, dont pass all data
-            action_player.generate_bot_decision(to_call, self.highest_bet_this_street, self.big_blind_amount)
+            action_player.decide_bot_action(self)
 
-            if action_player["bet"] > self.highest_bet_this_street:
-                self.highest_bet_this_street = action_player["bet"]
+            if action_player["bet"] > self.last_bet:
+                self.last_bet = action_player["bet"]
 
                 for player in self.players:
                     if player == action_player:
@@ -72,54 +71,60 @@ class Poker(BaseGame):
     def add_bets_to_pots(self):
         Log.trace("Adding bets to pots")
 
-        for player in self.players:
-            self.pot += player["bet"]
-            player["bet"] = 0
+        player_bets_remaining = {player: player["bet"] for player in self.players}
 
-        # lowest_bet = 0  # todo broken
-        #
-        # player_bets_remaining = {player: player["bet"] for player in self.players}
-        #
-        # pot_number = 0
-        # while player_bets_remaining:  # there are still bets left to process and add to pot
-        #     players_in_pot = list(player_bets_remaining.keys())
-        #     if len(players_in_pot) == 1:
-        #
-        #         log(f"Returned {player_bets_remaining[player]} excess chips to {player}")
-        #         break
-        #
-        #     pot_number += 1
-        #     self.pots[pot_number] = {"players": [], "size": 0}
-        #
-        #     log(f"Created pot number {pot_number}")
-        #
-        #     for player, bet in player_bets_remaining.items():
-        #         if bet < lowest_bet or not lowest_bet:
-        #             lowest_bet = bet
-        #
-        #     log(f"Lowest bet: {lowest_bet}")
-        #     self.pots[pot_number]["players"] = players_in_pot
-        #     self.pots[pot_number]["size"] = lowest_bet * len(players_in_pot)
-        #     log(f"Pot size: {self.pots[pot_number]['size']}")
-        #
-        #     for player, bet in player_bets_remaining.items():
-        #         player_bets_remaining[player] -= lowest_bet
-        #         if not player_bets_remaining[player]:  # all player's chips have been added to pot
-        #             log(f"Collected all chips of {player}")
-        #             del player_bets_remaining[player]
+        while player_bets_remaining:
+            player_bets_remaining_formatted = {player['username']: bet for player, bet in player_bets_remaining.items()}
+            Log.trace(f"Player bets remaining: {player_bets_remaining_formatted}")
+            players = list(player_bets_remaining.keys())
 
-        Log.info(f"Total pot: {self.pot}")
+            if len(players) == 1:
+                player = players[0]
+                player.return_bet_to_player(player_bets_remaining[player])
+                break
 
-    def deal_community_cards_for_street(self, street, deal_all_streets=False):
-        if deal_all_streets:
-            Log.trace("Dealing all streets (DEBUG ONLY)")
+            pot = None
+            for existing_pot in self.pots:
+                if existing_pot.players == players:
+                    pot = existing_pot
+                    Log.trace(f"Using existing pot {pot}")
+                    break
+
+            if not pot:
+                Log.trace(f"No suitable existing pot found, creating new one")
+                pot = Pot(players, pot_number=len(self.pots))
+                self.pots.append(pot)
+
+            lowest_bet: int = min([bet for bet in player_bets_remaining.values()])
+            if not lowest_bet:
+                Log.trace(f"Nobody has bet this round, continuing")
+                break
+
+            Log.trace(f"Lowest bet: {lowest_bet}")
+
+            for player in list(player_bets_remaining.keys()):
+                if player_bets_remaining[player] == lowest_bet:
+                    Log.trace(f"Added bet chips of {player} to pot")
+                    del player_bets_remaining[player]
+                    continue
+
+                player_bets_remaining[player] -= lowest_bet
+                Log.trace(f"Reduced bet of {player} to {player_bets_remaining[player]}")
+
+            pot.chips += lowest_bet * len(players)
+            Log.trace(f"{pot} now has {pot.chips} chips")
+
+    def deal_community_cards(self, deal_all_streets=False):
+        if deal_all_streets:  # testing only, can easily break the game
+            Log.trace("Dealing all streets")
             for street in [STREET_FLOP, STREET_TURN, STREET_RIVER]:
-                self.deal_community_cards_for_street(street)
+                self.street = street
+                self.deal_community_cards()
 
             Log.trace("Done dealing all streets")
             return
 
-        if street == STREET_FLOP:
+        if self.street == STREET_FLOP:
             n_cards = 3
         else:
             n_cards = 1
@@ -128,36 +133,41 @@ class Poker(BaseGame):
         self.community_cards.extend(drawn_cards)
         # todo send a packet here with only the newly drawn cards, not including all the old ones
 
-        Log.info(f"Dealt community cards: {Card.get_pretty_str(self.community_cards)}")
+        Log.info(f"Community cards: {Card.get_pretty_str(self.community_cards)}")
 
     def deal_player_cards(self):
-        Log.trace("Dealing cards to players")
+        Log.trace("Dealing cards to all players")
 
         for player in self.players:
             drawn_cards = self.deck.draw(2)
             player["cards"] = drawn_cards
             Log.debug(f"Dealt cards to {player}: {Card.get_pretty_str(drawn_cards)}")
 
-        Log.info("Dealt cards to players")
+        Log.trace("Dealt cards to all players")
 
     def get_next_action_seat(self, start_seat, last_action_seat) -> int:
-        """Returns 0 if betting is over"""
+        """Returns next action seat that can have action, 0 if betting round over"""
 
-        Log.debug("Getting next action seat")
+        Log.trace("Getting next action seat")
         seats = self.get_seats()
-        assert start_seat in seats and last_action_seat in seats, "no valid start/last_action seat"
+        assert start_seat in seats and (last_action_seat is None or last_action_seat in seats), "no valid start/last_action seat"
 
         # reorder player list to check in order, starting at player in seat start_seat, excl. last action player
         players_cycled = self.players.copy()
         while players_cycled[0]["seat"] != start_seat:  # should never be an infinite loop
             players_cycled.append(players_cycled.pop(0))
 
+        Log.trace(f"Possible action seats: {[player['seat'] for player in players_cycled]}")
+
         for player in players_cycled:
-            if player["seat"] == last_action_seat:
+            player_seat = player["seat"]
+            Log.trace(f"Evaluating player in seat {player_seat}")
+
+            if player_seat == last_action_seat:
                 Log.trace(f"Skipped {player} for action: last action seat")
                 continue
 
-            if player["manual_bet_matches"] and self.highest_bet_this_street:
+            if player["manual_bet_matches"]:
                 Log.trace(f"Skipped {player} for action: manual bet matches")
                 continue
 
@@ -169,33 +179,11 @@ class Poker(BaseGame):
                 Log.trace(f"Skipped {player} for action: has folded")
                 continue
 
-            player_seat = player["seat"]
-            Log.debug(f"Got next action seat: {player_seat}")
+            Log.debug(f"Got valid next action seat: {player_seat}")
             return player_seat
 
-        Log.debug("Betting is over")
+        Log.debug("Betting round over")
         return 0
-
-    def get_next_street(self):
-        if self.street is None:
-            self.street = STREET_PREFLOP
-
-        elif self.street == STREET_PREFLOP:
-            self.street = STREET_FLOP
-
-        elif self.street == STREET_FLOP:
-            self.street = STREET_TURN
-
-        elif self.street == STREET_TURN:
-            self.street = STREET_RIVER
-
-        elif self.street == STREET_RIVER:
-            raise NoMoreStreets
-
-        if self.street in [STREET_FLOP, STREET_TURN, STREET_RIVER]:
-            self.deal_community_cards_for_street(self.street)
-
-        return self.street
 
     def get_not_folded_players(self):
         return [player for player in self.players if not player["folded"]]
@@ -213,21 +201,38 @@ class Poker(BaseGame):
     def handle_event(self, event):
         pass
 
-    def on_showdown(self):  # todo handle side pots
-        Log.info(f"Showdown started")
+    def post_blinds(self):
+        # assert self.n_taken_seats() >= 2, "need 2 or more players to place blinds"  # safety check
 
-        players = self.get_not_folded_players()
+        Log.debug(f"Posting blinds")
+        small_blind_player = self.get_player_in_seat(self.small_blind_seat)
+        big_blind_player = self.get_player_in_seat(self.big_blind_seat)
 
-        evaluator = Evaluator()
-        winners, best_hand = evaluator.get_winners(self.community_cards, players)
+        small_blind_player.post_blind(self.small_blind_amount)
+        big_blind_player.post_blind(self.big_blind_amount)
 
-        Log.info(f"Pot winners: {winners} with {best_hand}")
+        self.last_bet = 2
+        self.last_aggressor = big_blind_player
 
-        chips_won_fraction = int(self.pot / len(winners))  # todo give last aggressor the chip if uneven
-        for winner in winners:
-            winner.won_chips(chips_won_fraction)
+    @staticmethod
+    def process_pocket_cards_winners(best_hands):
+        """
+        HEADS-UP WITHOUT FOLDING/BETTING ONLY
+        Add data to dataset of what pocket cards have the highest win percentage
+        """
 
-        # tracking what pocket pairs eventually win the most hands
+        players = []
+        winners = []
+        best_rank = 7463
+        for player, rank, _, _ in best_hands:
+            players.append(player)
+
+            if rank < best_rank:
+                winners = [player]
+                best_rank = rank
+            elif rank == best_rank:
+                winners.append(player)
+
         for player in players:
             cards = player["cards"]
             rank_ints = []
@@ -255,30 +260,39 @@ class Poker(BaseGame):
             with open("pocket_cards.json", "r") as f:
                 pocket_cards = json.load(f)
 
-            pocket_cards[cards_formatted]["times_dealt"] += 1
+            pocket_cards[cards_formatted]["dealt"] += 1
             Log.test(f"incremented times dealt of {cards_formatted}")
 
             if player in winners:
-                pocket_cards[cards_formatted]["times_won"] += 1
+                pocket_cards[cards_formatted]["won"] += 1
                 Log.test(f"incremented times won of {cards_formatted}")
 
             with open("pocket_cards.json", "w") as f:
                 json.dump(pocket_cards, f, indent=4)
 
-    def post_blinds(self):
-        # assert self.n_taken_seats() >= 2, "need 2 or more players to place blinds"  # safety check
+    def set_next_street_and_deal(self):
+        if self.street is None:
+            self.street = STREET_PREFLOP
 
-        Log.debug(f"Posting blinds")
-        small_blind_player = self.get_player_in_seat(self.small_blind_seat)
-        big_blind_player = self.get_player_in_seat(self.big_blind_seat)
+        elif self.street == STREET_PREFLOP:
+            self.street = STREET_FLOP
 
-        small_blind_player.post_blind(self.small_blind_amount)
-        big_blind_player.post_blind(self.big_blind_amount)
+        elif self.street == STREET_FLOP:
+            self.street = STREET_TURN
 
-        self.highest_bet_this_street = 2
+        elif self.street == STREET_TURN:
+            self.street = STREET_RIVER
 
-    def reset_pot(self):  # todo reset pot manager
-        self.pot = 0
+        elif self.street == STREET_RIVER:
+            raise StartShowdown
+
+        else:
+            raise AssertionError("current street is invalid")
+
+        Log.info(f"Street started: {self.street}")
+
+        if self.street in [STREET_FLOP, STREET_TURN, STREET_RIVER]:
+            self.deal_community_cards()
 
     def start(self):  # todo is only called once (as soon as enough players at table)
         self.players = sorted([player for player in self.table.seats_players.values()
@@ -305,32 +319,62 @@ class Poker(BaseGame):
             player.new_hand_starting()
 
         self.street = None
+        self.pots = [Pot(self.players)]
         self.community_cards = []
         self.deck = Deck()
         self.deck.shuffle()
-        self.reset_pot()
         self.update_dealer_blind_action_seats()
         self.post_blinds()
         self.deal_player_cards()
-        street = self.get_next_street()  # sets to PREFLOP if necessary
-        Log.info(f"Betting started: {street}")
 
-        seats = self.get_seats()
-        while self.action_seat:
-            self.do_action()
+        while True:
+            try:
+                self.set_next_street_and_deal()  # sets to PREFLOP if necessary
+            except StartShowdown:
+                Log.trace("Caught StartShowdown, starting showdown")
+                self.start_showdown()
+                break
 
-            # start looking for next action-eligible player at seat after the seat who just had action
-            start_seat = seats[(seats.index(self.action_seat) + 1) % len(seats)]
-            self.action_seat = self.get_next_action_seat(start_seat, self.action_seat)
+            seats = self.get_seats()
+            if self.street != STREET_PREFLOP:
+                # once the next street starts, all players can bet again
+                self.last_bet = 0
+                self.last_aggressor = None
+                Log.trace("Setting player's bet matches to False")
+                for player in self.players:
+                    player["manual_bet_matches"] = False
+                    player["bet"] = 0
 
-        self.add_bets_to_pots()
-        self.deal_community_cards_for_street(STREET_FLOP, deal_all_streets=True)
-        self.on_showdown()
+                start_seat = seats[(seats.index(self.dealer_seat) + 1) % len(seats)]
+                self.action_seat = self.get_next_action_seat(start_seat, None)
+
+            while self.action_seat:
+                self.action_on_seat()
+
+                # start looking for next action-eligible player at seat after the seat who just had action
+                start_seat = seats[(seats.index(self.action_seat) + 1) % len(seats)]
+                self.action_seat = self.get_next_action_seat(start_seat, self.action_seat)
+
+            self.add_bets_to_pots()
+
         elapsed_time = time.time() - start_time
-        Log.info(f"Hand finished in {elapsed_time}!")
+        Log.test(f"Hand finished in {round(elapsed_time * 1000)}ms")
         self.total_elapsed += elapsed_time
-        Log.test(f"Hands: {self.n_hands_played}, average time: {round(self.total_elapsed / self.n_hands_played * 1000)}ms")
+        Log.test(f"Hands played: {self.n_hands_played}, average time: {round(self.total_elapsed / self.n_hands_played * 1000)}ms")
+
         self.running = False
+
+    def start_showdown(self):  # todo handle side pots
+        Log.info(f"Showdown started!")
+
+        players = self.get_not_folded_players()
+
+        best_hands = Evaluator.get_best_hands(self.community_cards, players)  # [(player, %, hand)]
+
+        for pot in self.pots:
+            pot.distribute_chips(best_hands)
+
+        Poker.process_pocket_cards_winners(best_hands)
 
     def update_dealer_blind_action_seats(self):
         # if self.n_taken_seats() < 2:  # safety check

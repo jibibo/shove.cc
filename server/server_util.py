@@ -34,9 +34,9 @@ class StopServer(Exception):
 
 
 class Log:  # todo writing to file
-    LEVEL_TRACE = 0, "TRACE", Fore.WHITE
+    LEVEL_TRACE = 0, "TRACE", ""
     LEVEL_DEBUG = 1, "DEBUG", Fore.CYAN
-    LEVEL_INFO = 2, "INFO", Fore.GREEN
+    LEVEL_INFO = 2, "INFO", Fore.GREEN + Style.BRIGHT
     LEVEL_WARN = 3, "WARN", Fore.YELLOW
     LEVEL_ERROR = 4, "ERROR", Fore.RED
     LEVEL_FATAL = 5, "FATAL", Fore.RED + Style.BRIGHT
@@ -81,7 +81,7 @@ class Log:  # todo writing to file
         now_str = datetime.now().strftime("%H:%M:%S")
 
         Log.PRINT_LOCK.acquire()
-        print(f"[{now_str}]{level[2]}[S/{level[1]:<5}]{Style.RESET_ALL}[{thread_name}] {message}")
+        print(f"[{now_str}]{level[2]}[SERVER/{level[1]:<5}]{Style.RESET_ALL}[{thread_name}] {message}")
 
         if exception:
             print(f"{Log.LEVEL_FATAL[2]}", end="")

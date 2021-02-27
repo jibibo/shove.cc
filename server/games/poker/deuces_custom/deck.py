@@ -14,7 +14,7 @@ class Deck:
         random.shuffle(self.cards)
         Log.trace("Deck shuffled")
 
-    def draw(self, n_cards=1) -> List[Card]:  # exhaustive
+    def draw(self, n_cards=1) -> List[int]:  # exhaustive
         assert n_cards >= 1, "n_cards must be >= 1"
 
         cards_left = n_cards
@@ -23,7 +23,7 @@ class Deck:
             drawn_cards.append(self.cards.pop())
             cards_left -= 1
 
-        Log.trace(f"Drawn {n_cards} card(s): {Card.get_pretty_str(drawn_cards)}")
+        Log.trace(f"Drawn {n_cards} card(s) from deck: {Card.get_pretty_str(drawn_cards)}")
         return drawn_cards
 
     def __str__(self):
