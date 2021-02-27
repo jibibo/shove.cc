@@ -12,11 +12,11 @@ class Server:
         log("Server init...")
 
         self.default_game = Poker
+        self.next_bot_number = 1
         self.tables: List[Table] = []
         self.reset_tables()
-        self.tables[0].add_bots(2)
+        self.tables[0].add_bots(3)
 
-        self.socket: socket.socket = None
         self.connected_clients: List[ConnectedClient] = []
         self.received_client_packets = Queue()  # (ConnectedClient, packet)
         self.outgoing_client_packets = Queue()  # (ConnectedClient, packet)
@@ -26,6 +26,11 @@ class Server:
         self.start_connection_acceptor()
 
         log("Server init done")
+
+    def get_next_bot_number(self) -> int:
+        old = self.next_bot_number
+        self.next_bot_number += 1
+        return old
 
     @staticmethod
     def get_player(username) -> dict:  # todo messy exceptions
@@ -54,16 +59,16 @@ class Server:
             self.outgoing_client_packets.put((connection, packet))
 
     def start_connection_acceptor(self):
-        threading.Thread(target=self.accept_connections, name="ConnectionAcceptor", daemon=True).start()
+        threading.Thread(target=self.accept_connections, name="ConAc", daemon=True).start()
 
-    def accept_connections(self):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.socket.bind((SERVER_HOST, SERVER_PORT))
-        self.socket.listen(SERVER_BACKLOG)
-        log(f"Ready on {SERVER_HOST}:{SERVER_PORT}", LOG_INFO)
+    def accept_connections(self):  # todo handle possible exceptions/interruptions and retry
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind(("0.0.0.0", SERVER_PORT))
+        server_socket.listen(SERVER_BACKLOG)
+        log(f"Ready on port {SERVER_PORT}", LOG_INFO)
 
         while True:
-            connection, address = self.socket.accept()
+            connection, address = server_socket.accept()
             connected_client = ConnectedClient(self, connection, address)
             self.connected_clients.append(connected_client)
 

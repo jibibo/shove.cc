@@ -6,7 +6,7 @@ class PacketHandler(threading.Thread):
     def __init__(self, server):
         self.server = server
         self.packets_handled = 0
-        super().__init__(name=f"PacketHandler", daemon=True)
+        super().__init__(name=f"PackHand", daemon=True)
 
     def run(self):
         log("Ready")

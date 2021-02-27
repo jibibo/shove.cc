@@ -37,13 +37,14 @@ LOG_ERROR = 3, "ERROR"
 LOGGING_LEVEL = LOG_DEBUG
 HEADER_SIZE = 10
 SERVER_BACKLOG = 5
-SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 12345
 
 PRINT_LOCK = threading.Semaphore(value=1)  # how does this work
 
 
-def log(message, level=LOG_DEBUG, exception: BaseException=None):
+# todo https://www.tutorialspoint.com/log4j/log4j_logging_levels.htm add more levels, default TRACE
+# add methods for simplicity: error_log, warn_log, info_log, trace_log etc
+def log(message, level=LOG_DEBUG, exception: BaseException = None):
     if level[0] < LOGGING_LEVEL[0]:  # not high enough log level
         return
 
@@ -52,7 +53,7 @@ def log(message, level=LOG_DEBUG, exception: BaseException=None):
     PRINT_LOCK.acquire()
 
     now_str = datetime.now().strftime("%H:%M:%S")
-    print(f"[{now_str}][{level[1]:<5}][Server/{thread_name}] {message}")
+    print(f"[{now_str}][{level[1]:<5}][S/{thread_name}] {message}")
 
     if exception:
         traceback.print_exception(type(exception), exception, exception.__traceback__)

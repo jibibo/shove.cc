@@ -8,7 +8,7 @@ class DeleteTable(BaseException):
 class TableHandler(threading.Thread):
     def __init__(self, table):
         self.table = table
-        super().__init__(name=f"TableHandler/{table.name}", daemon=True)
+        super().__init__(name=f"TabHand/{table.name}", daemon=True)
 
     def run(self):
         log("Ready")

@@ -25,7 +25,7 @@ class Table:
         return f"'{self.name}' with {self.n_taken_seats()}/{self.n_total_seats()} players"
 
     def add_bot(self, seat=None) -> int:
-        bot_player = Player(is_bot=True)
+        bot_player = Player(bot_number=self.server.get_next_bot_number())
         seat = self.add_player(bot_player, seat)
         return seat
 

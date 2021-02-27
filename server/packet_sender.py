@@ -4,7 +4,7 @@ from server_util import *
 class PacketSender(threading.Thread):
     def __init__(self, server):
         self.server = server
-        super().__init__(name="PacketSender", daemon=True)
+        super().__init__(name="PackSend", daemon=True)
 
     def run(self):
         log("Ready")

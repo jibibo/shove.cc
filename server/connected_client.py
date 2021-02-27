@@ -11,7 +11,7 @@ class ConnectedClient:
             "model": "connected"
         })
         log(f"{self.address[0]}:{self.address[1]} connected")
-        threading.Thread(target=self.listen, name=f"ClientListener/{self.address[0]}:{self.address[1]}", daemon=True)
+        threading.Thread(target=self.listen, name=f"CliList/{self.address[0]}:{self.address[1]}", daemon=True)
 
     def listen(self):
         log("Listener ready")
