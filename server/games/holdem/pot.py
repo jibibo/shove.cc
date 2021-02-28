@@ -17,7 +17,7 @@ class Pot:
     def __str__(self):
         return f"'{self.pot_name}'"
 
-    def distribute_chips(self, best_hands):
+    def distribute_chips_to_best_hands(self, best_hands):
         pot_winners = []
         best_rank = 7463
         best_percentile = 1
@@ -35,11 +35,14 @@ class Pot:
             elif rank == best_rank:
                 pot_winners.append(player)
 
-        chips_per_winner = int(self.chips / len(pot_winners))  # todo odd chip goes to last aggressor
-        for winner in pot_winners:
-            winner.won_chips(chips_per_winner, best_hand, best_percentile)
+        self.give_chips_to_pot_winners(pot_winners)
 
-        Log.trace(f"Given {self.pot_name} winnings to {[winner['username'] for winner in pot_winners]} ({chips_per_winner} chips/winner)")
+    def give_chips_to_pot_winners(self, winners):
+        chips_per_winner = int(self.chips / len(winners))  # todo odd chip goes to last aggressor
+        for winner in winners:
+            winner.won_chips(chips_per_winner)
+
+        Log.trace(f"Given {self.pot_name} winnings to {[winner['username'] for winner in winners]} ({chips_per_winner} chips/winner)")
 
     def remove_folded_player(self, player):
         if player in self.participants:

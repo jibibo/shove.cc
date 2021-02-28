@@ -156,7 +156,7 @@ class LookupTable:
         Pair, Two Pair, Three of a Kind, Full House, and 4 of a Kind.
         """
 
-        backwards_ranks = Card.INT_RANKS_REVERSED
+        backwards_ranks = Card.RANKS_INTS_REVERSED
 
         # 1) Four of a Kind
         rank = LookupTable.MAX_STRAIGHT_FLUSH + 1

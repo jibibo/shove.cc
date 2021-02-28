@@ -1,4 +1,4 @@
-class Card:  # todo can easily be made OOP
+class Card:
     """
     Static class that handles cards. We represent cards as 32-bit integers, so
     there is no object instantiation - they are just ints. Most of the bits are
@@ -20,21 +20,22 @@ class Card:  # todo can easily be made OOP
     and is also quite performant.
     """
 
-    STR_RANKS = list("23456789TJQKA")
-    INT_RANKS = list(range(13))
-    INT_RANKS_REVERSED = INT_RANKS
-    INT_RANKS_REVERSED.reverse()
     PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41]
 
-    CHAR_RANK_TO_INT_RANK = dict(zip(STR_RANKS, INT_RANKS))
-    CHAR_SUIT_TO_INT_SUIT = {
-        "s": 1,
-        "h": 2,
-        "d": 4,
-        "c": 8
+    RANKS_INT_TO_RANK_CHAR = "23456789TJQKA"
+    RANKS_INTS = list(range(13))
+    RANK_CHAR_TO_RANK_INT = dict(zip(RANKS_INT_TO_RANK_CHAR, RANKS_INTS))
+    RANKS_INTS_REVERSED = RANKS_INTS
+    RANKS_INTS_REVERSED.reverse()
+
+    SUIT_INT_TO_SUIT_CHAR = {
+        1: "s",
+        2: "h",
+        4: "d",
+        8: "c"
     }
-    INT_SUIT_TO_CHAR_SUIT = list("xshxdxxxc")
-    PRETTY_SUITS = {
+    SUIT_CHAR_TO_SUIT_INT = {v: k for k, v in SUIT_INT_TO_SUIT_CHAR.items()}
+    SUIT_INT_TO_PRETTY_SUIT_CHAR = {
         1: chr(9824),  # spades
         2: chr(9829),  # hearts
         4: chr(9830),  # diamonds
@@ -58,19 +59,19 @@ class Card:  # todo can easily be made OOP
         return (card_int >> 12) & 0b1111
 
     @staticmethod
-    def hand_to_bin(card_str_list):
+    def str_list_to_int_list(card_str_list):
         """
         Expects a list of cards as strings and returns a list
         of integers of same length corresponding to those strings.
         """
 
-        card_bin_list = []
+        int_list = []
         for card_str in card_str_list:
-            card_bin_list.append(Card.new(card_str))
-        return card_bin_list
+            int_list.append(Card.from_str(card_str))
+        return int_list
 
     @staticmethod
-    def int_to_bin(card_int):
+    def int_to_bin_str(card_int):
         """
         For debugging purposes. Displays the binary number as a
         human readable string in groups of four digits.
@@ -80,7 +81,7 @@ class Card:  # todo can easily be made OOP
         output = list("\t".join(["0000"] * 8))
 
         for i in range(len(bin_str)):
-            output[i + int(i / 4)] = bin_str[i]  # todo what
+            output[i + int(i / 4)] = bin_str[i]  # what
 
         # output the string to console
         output.reverse()
@@ -97,19 +98,22 @@ class Card:  # todo can easily be made OOP
         rank_int = Card.get_rank_int(card_int)
 
         # if we need to color red
-        s = Card.PRETTY_SUITS[suit_int]
-        r = Card.STR_RANKS[rank_int]
+        s = Card.SUIT_INT_TO_PRETTY_SUIT_CHAR[suit_int]
+        r = Card.RANKS_INT_TO_RANK_CHAR[rank_int]
 
         return f"[{r}{s}]"
 
     @staticmethod
     def int_to_str(card_int):
+        """
+        Get regular string of a single card
+        """
         rank_int = Card.get_rank_int(card_int)
         suit_int = Card.get_suit_int(card_int)
-        return Card.STR_RANKS[rank_int] + Card.INT_SUIT_TO_CHAR_SUIT[suit_int]
+        return Card.RANKS_INT_TO_RANK_CHAR[rank_int] + Card.SUIT_INT_TO_SUIT_CHAR[suit_int]
 
     @staticmethod
-    def new(card_str):
+    def from_str(card_str):
         """
         Converts Card string to binary integer representation of card, inspired by:
 
@@ -119,8 +123,8 @@ class Card:  # todo can easily be made OOP
         # example: As
         rank_char = card_str[0]  # = A
         suit_char = card_str[1]  # = s
-        rank_int = Card.CHAR_RANK_TO_INT_RANK[rank_char]  # = 12 = 0b1100
-        suit_int = Card.CHAR_SUIT_TO_INT_SUIT[suit_char]  # = 1 = 0b0001
+        rank_int = Card.RANK_CHAR_TO_RANK_INT[rank_char]  # = 12 = 0b1100
+        suit_int = Card.SUIT_CHAR_TO_SUIT_INT[suit_char]  # = 1 = 0b0001
         rank_prime = Card.PRIMES[rank_int]  # = 41 = 0b00101001
 
         bitrank = 1 << rank_int << 16
@@ -169,7 +173,7 @@ class Card:  # todo can easily be made OOP
         """
 
         product = 1
-        for i in Card.INT_RANKS:
+        for i in Card.RANKS_INTS:
             # if the ith bit is set
             if rankbits & (1 << i):
                 product *= Card.PRIMES[i]

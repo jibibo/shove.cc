@@ -17,7 +17,7 @@ class Server:
         self.tables: List[Table] = []
         self.reset_tables()
         self.tables[0].add_bots(4)
-        for i in range(1):
+        for i in range(20):
             self.tables[0].events.put("start")
 
         self.connected_clients: List[ConnectedClient] = []

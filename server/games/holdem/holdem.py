@@ -69,7 +69,7 @@ class Holdem(BaseGame):
                     self.table.server.outgoing_packets.put((connection, {
                         "model": "action",
                         "street": self.street,
-                        "participating_players": self.players
+                        "players": self.players
                     }))
 
     def add_bets_to_pots(self):
@@ -127,37 +127,6 @@ class Holdem(BaseGame):
             pot.chips += lowest_bet * len(players_remaining)
             Log.trace(f"{pot} now has {pot.chips} chips")
 
-    def deal_community_cards(self, deal_all_streets=False):
-        if deal_all_streets:  # testing only, can easily break the game
-            Log.trace("Dealing all streets")
-            for street in [STREET_FLOP, STREET_TURN, STREET_RIVER]:
-                self.street = street
-                self.deal_community_cards()
-
-            Log.trace("Done dealing all streets")
-            return
-
-        if self.street == STREET_FLOP:
-            n_cards = 3
-        else:
-            n_cards = 1
-
-        drawn_cards = self.deck.draw(n_cards)
-        self.community_cards.extend(drawn_cards)
-        # todo send a packet here with only the newly drawn cards, not including all the old ones
-
-        Log.info(f"Community cards: {Card.get_pretty_str(self.community_cards)}")
-
-    def deal_player_cards(self):
-        Log.trace("Dealing cards to all participating_players")
-
-        for player in self.players:
-            drawn_cards = self.deck.draw(2)
-            player["cards"] = drawn_cards
-            Log.debug(f"Dealt cards to {player}: {Card.get_pretty_str(drawn_cards)}")
-
-        Log.info("Dealt cards to all participating_players")
-
     def get_next_action_seat(self, start_seat, last_action_seat) -> int:
         """Returns next action seat that can have action, 0 if betting round over"""
 
@@ -213,7 +182,7 @@ class Holdem(BaseGame):
         pass
 
     def post_blinds(self):
-        # assert self.n_taken_seats() >= 2, "need 2 or more participating_players to place blinds"  # safety check
+        # assert self.n_taken_seats() >= 2, "need 2 or more players to place blinds"  # safety check
 
         Log.debug(f"Posting blinds")
         small_blind_player = self.get_player_in_seat(self.small_blind_seat)
@@ -268,7 +237,7 @@ class Holdem(BaseGame):
                 else:
                     suffix = "o"
 
-            cards_formatted = f"{Card.STR_RANKS[rank_ints[0]]}{Card.STR_RANKS[rank_ints[1]]}{suffix}"
+            cards_formatted = f"{Card.RANKS_STR[rank_ints[0]]}{Card.RANKS_STR[rank_ints[1]]}{suffix}"
 
             with open("pocket_cards.json", "r") as f:
                 pocket_cards = json.load(f)
@@ -305,16 +274,22 @@ class Holdem(BaseGame):
         Log.info(f"Street started: {self.street}")
 
         if self.street in [STREET_FLOP, STREET_TURN, STREET_RIVER]:
-            self.deal_community_cards()
+            if self.street == STREET_FLOP:
+                n_cards = 3
+            else:
+                n_cards = 1
 
-    def start(self):  # todo is only called once (as soon as enough participating_players at table)
+            self.community_cards.extend(self.deck.draw(n_cards))
+            Log.info(f"Community cards: {Card.get_pretty_str(self.community_cards)}")
+
+    def start(self):  # todo is only called once (as soon as enough players at table)
         self.players = sorted([player for player in self.table.seats_players.values()
                                if player is not None and
                                player["chips"] > 0],
                               key=lambda p: p["seat"], reverse=False)
 
         if len(self.players) < 2:
-            Log.warn("Not enough participating_players with chips to start")
+            Log.warn("Not enough players with chips to start")
             return
 
         self.running = True
@@ -338,11 +313,11 @@ class Holdem(BaseGame):
         self.deck.shuffle()
         self.update_dealer_blind_buttons()
         self.post_blinds()
-        self.deal_player_cards()
+        self.deck.deal_players(self.players)
 
         while True:
             try:
-                self.set_next_street_and_deal()  # sets to PREFLOP if necessary
+                self.set_next_street_and_deal()  # todo if all players but one folded/all in just skip to showdown
             except StartShowdown:
                 Log.trace("Caught StartShowdown, starting showdown")
                 self.start_showdown()
@@ -350,13 +325,13 @@ class Holdem(BaseGame):
 
             seats = self.get_seats()
             if self.street != STREET_PREFLOP:
-                # once the next street starts, all participating_players can bet again
+                # once the next street starts, all players can bet again
                 self.last_bet = 0
                 self.last_aggressor = None
                 for player in self.players:
                     player.next_street_started()
 
-                Log.trace("All participating_players called .new_street_starting()")
+                Log.trace("All players called .new_street_starting()")
 
                 start_seat = seats[(seats.index(self.dealer_seat) + 1) % len(seats)]
                 self.action_seat = self.get_next_action_seat(start_seat, None)
@@ -386,16 +361,16 @@ class Holdem(BaseGame):
         best_hands = Evaluator.get_best_hands(self.community_cards, self.get_not_folded_players())
 
         for pot in self.pots:
-            pot.distribute_chips(best_hands)
+            pot.distribute_chips_to_best_hands(best_hands)
 
         # Holdem.process_pocket_cards_winners(best_hands)
 
     def update_dealer_blind_buttons(self):
         # if self.n_taken_seats() < 2:  # safety check
-        #     log(f"Ignoring update dealer/blinds call with < 2 participating_players", LEVEL_ERROR)
+        #     log(f"Ignoring update dealer/blinds call with < 2 players", LEVEL_ERROR)
         #     return
 
-        # todo participating_players new to table always pay big blind
+        # todo players new to table always pay big blind
 
         Log.debug(f"Updating dealer and blind buttons")
         seats = self.get_seats()

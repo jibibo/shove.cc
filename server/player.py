@@ -153,6 +153,6 @@ class Player:
             self["all_in"] = False
             Log.info(f"{self} is no longer all-in")
 
-    def won_chips(self, amount, hand, percentile):
+    def won_chips(self, amount):
         self["chips"] += amount
-        Log.info(f"{self} won {amount} chips with {hand} (top {round(percentile * 100, 2)}%). Stack: {self['chips']} chips")
+        Log.info(f"{self} won {amount} chips, tack: {self['chips']} chips")
