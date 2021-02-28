@@ -89,7 +89,7 @@ class Card:  # todo can easily be made OOP
     @staticmethod
     def int_to_pretty_str(card_int):
         """
-        Prints a single card
+        Get pretty string of a single card
         """
 
         # suit and rank
@@ -177,25 +177,11 @@ class Card:  # todo can easily be made OOP
         return product
 
     @staticmethod
-    def print_pretty_card(card_int):  # todo should be removed
+    def get_pretty_str(card_int_list) -> str:
         """
-        Expects a single integer as input
+        Gives a human readable list of cards
+        :param card_int_list: list of card ints
+        :return: str: readable list of cards in string form
         """
-
-        print(Card.int_to_pretty_str(card_int))
-
-    @staticmethod
-    def get_pretty_str(card_int_list):  # todo should be removed
-        """
-        Expects a list of cards in integer form.
-        """
-
-        # output = " "
-        # for i in range(len(card_int_list)):
-        #     c = card_int_list[i]
-        #     if i != len(card_int_list) - 1:
-        #         output += Card.int_to_pretty_str(c) + ","
-        #     else:
-        #         output += Card.int_to_pretty_str(c) + " "
 
         return " ".join([Card.int_to_pretty_str(card_int) for card_int in card_int_list])

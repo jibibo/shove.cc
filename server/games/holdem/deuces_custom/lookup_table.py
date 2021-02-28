@@ -1,4 +1,5 @@
 from server_util import *
+
 from .card import Card
 
 
@@ -34,7 +35,7 @@ class LookupTable:
     MAX_PAIR = 6185
     MAX_HIGH_CARD = 7462
 
-    MAX_RANK_TO_STRING = {
+    MAX_RANK_TO_NAME = {
         MAX_ROYAL_FLUSH: "Royal Flush",
         MAX_STRAIGHT_FLUSH: "Straight Flush",
         MAX_FOUR_OF_A_KIND: "Four of a Kind",
@@ -111,7 +112,7 @@ class LookupTable:
 
         # now add to the lookup map:
         # start with straight flushes and the rank of 1
-        # since it is the best hand in poker
+        # since it is the best hand in holdem
         # rank 1 = Royal Flush!
         rank = 1
         for sf in straight_flushes:
@@ -228,7 +229,7 @@ class LookupTable:
         """
         Bit hack from here:
         # http://www-graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
-        Generator even does this in poker order rank
+        Generator even does this in holdem order rank
         so no need to sort when done! Perfect.
         """
 
@@ -251,30 +252,30 @@ class LookupTable:
         return hand_rank / LookupTable.MAX_HIGH_CARD
 
     @staticmethod
-    def rank_to_string(hand_rank) -> str:
+    def rank_to_name(hand_rank) -> str:
         """
         Gets the readable string correlated with the hand rank
         """
 
         if hand_rank == 1:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_ROYAL_FLUSH]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_ROYAL_FLUSH]
         if hand_rank <= LookupTable.MAX_STRAIGHT_FLUSH:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_STRAIGHT_FLUSH]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_STRAIGHT_FLUSH]
         if hand_rank <= LookupTable.MAX_FOUR_OF_A_KIND:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_FOUR_OF_A_KIND]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_FOUR_OF_A_KIND]
         if hand_rank <= LookupTable.MAX_FULL_HOUSE:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_FULL_HOUSE]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_FULL_HOUSE]
         if hand_rank <= LookupTable.MAX_FLUSH:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_FLUSH]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_FLUSH]
         if hand_rank <= LookupTable.MAX_STRAIGHT:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_STRAIGHT]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_STRAIGHT]
         if hand_rank <= LookupTable.MAX_THREE_OF_A_KIND:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_THREE_OF_A_KIND]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_THREE_OF_A_KIND]
         if hand_rank <= LookupTable.MAX_TWO_PAIR:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_TWO_PAIR]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_TWO_PAIR]
         if hand_rank <= LookupTable.MAX_PAIR:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_PAIR]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_PAIR]
         if hand_rank <= LookupTable.MAX_HIGH_CARD:
-            return LookupTable.MAX_RANK_TO_STRING[LookupTable.MAX_HIGH_CARD]
+            return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_HIGH_CARD]
 
         raise ValueError(f"Invalid hand rank {hand_rank}")  # todo handle this ex

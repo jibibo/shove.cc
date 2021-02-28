@@ -120,7 +120,7 @@ class Table:
 
     def put_player_in_seat(self, player: Player, seat: int):
         player["seat"] = seat
-        self.seats_players[seat] = player  # todo should just be a list of players
+        self.seats_players[seat] = player  # todo should just be a list of participating_players
         Log.info(f"Put player {player} in seat {seat}")
 
     def send_player(self, target_player: dict, packet):

@@ -43,7 +43,7 @@ def handle_console_input(server, input_str):
         Log.error("todo")
         return False
 
-    if input_split[0] in ["players"]:
+    if input_split[0] in ["participating_players"]:
         players = []
         n_bots = 0
 
@@ -88,7 +88,7 @@ def listen_for_console_input(server):
             Log.trace("StopServer was caught")
             break
 
-    Log.debug("Console input listener stopped")
+    Log.trace("Console input listener stopped")
 
 
 def main():
@@ -102,7 +102,7 @@ def main():
     except Exception as ex:
         Log.fatal(f"UNHANDLED {type(ex).__name__} on main()", ex)
 
-    Log.debug("Stopped main thread")
+    Log.trace("Stopped main thread")
 
 
 if __name__ == "__main__":

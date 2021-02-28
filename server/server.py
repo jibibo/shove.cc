@@ -1,23 +1,23 @@
 from server_util import *
 
+from connected_client import ConnectedClient
 from packet_handler_thread import PacketHandlerThread
 from packet_sender_thread import PacketSenderThread
 from table import Table
-from games.poker.poker import Poker
-from connected_client import ConnectedClient
+from games.holdem import Holdem
 
 
 class Server:
     def __init__(self):
-        Log.debug("Server init start")
+        Log.debug("Setting up server")
 
-        self.default_game = Poker
+        self.default_game = Holdem
         self.selected_table = None
         self.next_bot_number = 1
         self.tables: List[Table] = []
         self.reset_tables()
-        self.tables[0].add_bots(2)
-        for i in range(40000):
+        self.tables[0].add_bots(4)
+        for i in range(1):
             self.tables[0].events.put("start")
 
         self.connected_clients: List[ConnectedClient] = []

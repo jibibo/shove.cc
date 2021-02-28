@@ -28,7 +28,10 @@ class TableHandlerThread(threading.Thread):
     def handle_event(self, event: str):
         Log.trace(f"Handling event: {event}")
 
-        if event in ["player_added", "start"]:
+        if event in ["player_added"]:
+            return
+
+        if event in ["start"]:
             self.table.try_to_start_game()
             return
 

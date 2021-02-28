@@ -1,4 +1,5 @@
 from server_util import *
+
 from .card import Card
 from .lookup_table import LookupTable
 
@@ -82,10 +83,10 @@ class Evaluator:
     @staticmethod
     def get_best_hands(board, players) -> List[tuple]:  # todo cleanup
         """
-        Returns [(player, rank, percentile, hand)] based on each given player's hand rank
+        Returns [(player, rank, percentile, name)] based on each given player's hand's rank
         """
 
-        Log.trace("Evaluating best hands")
+        Log.trace(f"Evaluating best hands, board: {Card.get_pretty_str(board)}")
 
         assert len(board) == 5, f"Invalid board length ({len(board)})"
 
@@ -94,16 +95,14 @@ class Evaluator:
 
         best_hands = []
         for player in players:
-            rank = Evaluator.evaluate(player["cards"], board)
-            if rank > 1:
-                class_string = LookupTable.rank_to_string(rank)  # self.class_to_string(self.get_rank_class(rank))
-            else:
-                class_string = "Royal Flush"
+            player_cards = player["cards"]
+            rank = Evaluator.evaluate(player_cards, board)
+            rank_name = LookupTable.rank_to_name(rank)
 
             percentile = LookupTable.rank_to_percentile(rank)
             # todo only make the aggressors cards public, all others get mucked
-            Log.trace(f"{player} has a {class_string}, rank {rank}")
-            best_hands.append((player, rank, percentile, class_string))
+            Log.trace(f"{player} ({Card.get_pretty_str(player_cards)}) has a {rank_name}, rank {rank}")
+            best_hands.append((player, rank, percentile, rank_name))
 
         Log.trace(f"Done evaluating best hands: {best_hands}")
         return best_hands
