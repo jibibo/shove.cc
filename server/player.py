@@ -138,7 +138,7 @@ class Player:
         self.action(ACTION_BLIND, blind_amount)
 
     def return_excess_chips(self, excess_chips):
-        assert excess_chips > 0, "no chip amount given"
+        assert excess_chips > 0, "no excess chips amount given"
 
         self["chips"] += excess_chips
         self["bet"] -= excess_chips
