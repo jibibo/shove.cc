@@ -1,4 +1,3 @@
-import itertools
 from server_util import *
 from .card import Card
 from .lookup_table import LookupTable
