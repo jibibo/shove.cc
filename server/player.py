@@ -79,7 +79,7 @@ class Player:
 
         if requested_place_chips > self["chips"]:
             place_chips = self["chips"]
-            Log.warn(f"Reduced requested amount that exceeded player's chip count ({requested_place_chips})")
+            Log.warn(f"Reduced requested amount that exceeded player's chip count ({requested_place_chips} -> {place_chips})")
         else:
             place_chips = requested_place_chips
 
@@ -153,6 +153,6 @@ class Player:
             self["all_in"] = False
             Log.info(f"{self} is no longer all-in")
 
-    def won_chips(self, amount):
+    def won_chips(self, amount, name, rank, percentile):
         self["chips"] += amount
-        Log.info(f"{self} won {amount} chips, tack: {self['chips']} chips")
+        Log.info(f"{self} won {amount} chips with a {name} (top {round(percentile * 100, 2)}%, rank {rank})")

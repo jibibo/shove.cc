@@ -83,7 +83,7 @@ class Evaluator:
     @staticmethod
     def get_best_hands(board, players) -> List[tuple]:  # todo cleanup
         """
-        Returns [(player, rank, percentile, name)] based on each given player's hand's rank
+        Returns [(player, name, rank, percentile)] based on each given player's hand's rank
         """
 
         Log.trace(f"Evaluating best hands, board: {Card.get_pretty_str(board)}")
@@ -97,12 +97,11 @@ class Evaluator:
         for player in players:
             player_cards = player["cards"]
             rank = Evaluator.evaluate(player_cards, board)
-            rank_name = LookupTable.rank_to_name(rank)
-
+            name = LookupTable.rank_to_name(rank)
             percentile = LookupTable.rank_to_percentile(rank)
             # todo only make the aggressors cards public, all others get mucked
-            Log.trace(f"{player} ({Card.get_pretty_str(player_cards)}) has a {rank_name}, rank {rank}")
-            best_hands.append((player, rank, percentile, rank_name))
+            Log.trace(f"{player} ({Card.get_pretty_str(player_cards)}) has a {name}, rank {rank}")
+            best_hands.append((player, name, rank, percentile))
 
         Log.trace(f"Done evaluating best hands: {best_hands}")
         return best_hands

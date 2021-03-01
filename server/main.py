@@ -94,7 +94,7 @@ def listen_for_console_input(server):
 def main():
     try:
         threading.current_thread().setName("Main")
-
+        Log.start_log_writing_thread()
         server = Server()
 
         listen_for_console_input(server)

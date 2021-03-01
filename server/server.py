@@ -24,9 +24,9 @@ class Server:
         self.received_client_packets = Queue()  # (ConnectedClient, packet)
         self.outgoing_client_packets = Queue()  # (ConnectedClient, packet)
 
-        self.start_packet_sender()
-        self.start_packet_handler()
-        self.start_connection_acceptor()
+        PacketHandlerThread(self).start()
+        PacketSenderThread(self).start()
+        threading.Thread(target=self.accept_connections, name="ConnectionAcceptor", daemon=True).start()
 
         Log.info("Server ready")
 
@@ -73,9 +73,6 @@ class Server:
         for connection in connections:
             self.outgoing_client_packets.put((connection, packet))
 
-    def start_connection_acceptor(self):
-        threading.Thread(target=self.accept_connections, name="ConnectionAcceptor", daemon=True).start()
-
     def accept_connections(self):  # todo handle possible exceptions/interruptions and retry
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
@@ -91,9 +88,3 @@ class Server:
             connection, address = server_socket.accept()
             connected_client = ConnectedClient(self, connection, address)
             self.connected_clients.append(connected_client)
-
-    def start_packet_handler(self):
-        PacketHandlerThread(self).start()
-
-    def start_packet_sender(self):
-        PacketSenderThread(self).start()

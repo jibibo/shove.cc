@@ -224,22 +224,18 @@ class Holdem(BaseGame):
                 suit_ints.append(Card.get_suit_int(card))
 
             if rank_ints[0] < rank_ints[1]:
-                rank_ints.append(rank_ints.pop(0))
+                rank_ints.append(rank_ints.pop(0))  # highest ranked card goes first (5A becomes A5)
 
-            suited = suit_ints[0] == suit_ints[1]
-            pair = rank_ints[0] == rank_ints[1]
-
-            if pair:
+            if rank_ints[0] == rank_ints[1]:  # pocket pair
                 suffix = ""
+            elif suit_ints[0] == suit_ints[1]:
+                suffix = "s"  # suited
             else:
-                if suited:
-                    suffix = "s"
-                else:
-                    suffix = "o"
+                suffix = "o"  # offsuit
 
-            cards_formatted = f"{Card.RANKS_STR[rank_ints[0]]}{Card.RANKS_STR[rank_ints[1]]}{suffix}"
+            cards_formatted = f"{Card.RANKS_INT_TO_RANK_CHAR[rank_ints[0]]}{Card.RANKS_INT_TO_RANK_CHAR[rank_ints[1]]}{suffix}"
 
-            with open("pocket_cards.json", "r") as f:
+            with open("test/pocket_cards.json", "r") as f:
                 pocket_cards = json.load(f)
 
             pocket_cards[cards_formatted]["dealt"] += 1
@@ -249,7 +245,7 @@ class Holdem(BaseGame):
                 pocket_cards[cards_formatted]["won"] += 1
                 Log.test(f"incremented times won of {cards_formatted}")
 
-            with open("pocket_cards.json", "w") as f:
+            with open("test/pocket_cards.json", "w") as f:
                 json.dump(pocket_cards, f, indent=4)
 
     def set_next_street_and_deal(self):
@@ -406,4 +402,4 @@ class Holdem(BaseGame):
         else:
             old_dealer_seat_formatted = "(not set)"
 
-        Log.info(f"Updated seats, D: {old_dealer_seat_formatted} -> {new_dealer_seat}, SB: {self.small_blind_seat}, BB: {self.big_blind_seat}")
+        Log.info(f"Updated button seats, D: {old_dealer_seat_formatted} -> {new_dealer_seat}, SB: {self.small_blind_seat}, BB: {self.big_blind_seat}")

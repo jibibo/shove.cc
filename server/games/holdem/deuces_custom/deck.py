@@ -29,7 +29,8 @@ class Deck:
         cards_left = n_cards
         drawn_cards = []
         while cards_left:
-            drawn_cards.append(self.cards.pop())
+            card = self.cards.pop()
+            drawn_cards.append(card)
             cards_left -= 1
 
         Log.trace(f"Drawn {n_cards} card(s) from deck: {Card.get_pretty_str(drawn_cards)}")

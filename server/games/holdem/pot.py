@@ -19,28 +19,28 @@ class Pot:
 
     def distribute_chips_to_best_hands(self, best_hands):
         pot_winners = []
+        best_name = None
         best_rank = 7463
         best_percentile = 1
-        best_hand = None
 
-        for player, rank, percentile, hand in best_hands:
+        for player, name, rank, percentile in best_hands:
             if player not in self.participants:  # player is not eligible for this pot
                 continue
 
             if rank < best_rank:
                 pot_winners = [player]
+                best_name = name
                 best_rank = rank
                 best_percentile = percentile
-                best_hand = hand
             elif rank == best_rank:
                 pot_winners.append(player)
 
-        self.give_chips_to_pot_winners(pot_winners)
+        self.give_chips_to_pot_winners(pot_winners, best_name, best_rank, best_percentile)
 
-    def give_chips_to_pot_winners(self, winners):
+    def give_chips_to_pot_winners(self, winners, name, rank, percentile):
         chips_per_winner = int(self.chips / len(winners))  # todo odd chip goes to last aggressor
         for winner in winners:
-            winner.won_chips(chips_per_winner)
+            winner.won_chips(chips_per_winner, name, rank, percentile)
 
         Log.trace(f"Given {self.pot_name} winnings to {[winner['username'] for winner in winners]} ({chips_per_winner} chips/winner)")
 

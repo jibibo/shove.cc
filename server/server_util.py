@@ -14,8 +14,6 @@ from typing import Dict, List
 import colorama
 from colorama import Fore, Style
 
-colorama.init(autoreset=False)
-
 
 class InvalidPacket(Exception):
     def __init__(self, details):
@@ -43,7 +41,9 @@ class Log:  # todo writing to file
     LEVEL_FATAL = 5, "FATAL", Fore.RED + Style.BRIGHT
     LEVEL_TEST = 6, "TEST", Fore.MAGENTA
 
-    PRINT_LOCK = threading.Semaphore(value=1)  # how does this work
+    PRINT_LOCK = threading.Lock()
+
+    WRITING_QUEUE = Queue()
 
     @staticmethod
     def trace(message, exception=None):
@@ -75,11 +75,14 @@ class Log:  # todo writing to file
 
     @staticmethod
     def log(message, level, exception=None):
-        if level[0] < CONSOLE_LOG_LEVEL[0]:  # not high enough log level
-            return
 
         thread_name = threading.current_thread().getName()
         now_str = datetime.now().strftime("%H:%M:%S")
+
+        Log.WRITING_QUEUE.put((now_str, level, thread_name, message))
+
+        if level[0] < CONSOLE_LOG_LEVEL[0]:  # not high enough log level
+            return
 
         Log.PRINT_LOCK.acquire()
         print(f"[{now_str}]{level[2]}[SERVER/{level[1]:<5}]{Style.RESET_ALL}[{thread_name}] {message}")
@@ -91,8 +94,24 @@ class Log:  # todo writing to file
 
         Log.PRINT_LOCK.release()
 
+    @staticmethod
+    def start_log_writing_thread():
+        threading.Thread(target=Log.write_to_log_file_thread, name="LogWriter", daemon=True).start()
+
+    @staticmethod
+    def write_to_log_file_thread():
+        while True:
+            now_str, level, thread_name, message = Log.WRITING_QUEUE.get()
+
+            with open(LOG_FILE, "a", encoding="utf-8") as f:
+                f.write(f"[{now_str}][SERVER/{level[1]:<5}][{thread_name}] {message}\n")
+
 
 CONSOLE_LOG_LEVEL = Log.LEVEL_TRACE
+LOG_FILE = "logs/_latest.log"
 HEADER_SIZE = 10
 SERVER_BACKLOG = 5
 SERVER_PORT = 12345
+
+colorama.init(autoreset=False)
+open(LOG_FILE, "w").close()
