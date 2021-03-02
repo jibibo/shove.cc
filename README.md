@@ -5,4 +5,4 @@ Some lines of code
 => [requirements.txt](https://github.com/julianib/shove/blob/main/requirements.txt)
 
 ## Credits
-Hand evaluation based on Will Drevo's deuces: https://github.com/worldveil/deuces
+Hand evaluation based on deuces by Will Drevo: https://github.com/worldveil/deuces

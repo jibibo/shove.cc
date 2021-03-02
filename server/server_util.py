@@ -6,6 +6,7 @@ import traceback
 import threading
 import sys
 import random
+import secrets
 import itertools
 from queue import Queue
 from abc import ABC, abstractmethod
@@ -114,4 +115,8 @@ SERVER_BACKLOG = 5
 SERVER_PORT = 12345
 
 colorama.init(autoreset=False)
-open(LOG_FILE, "w").close()
+try:
+    open(LOG_FILE, "w").close()
+except FileNotFoundError:
+    os.mkdir("logs")
+    open(LOG_FILE, "w").close()

@@ -87,7 +87,7 @@ class ServerListener(threading.Thread):
             raise LostConnection(ex.strerror)
 
     def handle_packet(self, packet: dict):
-        if "model" not in packet.keys():
+        if "model" not in packet:
             raise InvalidPacket(f"No model set")
 
         model = packet["model"]
