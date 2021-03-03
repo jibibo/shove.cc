@@ -1,26 +1,26 @@
-from util import *
+from convenience import *
 from player import Player
-from table_handler_thread import TableHandlerThread
+from room_handler_thread import RoomHandlerThread
 from base_game import BaseGame
 
 
-class Table:
+class Room:
     MIN_PLAYERS = 2
 
     def __init__(self, server):
         self.server = server
-        self.name = f"{len(server.tables) + 1}"
+        self.name = f"{len(server.rooms) + 1}"
         self.events = Queue()
         self.game: BaseGame = server.get_default_game()(table=self)
         self.n_seats = 10
         self.seats_players = dict.fromkeys(range(1, self.n_seats + 1))
 
-        TableHandlerThread(self).start()
+        RoomHandlerThread(self).start()
 
-        Log.info(f"Created table {self}")
+        Log.info(f"Created room {self}")
 
     def __repr__(self):
-        return f"<Table '{self.name}', {self.n_taken_seats()}/{self.n_total_seats()} players>"
+        return f"<Room '{self.name}', {self.n_taken_seats()}/{self.n_total_seats()} players>"
 
     def __str__(self):
         return f"'{self.name}'"
@@ -43,7 +43,7 @@ class Table:
         Log.info(f"Added {added_bots}/{amount} bots to seats {seats}")
 
     def add_player(self, client_or_bot, seat=None) -> int:
-        """sets and returns player's seat, 0 or AssertionError if fail"""
+        """Sets and returns player's seat, 0 or AssertionError if fail"""
 
         if self.game.running:
             Log.warn("Can't add player: game running")  # todo add to a queue to join next round
@@ -138,7 +138,7 @@ class Table:
             Log.info("Game already started")
             return
 
-        if self.n_taken_seats() < Table.MIN_PLAYERS:
+        if self.n_taken_seats() < Room.MIN_PLAYERS:
             Log.info(f"Not enough players to start: {self.n_taken_seats()}/{self.MIN_PLAYERS}")
             return
 

@@ -1,17 +1,17 @@
-from util import *
+from convenience import *
 
 
 class DeleteTable(Exception):
     pass
 
 
-class TableHandlerThread(threading.Thread):
+class RoomHandlerThread(threading.Thread):
     def __init__(self, table):
         self.table = table
         super().__init__(name=f"TableHandler/{table.name}", daemon=True)
 
     def run(self):
-        Log.debug("Ready")
+        Log.trace("Ready")
 
         while True:
             event = self.table.events.get()

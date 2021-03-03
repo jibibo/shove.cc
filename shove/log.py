@@ -2,7 +2,7 @@ import traceback
 import colorama
 from colorama import Fore, Style
 
-from globals import *
+from convenience import *
 
 
 colorama.init(autoreset=False)
@@ -16,15 +16,9 @@ LEVEL_ERROR = 4, "ERROR", Fore.RED
 LEVEL_FATAL = 5, "FATAL", Fore.RED + Style.BRIGHT
 LEVEL_TEST = 6, "TEST", Fore.MAGENTA
 CONSOLE_LOG_LEVEL = LEVEL_TRACE
-LOG_FILE = "logs/_latest.log"
-
-
-try:
-    open(LOG_FILE, "w").close()
-
-except FileNotFoundError:
-    os.mkdir("logs")
-    open(LOG_FILE, "w").close()
+LOG_TO_FILE = False
+MESSAGE_LENGTH_CUTOFF = 400
+LOG_FILE = "/logs/_latest.log"
 
 
 class Log:
@@ -61,21 +55,23 @@ class Log:
 
     @staticmethod
     def log(message, level, exception=None):
+        excess_message_size = len(message) - MESSAGE_LENGTH_CUTOFF
+        if excess_message_size > 0:
+            message = message[:MESSAGE_LENGTH_CUTOFF] + f"... (+ {excess_message_size})"
+
         thread_name = threading.current_thread().getName()
-
         now_str = datetime.now().strftime("%H:%M:%S")
-        Log.FILE_WRITING_QUEUE.put((now_str, level, thread_name, message))
 
-        if level[0] < CONSOLE_LOG_LEVEL[0]:  # not high enough log level
-            return
+        if level[0] >= CONSOLE_LOG_LEVEL[0]:  # check log level for console logging
+            with Log.PRINT_LOCK:
+                print(f"{level[2]}[{now_str}][{level[1]}]{Style.RESET_ALL}[{thread_name}] {message}")
+                if exception:
+                    # print(f"{Fore.CYAN}", end="")
+                    traceback.print_exception(type(exception), exception, exception.__traceback__)
+                    # print(f"{Style.RESET_ALL}", end="")
 
-        with Log.PRINT_LOCK:
-            # to cleanup with trailing spaces: {message_prefix:<int}
-            print(f"[{now_str}]{level[2]}[SERVER/{level[1]}]{Style.RESET_ALL}[{thread_name}] {message}")
-            if exception:
-                # print(f"{Fore.CYAN}", end="")
-                traceback.print_exception(type(exception), exception, exception.__traceback__)
-                # print(f"{Style.RESET_ALL}", end="")
+        if LOG_TO_FILE:  # file logging doesn't require specific log level
+            Log.FILE_WRITING_QUEUE.put((now_str, level, thread_name, message))
 
     @staticmethod
     def start_file_writer_thread():
@@ -83,10 +79,19 @@ class Log:
 
     @staticmethod
     def write_to_log_file_thread():
+        try:
+            open(LOG_FILE, "w").close()
+            print("Emptied latest log file")
+
+        except FileNotFoundError:
+            os.mkdir("/logs")
+            print("Created /logs directory")
+            open(LOG_FILE, "w").close()
+            print("Created latest log file")
+
         Log.trace("Ready")
         while True:
             now_str, level, thread_name, message = Log.FILE_WRITING_QUEUE.get()
 
             with open(LOG_FILE, "a", encoding="utf-8") as f:
-                # to cleanup with trailing spaces: {message_prefix:<int}
                 f.write(f"[{now_str}][SERVER/{level[1]}][{thread_name}] {message}\n")

@@ -1,3 +1,5 @@
-.idea/
-logs/
-test/
+/.idea/
+*/__pycache__/
+/shove/logs/
+/shove/test/
+/client/node_modules/

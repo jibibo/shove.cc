@@ -1,4 +1,4 @@
-from util import *
+from convenience import *
 
 
 ACTION_BET = "BET"

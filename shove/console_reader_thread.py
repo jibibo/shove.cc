@@ -1,4 +1,4 @@
-from util import *
+from convenience import *
 
 
 # todo input() massively slows down flask startup? implement chrome admin console instead
@@ -15,7 +15,7 @@ class ConsoleReaderThread(threading.Thread):
                 prompt = f"Table {self.server.selected_table}"
 
             else:
-                prompt = "Server"
+                prompt = "Shove"
 
             input_str = input(f"{prompt}> ")
 
@@ -43,7 +43,7 @@ class ConsoleReaderThread(threading.Thread):
         if input_split[0] in ["table"]:
             if input_len >= 2:
                 table_name = " ".join(input_split[1:])
-                found_table = self.server.get_table(table_name)
+                found_table = self.server.get_room(table_name)
                 if found_table:
                     self.server.selected_table = found_table
                     Log.info(f"Selected table {found_table}")
@@ -61,8 +61,8 @@ class ConsoleReaderThread(threading.Thread):
 
             return False
 
-        if input_split[0] in ["tables"]:
-            self.server.print_tables()
+        if input_split[0] in ["rooms"]:
+            self.server.print_rooms()
             return True
 
         if input_split[0] in ["player"]:
@@ -73,8 +73,8 @@ class ConsoleReaderThread(threading.Thread):
             players = []
             n_bots = 0
 
-            for table in self.server.tables:
-                for player in table.get_taken_seats_players().values():
+            for room in self.server.rooms:
+                for player in room.get_taken_seats_players().values():
                     players.append(player)
                     if player.is_bot:
                         n_bots += 1

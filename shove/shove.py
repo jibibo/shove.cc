@@ -1,29 +1,35 @@
-from util import *
+from convenience import *
 from client import Client
-from table import Table
+from room import Room
 from games.holdem import Holdem
 
 
-class Server:
+class Shove:
     def __init__(self, socketio):
-        Log.debug("Setting up server")
+        Log.trace("Initializing Shove")
         self.socketio = socketio
 
         self.clients: List[Client] = []
-        self.incoming_packets_queue = Queue()  # (Client, packet)
-        self.outgoing_packets_queue = Queue()  # ([Client], packet, is_response)
+        self.incoming_packets_queue = Queue()  # (Client, packet: dict)
+        self.outgoing_packets_queue = Queue()  # ([Client], packet: dict, is_response: bool)
 
         self.default_game = Holdem
         self.next_bot_number = 1
-        self.tables: List[Table] = []
-        self.reset_tables()
-        # self.tables[0].add_bots(4)
+        self.rooms: List[Room] = []
+        self.reset_rooms()
+        # self.rooms[0].add_bots(4)
         # for i in range(0):
-        #     self.tables[0].events.put("start")
+        #     self.rooms[0].events.put("start")
 
         self.selected_table = None
 
-        Log.info("Server ready")
+        Log.info("Shove initialized")
+
+    def get_all_clients(self):
+        return self.clients.copy()
+
+    def get_all_room_names(self):
+        return [room.name for room in self.rooms]
 
     def get_client(self, sid: str) -> Client:
         for client in self.clients:
@@ -31,9 +37,6 @@ class Server:
                 return client
 
         Log.warn(f"Could not find client with sid {sid}")
-
-    def get_all_clients(self):
-        return self.clients.copy()
 
     def get_clients_count(self):
         return len(self.clients)
@@ -46,30 +49,19 @@ class Server:
         self.next_bot_number += 1
         return old
 
-    # @staticmethod
-    # def get_player(username) -> dict:  # todo should just lookup accounts
-    #     try:
-    #         with open(f"players/{username}.json", "r") as f:
-    #             player = json.load(f)
-    #
-    #     except FileNotFoundError:
-    #         return {}
-    #
-    #     return player
+    def get_room(self, room_name: str) -> Room:
+        room_name_formatted = room_name.lower().strip()
+        for room in self.rooms:
+            if room.name.lower() == room_name_formatted:
+                Log.trace(f"Found room with matching name: {room}")
+                return room
 
-    def get_table(self, find_table: str) -> Table:
-        find_table_lower = find_table.lower()
-        for table in self.tables:
-            if table.name.lower() == find_table_lower:
-                Log.trace("Found table with matching name")
-                return table
-
-        Log.trace("Table with matching name not found")
+        Log.trace("Room with matching name not found")
 
     def new_client(self, sid: str):
         sids = [client.sid for client in self.clients]
         if sid in sids:
-            Log.warn(f"Attempted to create client with existing sid {sid}")  # SHOULDN'T happen
+            Log.error(f"Attempted to create new client with existing sid {sid}")  # SHOULDN'T happen
             return
 
         client = Client(sid)
@@ -81,13 +73,13 @@ class Server:
         if not client:
             return
 
-        self.send_packet(client, {
+        self.send_queue(client, {
             "model": "client_connected",
             "you": True,
             "sid": sid,
             "online_count": len(self.clients)
         })
-        self.send_packet(self.get_all_clients(), {
+        self.send_queue(self.get_all_clients(), {
             "model": "client_connected",
             "you": False,
             "sid": sid,
@@ -101,24 +93,24 @@ class Server:
 
         self.clients.remove(client)
 
-        self.send_packet(self.get_all_clients(), {
+        self.send_queue(self.get_all_clients(), {
             "model": "client_disconnected",
             "sid": sid,
             "online_count": len(self.clients)
         })
 
-    def print_tables(self):
-        lines = ["Tables"]
-        lines.extend([f"{table}" for table in self.tables])
+    def print_rooms(self):
+        lines = ["Rooms"]
+        lines.extend([f"{room}" for room in self.rooms])
         Log.info("\n".join(lines))
 
-    def reset_tables(self, n_tables=1):
-        Log.info("Resetting tables")
-        self.tables = []  # todo handle removing clients from table
-        for _ in range(n_tables):
-            self.tables.append(Table(self))
+    def reset_rooms(self, n_rooms=1):
+        Log.info("Resetting rooms")
+        self.rooms = []  # todo handle removing clients from room
+        for _ in range(n_rooms):
+            self.rooms.append(Room(self))
 
-    def send_packet(self, clients: Union[Client, list], packet: dict, skip: Client = None, is_response=False):
+    def send_queue(self, clients: Union[Client, list], packet: dict, skip: Client = None, is_response=False):
         try:
             if type(clients) == Client:
                 clients = [clients]
@@ -139,10 +131,8 @@ class Server:
 
             self.outgoing_packets_queue.put((clients, packet, is_response))
 
-            # sids = [client.sid for client in clients]
-            # for sid in sids:
-            #     self.socketio.send(packet, room=sid)
-            # Log.debug(f"Sent '{packet['model']}' packet")
-
         except ValueError as ex:
-            Log.error("Error on server.send_packet()", exception=ex)
+            Log.error("Error on pending outgoing packet", exception=ex)
+
+        except BaseException as ex:
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on pending outgoing packet", exception=ex)
