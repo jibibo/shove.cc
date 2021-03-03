@@ -59,11 +59,11 @@ def on_error(e):
 
 
 @socketio.on("message")
-def on_packet(packet: dict):
+def on_message(packet: dict):  # all sent messages should always be a model-containing packet
     update_socketio_thread_name()
     sender_sid = request.sid
     client = shove.get_client(sender_sid)
-    Log.trace(f"Received packet from {client.sid}: {packet}")
+    Log.debug(f"Received packet: {packet}")
     shove.incoming_packets_queue.put((client, packet))
 
 
