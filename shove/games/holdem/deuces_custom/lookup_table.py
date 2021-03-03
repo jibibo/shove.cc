@@ -50,7 +50,7 @@ class LookupTable:
 
     def __init__(self):
         """
-        Calculates lookup tables
+        Calculates lookup rooms
         """
 
         # create dictionaries

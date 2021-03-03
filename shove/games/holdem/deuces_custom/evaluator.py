@@ -1,6 +1,6 @@
 import itertools
 
-from util import *
+from convenience import *
 from .card import Card
 from .lookup_table import LookupTable
 

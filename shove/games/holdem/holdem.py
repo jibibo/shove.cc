@@ -1,4 +1,4 @@
-from util import *
+from convenience import *
 from base_game import BaseGame
 from player import Player
 
@@ -61,9 +61,9 @@ class Holdem(BaseGame):
                 Log.trace(f"Set other player's had_action to False")
 
         else:  # todo abstract player object should have connection socket (and Account object?)
-            for connection, player in self.table.server.connections_players.items():
+            for connection, player in self.table.shove.connections_players.items():
                 if action_player == player:
-                    self.table.server.outgoing_packets.put((connection, {
+                    self.table.shove.outgoing_packets.put((connection, {
                         "model": "action",
                         "street": self.street,
                         "players": self.players

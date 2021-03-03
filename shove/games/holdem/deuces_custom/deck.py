@@ -1,4 +1,4 @@
-from util import *
+from convenience import *
 
 from .card import Card
 
