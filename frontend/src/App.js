@@ -31,10 +31,13 @@ function App() {
             handlePacket(packet);
         });
         connection.on("connect", () => {
-            console.log("socket connect event");
+            addToBox("Connection established");
         });
-        connection.on("disconnect", () => {
-            console.log("socket disconnect event");
+        connection.on("connect_error", () => {
+            addToBox("Failed to connect, socket offline?")
+        });
+        connection.on("disconnect", (reason) => {
+            addToBox("Connection lost: " + reason);
         });
         setSocket(connection);
         connection.send({
@@ -106,6 +109,11 @@ function App() {
             } else {
                 addToBox("Someone connected: " + packet["sid"]);
             }
+            return;
+        }
+
+        if (model === "client_disconnected") {
+            addToBox("Someone disconnected: " + packet["sid"]);
             return;
         }
 

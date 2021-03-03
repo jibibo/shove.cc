@@ -1,10 +1,11 @@
 # Shove
-[Trello](https://trello.com/b/n23x0ggq/shove)
-
 Some lines of code
 
+[Trello](https://trello.com/b/n23x0ggq/shove)
+
 ## Dependencies
-=> [requirements.txt](/requirements.txt)
+=> see [requirements.txt](/requirements.txt)
 
 ## Credits
-Hand evaluation based on deuces by Will Drevo: https://github.com/worldveil/deuces
+- Several stock images from [...]
+- Hand evaluation based on deuces by Will Drevo: https://github.com/worldveil/deuces

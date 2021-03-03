@@ -1,5 +1,5 @@
 /.idea/
 */__pycache__/
-/shove/logs/
-/shove/test/
-/client/node_modules/
+/backend/logs/
+/backend/test/
+/frontend/node_modules/
