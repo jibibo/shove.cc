@@ -1,0 +1,7 @@
+div.message-bubble {
+    background-color: #b0cfb0;
+    padding: 5px 10px;
+    border-radius: 10px;
+    color: #000000;
+    margin-bottom: 5px;
+}

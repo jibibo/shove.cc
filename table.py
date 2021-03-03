@@ -1,8 +1,7 @@
-from server_util import *
+from util import *
 from player import Player
 from table_handler_thread import TableHandlerThread
 from base_game import BaseGame
-from connected_client import ConnectedClient
 
 
 class Table:
@@ -52,13 +51,13 @@ class Table:
 
         assert client_or_bot, "no player given"
 
-        if isinstance(client_or_bot, ConnectedClient):
-            assert client_or_bot.player, "Client is not logged in"
-            player = client_or_bot.player
-
-        else:
-            assert client_or_bot.is_bot, "Neither connected client nor bot player provided"
-            player = client_or_bot
+        # if isinstance(client_or_bot, ConnectedClient):
+        #     assert client_or_bot.player, "Client is not logged in"
+        #     player = client_or_bot.player
+        #
+        # else:
+        #     assert client_or_bot.is_bot, "Neither connected client nor bot player provided"
+        #     player = client_or_bot
 
         empty_seats = self.get_empty_seats()
 
@@ -77,7 +76,7 @@ class Table:
             seat = random.choice(empty_seats)
             Log.trace(f"No seat given, chose random seat {seat}")
 
-        self.put_player_in_seat(player, seat)
+        self.put_player_in_seat(client_or_bot, seat)
         self.events.put("player_added")
         return seat
 

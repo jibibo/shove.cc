@@ -1,4 +1,4 @@
-from server_util import *
+import itertools
 
 from .card import Card
 

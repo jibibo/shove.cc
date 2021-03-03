@@ -1,4 +1,4 @@
-from server_util import *
+from util import *
 
 
 class Pot:

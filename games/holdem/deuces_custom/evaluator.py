@@ -1,5 +1,6 @@
-from server_util import *
+import itertools
 
+from util import *
 from .card import Card
 from .lookup_table import LookupTable
 

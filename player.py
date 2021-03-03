@@ -1,4 +1,4 @@
-from server_util import *
+from util import *
 
 
 ACTION_BET = "BET"
@@ -9,7 +9,7 @@ ACTION_FOLD = "FOLD"
 ACTION_RAISE = "RAISE"
 
 
-class Player:
+class Player:  # todo this is a Holdem player, so move it to holdem game package
     DEFAULT_DATA: dict = {  # always .copy() this
         "username": None,
         "password": None,
@@ -95,7 +95,7 @@ class Player:
 
     def decide_bot_action(self, game):
         last_bet = game.last_bet
-        minimum_bet = game.big_blind_amount
+        minimum_bet = 2 * game.blind_amount
         to_call = last_bet - self["bet"]
         Log.trace(f"{self} deciding bot action, bet: {self['bet']}, to call: {to_call}, last bet: {last_bet}, min bet: {minimum_bet}")
 

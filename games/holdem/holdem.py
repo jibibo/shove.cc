@@ -1,4 +1,4 @@
-from server_util import *
+from util import *
 from base_game import BaseGame
 from player import Player
 
@@ -24,8 +24,8 @@ class Holdem(BaseGame):
     def __init__(self, table):
         super().__init__(table)
 
-        self.action_seat: int = 0
         self.big_blind_seat = 0
+        self.blind_amount = 1
         self.community_cards: List[int] = []
         self.dealer_seat = 0
         self.deck: Deck = Deck()
@@ -34,15 +34,12 @@ class Holdem(BaseGame):
         self.n_hands_played = 0
         self.players = []
         self.pots: List[Pot] = []
-        self.small_blind_amount = 1
         self.small_blind_seat = 0
         self.street = None
-        self.big_blind_amount = 2 * self.small_blind_amount
 
         self.total_elapsed = 0  # testing purposes
 
-    def action_on_seat(self):
-        action_player = self.get_player_in_seat(self.action_seat)
+    def action_on_player(self, action_player: Player):
         Log.info(f"Action on seat {action_player['seat']}: {action_player}, to call: {self.last_bet - action_player['bet']}")
 
         if action_player.is_bot:
@@ -127,18 +124,17 @@ class Holdem(BaseGame):
             pot.chips += lowest_bet * len(players_remaining)
             Log.trace(f"{pot} now has {pot.chips} chips")
 
-    def get_next_action_seat(self, start_seat, last_action_seat) -> int:
-        """Returns next action seat that can have action, 0 if betting round over"""
+    def get_next_action_player(self, start_seat, last_player) -> Player:
+        """Returns next player that can have action, 0 if betting round over"""
 
-        Log.debug("Getting next action seat")
+        Log.debug("Getting next action player")
         seats = self.get_seats()
-        assert start_seat in seats and (last_action_seat is None or last_action_seat in seats), f"no valid start/last_action seats: {start_seat}, {last_action_seat}"
+        assert start_seat in seats, f"invalid start seat: {start_seat}"
 
         # reorder player list to check in order, starting at player in seat start_seat, excl. last action player
-        players_cycled = [player for player in self.players
-                          if player["seat"] != last_action_seat]
+        players_cycled = [player for player in self.players if player != last_player]
 
-        while players_cycled[0]["seat"] != start_seat:  # should never be an infinite loop
+        while players_cycled[0]["seat"] != start_seat:  # should never be an infinite loop, who knows
             players_cycled.append(players_cycled.pop(0))
 
         Log.trace(f"Possible action seats: {[player['seat'] for player in players_cycled]}")
@@ -159,11 +155,10 @@ class Holdem(BaseGame):
                 Log.trace(f"Skipped {player} for action: already had action")
                 continue
 
-            Log.debug(f"Got valid next action seat: {player_seat}")
-            return player_seat
+            Log.debug(f"Got valid next action player: {player}")
+            return player
 
         Log.debug("Betting round over")
-        return 0
 
     def get_not_folded_players(self):
         return [player for player in self.players if not player["folded"]]
@@ -175,23 +170,21 @@ class Holdem(BaseGame):
 
         Log.error(f"No player in seat: {seat}")
 
-    def get_seats(self):
+    def get_seats(self):  # always ordered, as self.players is ordered upon hand start
         return [player["seat"] for player in self.players]
 
     def handle_event(self, event):
         pass
 
-    def post_blinds(self):
+    def post_blinds(self, small_blind_player, big_blind_player):
         # assert self.n_taken_seats() >= 2, "need 2 or more players to place blinds"  # safety check
 
         Log.debug(f"Posting blinds")
-        small_blind_player = self.get_player_in_seat(self.small_blind_seat)
-        big_blind_player = self.get_player_in_seat(self.big_blind_seat)
+        small_blind_player.post_blind(self.blind_amount)
+        big_blind_player.post_blind(2 * self.blind_amount)
 
-        small_blind_player.post_blind(self.small_blind_amount)
-        big_blind_player.post_blind(self.big_blind_amount)
-
-        self.last_bet = 2
+        # todo this might go wrong if the blind player is forced to go all in
+        self.last_bet = 2 * self.blind_amount
         self.last_aggressor = big_blind_player
 
     @staticmethod
@@ -282,7 +275,8 @@ class Holdem(BaseGame):
         self.players = sorted([player for player in self.table.seats_players.values()
                                if player is not None and
                                player["chips"] > 0],
-                              key=lambda p: p["seat"], reverse=False)
+                              key=lambda p: p["seat"],
+                              reverse=False)
 
         if len(self.players) < 2:
             Log.warn("Not enough players with chips to start")
@@ -297,7 +291,7 @@ class Holdem(BaseGame):
 
         self.n_hands_played += 1
         start_time = time.time()
-        Log.info(f"Hand #{self.n_hands_played} started! Players: {self.players}")
+        Log.info(f"Hand #{self.n_hands_played} started! Players ({len(self.players)}): {self.players}")
 
         for player in self.players:
             player.new_hand_started()
@@ -307,8 +301,8 @@ class Holdem(BaseGame):
         self.community_cards = []
         self.deck = Deck()
         self.deck.shuffle()
-        self.update_dealer_blind_buttons()
-        self.post_blinds()
+        self.update_buttons()
+        self.post_blinds(self.get_player_in_seat(self.small_blind_seat), self.get_player_in_seat(self.big_blind_seat))
         self.deck.deal_players(self.players)
 
         while True:
@@ -320,24 +314,30 @@ class Holdem(BaseGame):
                 break
 
             seats = self.get_seats()
-            if self.street != STREET_PREFLOP:
+            if self.street == STREET_PREFLOP:
+                if len(seats) == 2:
+                    start_seat = self.dealer_seat  # in heads up, dealer has action first
+                else:
+                    start_seat = seats[(seats.index(self.dealer_seat) + 3) % len(seats)]  # get the seat of the "under the gun" player
+
+            else:
+                start_seat = seats[(seats.index(self.dealer_seat) + 1) % len(seats)]  # after the preflop, action starts at position AFTER the dealer
+
                 # once the next street starts, all players can bet again
                 self.last_bet = 0
                 self.last_aggressor = None
                 for player in self.players:
                     player.next_street_started()
 
-                Log.trace("All players called .new_street_starting()")
+            while True:
+                action_player = self.get_next_action_player(start_seat, None)
+                if not action_player:
+                    break
 
-                start_seat = seats[(seats.index(self.dealer_seat) + 1) % len(seats)]
-                self.action_seat = self.get_next_action_seat(start_seat, None)
-
-            while self.action_seat:
-                self.action_on_seat()
+                self.action_on_player(action_player)
 
                 # start looking for next action-eligible player at seat after the seat who just had action
-                start_seat = seats[(seats.index(self.action_seat) + 1) % len(seats)]
-                self.action_seat = self.get_next_action_seat(start_seat, self.action_seat)
+                start_seat = seats[(seats.index(start_seat) + 1) % len(seats)]
 
             self.add_bets_to_pots()
 
@@ -351,7 +351,7 @@ class Holdem(BaseGame):
 
         self.running = False
 
-    def start_showdown(self):  # todo test side pots
+    def start_showdown(self):
         Log.info(f"Showdown started!")
 
         best_hands = Evaluator.get_best_hands(self.community_cards, self.get_not_folded_players())
@@ -361,45 +361,37 @@ class Holdem(BaseGame):
 
         # Holdem.process_pocket_cards_winners(best_hands)
 
-    def update_dealer_blind_buttons(self):
-        # if self.n_taken_seats() < 2:  # safety check
-        #     log(f"Ignoring update dealer/blinds call with < 2 players", LEVEL_ERROR)
-        #     return
-
-        # todo players new to table always pay big blind
+    def update_buttons(self):
+        if len(self.get_seats()) < 2:  # safety check
+            Log.error(f"Ignoring update buttons call with < 2 players")
+            return
 
         Log.debug(f"Updating dealer and blind buttons")
         seats = self.get_seats()
+        Log.trace(f"Seats: {seats}")
         n_seats = len(seats)
-        old_dealer_seat = self.dealer_seat
+        previous_dealer_seat = self.dealer_seat
 
-        if not old_dealer_seat:  # dealer/blind seats not set
+        if not previous_dealer_seat:  # dealer/blind seats not set
             new_dealer_seat_index = random.randint(0, n_seats - 1)
-
         else:
             new_dealer_seat_index = 0  # not changed if old dealer seat was the last occupied seat
             for i, seat in enumerate(seats):
-                if seat > old_dealer_seat:
+                if seat > previous_dealer_seat:
                     new_dealer_seat_index = i
                     break
 
-        new_dealer_seat = seats[new_dealer_seat_index]
-        self.dealer_seat = new_dealer_seat
+        Log.trace(f"New dealer seat index: {new_dealer_seat_index}")
+        self.dealer_seat = seats[new_dealer_seat_index]
 
         if n_seats == 2:  # in heads up the dealer is the small blind
-            Log.trace("Selecting seats for button (heads-up)")
-            self.small_blind_seat = new_dealer_seat
+            Log.trace("Setting button seats for heads-up")
+            self.small_blind_seat = self.dealer_seat
             self.big_blind_seat = seats[(new_dealer_seat_index + 1) % n_seats]
-            self.action_seat = new_dealer_seat  # todo take into account if player is not active
+
         else:
-            Log.trace("Selecting seats for buttons (non heads-up)")
+            Log.trace("Setting button seats for non heads-up")
             self.small_blind_seat = seats[(new_dealer_seat_index + 1) % n_seats]
             self.big_blind_seat = seats[(new_dealer_seat_index + 2) % n_seats]
-            self.action_seat = seats[(new_dealer_seat_index + 3) % n_seats]  # todo take into account if player is not active
 
-        if old_dealer_seat > 0:
-            old_dealer_seat_formatted = old_dealer_seat
-        else:
-            old_dealer_seat_formatted = "(not set)"
-
-        Log.info(f"Updated button seats, D: {old_dealer_seat_formatted} -> {new_dealer_seat}, SB: {self.small_blind_seat}, BB: {self.big_blind_seat}")
+        Log.debug(f"Updated button seats, D: {previous_dealer_seat if previous_dealer_seat else '(not set)'} -> {self.dealer_seat}, SB: {self.small_blind_seat}, BB: {self.big_blind_seat}")
