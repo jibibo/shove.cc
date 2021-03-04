@@ -1,44 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>shove.cc</title>
-  <link rel="stylesheet" id="index-css">
-  <!-- bootstrap -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
-        integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu" crossorigin="anonymous">
-</head>
-<body>
-  <div class="text-center well"><b>Shove</b></div>
-  <div class="container">
-    <div class="col-sm-8">
-      <div class="message-holder">
-        <h1 class="nothing-here" style="color: gray">Nothing here</h1>
-      </div>
-    </div>
-    <div class="col-sm-4">
-      <form class="room" action="" method="POST">
-        <input type="text" class="room form-control" placeholder="Join room">
-        <button type="submit" class="btn btn-success btn-block">Join</button>
-      </form>
+    <head>
+        <title>shove.cc</title>
+        <link rel="stylesheet" id="index-css" />
+        <!-- bootstrap -->
+        <link
+            rel="stylesheet"
+            href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css"
+            integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu"
+            crossorigin="anonymous"
+        />
+    </head>
+    <body>
+        <div class="text-center well"><b>Shove</b></div>
+        <div class="container">
+            <div class="col-sm-8">
+                <div class="message-holder">
+                    <h1 class="nothing-here" style="color: gray">
+                        Nothing here
+                    </h1>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <form class="room" action="" method="POST">
+                    <input
+                        type="text"
+                        class="room form-control"
+                        placeholder="Join room"
+                    />
+                    <button type="submit" class="btn btn-success btn-block">
+                        Join
+                    </button>
+                </form>
 
-      <form class="message" action="" method="POST">
-        <input type="text" class="username form-control" placeholder="Username">
-        <input type="text" class="message form-control" placeholder="Message">
-        <button type="submit" class="btn btn-success btn-block">
-          <span class="glyphicon glyphicon-send"></span> Send
-        </button>
-      </form>
-    </div>
-  </div>
+                <form class="message" action="" method="POST">
+                    <input
+                        type="text"
+                        class="username form-control"
+                        placeholder="Username"
+                    />
+                    <input
+                        type="text"
+                        class="message form-control"
+                        placeholder="Message"
+                    />
+                    <button type="submit" class="btn btn-success btn-block">
+                        <span class="glyphicon glyphicon-send"></span> Send
+                    </button>
+                </form>
+            </div>
+        </div>
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script> <!-- jQuery -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js"></script> <!-- socket.io -->
-  <script id="client-js"></script>
-  <script>
-    // prevent using cached versions
-    const t = Date.now()
-    document.getElementById("client-js").src = "../js/client.js?t=" + t
-    document.getElementById("index-css").href = "../css/index.css?t=" + t
-  </script>
-</body>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <!-- jQuery -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.js"></script>
+        <!-- socket.io -->
+        <script id="client-js"></script>
+        <script>
+            // prevent using cached versions
+            const t = Date.now();
+            document.getElementById("client-js").src = "../js/client.js?t=" + t;
+            document.getElementById("index-css").href =
+                "../css/index.css?t=" + t;
+        </script>
+    </body>
 </html>
