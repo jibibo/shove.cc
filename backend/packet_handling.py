@@ -68,6 +68,12 @@ def _handle(shove: Shove, client: Client, packet: dict) -> Optional[dict]:
             }
 
     if model == "join_room":
+        # temporary
+        username = packet["room_name"]
+        account_data = shove.get_account_data(username=username)
+        Log.test(f"match {account_data}")
+
+        # original
         room_name = packet["room_name"]
         room = shove.get_room(room_name)
 

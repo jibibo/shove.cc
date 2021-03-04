@@ -4,6 +4,23 @@ from room import Room
 from games.holdem import Holdem
 
 
+def get_all_account_data():  # should be a generator if many files
+    all_account_data = []
+    Log.test("get_all_account_data()")
+    for filename in os.listdir(f"{os.getcwd()}/backend/accounts"):
+        if os.path.isfile(f"{os.getcwd()}/backend/accounts/{filename}"):
+            with open(f"{os.getcwd()}/backend/accounts/{filename}", "r") as f:
+                try:
+                    data = json.load(f)
+                except BaseException as ex:
+                    Log.fatal(f"UNHANDLED {type(ex).__name__}", exception=ex)
+                    continue
+
+                all_account_data.append(data)
+
+    return all_account_data
+
+
 class Shove:
     def __init__(self, socketio):
         Log.trace("Initializing Shove")
@@ -24,6 +41,20 @@ class Shove:
         self.selected_table = None
 
         Log.info("Shove initialized")
+
+    @staticmethod
+    def get_account_data(**k_v) -> dict:
+        if len(k_v) != 1:
+            Log.error(f"Invalid k, v length: {k_v}")
+
+        k, v = list(k_v.items())[0]
+        for account_data in get_all_account_data():
+            Log.test(account_data)
+            if account_data[k] == v:
+                Log.trace(f"Account data {account_data} matched with {k}={v}")
+                return account_data
+
+        Log.trace(f"No account data matched with {k}={v}")
 
     def get_all_clients(self):
         return self.clients.copy()

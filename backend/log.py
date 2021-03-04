@@ -55,6 +55,7 @@ class Log:
 
     @staticmethod
     def log(message, level, exception=None):
+        message = str(message)
         excess_message_size = len(message) - MESSAGE_LENGTH_CUTOFF
         if excess_message_size > 0:
             message = message[:MESSAGE_LENGTH_CUTOFF] + f"... (+ {excess_message_size})"

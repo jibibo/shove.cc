@@ -6,8 +6,8 @@ from flask_socketio import SocketIO
 
 from convenience import *
 from shove import Shove
-from packet_sender_thread import PacketSenderThread
-from packet_handler_thread import PacketHandlerThread
+from packet_sending import PacketSenderThread
+from packet_handling import PacketHandlerThread
 
 
 HOST = "0.0.0.0"
