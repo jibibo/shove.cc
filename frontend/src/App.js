@@ -22,7 +22,7 @@ function App() {
     console.log(useContext(UserContext));
 
     return (
-        <div className="container">
+        <div>
             <Header />
             <WebsiteStatus />
             

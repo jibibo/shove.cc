@@ -2,11 +2,22 @@ import { useContext } from "react";
 
 import { UserContext } from "./UserContext";
 
+import "./Header.css";
+
 function Header() {
 
     const { user } = useContext(UserContext);
 
-    return <div onClick={() => user.setUsername("not julian")} className="header">logged in as: {user.username}</div>;
+    return (
+        <header>
+            <div>
+                <h3>Logged in as: <b>{user.username}</b></h3>
+            </div>
+            <div>
+                <button className="header-button">{user.username ? "Log out" : "Log in"}</button>
+            </div>
+        </header>
+    );
 }
 
 export default Header;
