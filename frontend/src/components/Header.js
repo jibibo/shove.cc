@@ -4,9 +4,9 @@ import { UserContext } from "./UserContext";
 
 function Header() {
 
-    const [ username, _ ] = useContext(UserContext);
+    const { user } = useContext(UserContext);
 
-    return <div onClick={() => _("not julian")} className="header">logged in as: {username}</div>;
+    return <div onClick={() => user.setUsername("not julian")} className="header">logged in as: {user.username}</div>;
 }
 
 export default Header;

@@ -15,9 +15,11 @@ import Header from "./components/Header";
 
 function App() {
     const [card, setCard] = useState();
-    const [username, setUsername] = useContext(UserContext);
+    const { user } = useContext(UserContext);
     console.log("App() called");
     initSocket();
+
+    console.log(useContext(UserContext));
 
     return (
         <div className="container">
@@ -26,7 +28,7 @@ function App() {
             
             <RoomsList />
             <JoinRoomForm />
-            <button onClick={() => setUsername("julian")}>sign in yh? {username}</button>
+            <button onClick={() => user.setUsername("julian")}>sign in yh? {user.username}</button>
             <br />
             {/* <MessageBox /> */}
 
