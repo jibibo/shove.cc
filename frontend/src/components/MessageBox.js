@@ -1,6 +1,4 @@
-import { useState } from "react";
-
-import Message from "./Message";
+// import { useState } from "react";
 
 let addMessageHandler;
 
@@ -14,7 +12,6 @@ function MessageBox() {
 }
 
 function addMessage(text, style) {
-    let newMessage = <Message text={text} style={style} />;
     let element = document.createElement("p");
     let list = document.getElementById("message-box");
     if (list !== null) {
