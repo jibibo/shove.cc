@@ -28,7 +28,7 @@ class Shove:
 
         self.clients: List[Client] = []
         # self.incoming_packets_queue = Queue()  # (Client, packet: dict)
-        self.outgoing_packets_queue = Queue()  # ([Client], packet: dict, is_response: bool)
+        self.outgoing_packets_queue = Queue()  # ([Client], model: str, packet: dict, is_response: bool)
 
         self.default_game = Holdem
         self.next_bot_number = 1
@@ -104,14 +104,12 @@ class Shove:
         if not client:
             return
 
-        self.send_queue(client, {
-            "model": "client_connected",
+        self.send_queue(client, "client_connected", {
             "you": True,
             "sid": sid,
             "online_count": len(self.clients)
         })
-        self.send_queue(self.get_all_clients(), {
-            "model": "client_connected",
+        self.send_queue(self.get_all_clients(), "client_connected", {
             "you": False,
             "sid": sid,
             "online_count": len(self.clients)
@@ -124,8 +122,7 @@ class Shove:
 
         self.clients.remove(client)
 
-        self.send_queue(self.get_all_clients(), {
-            "model": "client_disconnected",
+        self.send_queue(self.get_all_clients(), "client_disconnected", {
             "sid": sid,
             "online_count": len(self.clients)
         })
@@ -141,7 +138,7 @@ class Shove:
         for _ in range(n_rooms):
             self.rooms.append(Room(self))
 
-    def send_queue(self, clients: Union[Client, list], packet: dict, skip: Client = None, is_response=False):
+    def send_queue(self, clients: Union[Client, list], model: str, packet: dict, skip: Client = None, is_response=False):
         try:
             if type(clients) == Client:
                 clients = [clients]
@@ -157,10 +154,10 @@ class Shove:
                 clients.remove(skip)
 
             if not clients:
-                Log.trace(f"Skipped outgoing packet with no recipients: {packet['model']} ")
+                Log.trace(f"Skipping outgoing {model} packet with no recipients: {packet} ")
                 return
 
-            self.outgoing_packets_queue.put((clients, packet, is_response))
+            self.outgoing_packets_queue.put((clients, model, packet, is_response))
 
         except ValueError as ex:
             Log.error("Internal error on adding outgoing packet to queue", exception=ex)

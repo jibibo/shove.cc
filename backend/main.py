@@ -61,14 +61,14 @@ def on_error(e):
 
 
 @socketio.on("message")
-def on_message(packet: dict):  # all sent messages should always be a model-containing packet
+def on_message(model: str, packet: dict):  # all sent messages should always be a model-containing packet
     update_socketio_thread_name()
     global n_packets_received
     n_packets_received += 1
     sender_sid = request.sid
     client = shove.get_client(sender_sid)
     Log.debug(f"Received packet #{n_packets_received}")
-    PacketHandlerThread(shove, client, packet, n_packets_received).start()
+    PacketHandlerThread(shove, client, model, packet, n_packets_received).start()
 
 
 def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to be changed easily

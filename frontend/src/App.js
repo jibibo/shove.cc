@@ -1,10 +1,10 @@
-import { useState, useContext } from "react";
+import { useContext } from "react";
 
-import { InitSocket, sendPacket } from "./connection";
+import { initSocket } from "./connection";
 
 import { GlobalContext } from "./components/GlobalContext";
 
-import WebsiteStatus from "./components/WebsiteStatus";
+import ConnectionStatus from "./components/ConnectionStatus";
 import RegisterForm from "./components/RegisterForm";
 import LogInForm from "./components/LogInForm";
 import JoinRoomForm from "./components/JoinRoomForm";
@@ -13,17 +13,23 @@ import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
 
 function App() {
-    const [card, setCard] = useState();
+    // const [card, setCard] = useState();
     const { user, setUser } = useContext(GlobalContext);
-    console.log("App() called");
-    InitSocket();
-
-    console.log(useContext(GlobalContext));
+    initSocket();
 
     return (
         <div>
             <Header />
-            <WebsiteStatus />
+            <ConnectionStatus />
+
+            {!user ? (
+                <>
+                    <LogInForm />
+                    <RegisterForm />
+                </>
+            ) : (
+                "Signed in as:" + user
+            )}
 
             <RoomsList />
             <JoinRoomForm />
@@ -33,7 +39,7 @@ function App() {
             <br />
             <MessageBox />
 
-            {card ? <img alt="jc" src={`./games/holdem/${card}.svg`} /> : ""}
+            {/* {card ? <img alt="jc" src={`./games/holdem/${card}.svg`} /> : ""} */}
         </div>
     );
 }

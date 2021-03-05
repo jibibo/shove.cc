@@ -11,21 +11,21 @@ class PacketSendingThread(threading.Thread):
         Log.trace("Ready")
 
         while True:
-            clients, packet, is_response = self.shove.outgoing_packets_queue.get()
+            clients, model, packet, is_response = self.shove.outgoing_packets_queue.get()
 
             try:
-                _send_packet(self.socketio, clients, packet, is_response)
+                _send_packet(self.socketio, clients, model, packet, is_response)
 
             except BaseException as ex:
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on sending packet", ex)
                 continue
 
 
-def _send_packet(socketio, clients, packet: dict, is_response: bool):
-    Log.trace(f"Sending {'response' if is_response else 'packet'} to {clients}: {packet}")
+def _send_packet(socketio, clients, model: str, packet: dict, is_response: bool):
+    Log.trace(f"Sending {'response' if is_response else 'packet'} {model} to {clients}: {packet}")
 
     sids = [client.sid for client in clients]
     for sid in sids:
-        socketio.emit("message", packet, room=sid)
+        socketio.emit(model, packet, room=sid)
 
-    Log.trace(f"Sent {'response' if is_response else 'packet'} with model: {packet['model']} ")
+    Log.trace(f"Sent {'response' if is_response else 'packet'} {model}")

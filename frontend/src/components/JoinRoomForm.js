@@ -3,7 +3,7 @@ import { useState } from "react";
 import { sendPacket } from "../connection";
 
 function JoinRoomForm() {
-    const [roomName, setRoomName] = useState(undefined);
+    // const [roomName, setRoomName] = useState(undefined);
 
     return (
         <div className="join-room-form">

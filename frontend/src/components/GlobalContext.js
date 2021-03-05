@@ -5,7 +5,7 @@ const GlobalContext = createContext();
 function GlobalContextProvider({ children }) {
     const [user, setUser] = useState();
     const [room, setRoom] = useState();
-    const [messages, setMessages] = useState(["Nothing"]);
+    const [messages, setMessages] = useState([]);
 
     return (
         <GlobalContext.Provider
