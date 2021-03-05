@@ -15,14 +15,14 @@ PORT = 777
 DEBUG = True
 
 # how much red text in console
-LOG_EVENTS = False
-LOG_REQUESTS = False
+LOG_EMITS = False
+LOG_SOCKETIO = False
 LOG_ENGINEIO = False
 
 
 threading.current_thread().setName("Main")
 app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", logger=LOG_REQUESTS, engineio_logger=LOG_ENGINEIO)
+socketio = SocketIO(app, cors_allowed_origins="*", logger=LOG_EMITS, engineio_logger=LOG_ENGINEIO)
 updated_socketio_thread_name = False
 global shove
 n_packets_received = 0
@@ -53,7 +53,8 @@ def on_disconnect():
     shove.on_disconnect(sid)
 
 
-@socketio.on_error()
+# todo BrokenPipeErrors?? check out https://stackoverflow.com/questions/47875007/flask-socket-io-frequent-time-outs
+@socketio.on_error_default
 def on_error(e):
     update_socketio_thread_name()
     Log.fatal(f"UNHANDLED {type(e).__name__} caught", exception=e)
@@ -78,9 +79,13 @@ def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to b
         updated_socketio_thread_name = True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     Log.start_file_writer_thread()
     shove = Shove(socketio)
     PacketSendingThread(shove, socketio).start()
-    Log.info(f"Starting SocketIO on port {PORT}")
-    socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_REQUESTS, use_reloader=False)
+    Log.info(f"Running SocketIO on port {PORT}")
+
+    try:
+        socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)
+    except BaseException as ex:
+        Log.fatal(f"UNHANDLED {type(ex).__name__} on running SocketIO", exception=ex)
