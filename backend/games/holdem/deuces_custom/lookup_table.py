@@ -278,4 +278,4 @@ class LookupTable:
         if hand_rank <= LookupTable.MAX_HIGH_CARD:
             return LookupTable.MAX_RANK_TO_NAME[LookupTable.MAX_HIGH_CARD]
 
-        raise ValueError(f"Invalid hand rank {hand_rank}")  # todo handle this e
+        raise ValueError(f"Invalid hand rank {hand_rank}")  # todo handle this exception
