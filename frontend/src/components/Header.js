@@ -1,20 +1,23 @@
 import { useContext } from "react";
 
-import { UserContext } from "./UserContext";
+import { GlobalContext } from "./GlobalContext";
 
 import "./Header.css";
 
 function Header() {
-
-    const { user } = useContext(UserContext);
+    const { user } = useContext(GlobalContext);
 
     return (
         <header>
             <div>
-                <h3>Logged in as: <b>{user.username}</b></h3>
+                <h3>
+                    Logged in as: <b>{user}</b>
+                </h3>
             </div>
             <div>
-                <button className="header-button">{user.username ? "Log out" : "Log in"}</button>
+                <button className="header-button">
+                    {user ? "Log out" : "Log in"}
+                </button>
             </div>
         </header>
     );

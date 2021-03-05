@@ -1,15 +1,20 @@
+import { useContext } from "react";
 import { io } from "socket.io-client";
-import { addMessage } from "./components/MessageBox";
 import handlePacket from "./handlePacket";
+
+import { GlobalContext } from "./components/GlobalContext";
 
 let socket = undefined;
 
-function initSocket() {
+function InitSocket() {
+    const { messages, setMessages } = useContext(GlobalContext);
+
+    console.debug("Initializing socket");
+
     if (socket !== undefined) {
+        console.debug("Socket already initialized, ignoring call");
         return;
     }
-
-    console.log("Initializing socket");
 
     socket = io.connect(document.domain + ":777");
 
@@ -17,13 +22,13 @@ function initSocket() {
         handlePacket(packet);
     });
     socket.on("connect", () => {
-        addMessage("Connection established", "green");
+        setMessages(messages.concat("Connection established"));
     });
     socket.on("connect_error", () => {
-        addMessage("Failed to connect, socket offline?", "red");
+        setMessages(messages.concat("Failed to connect, socket offline?"));
     });
     socket.on("disconnect", (reason) => {
-        addMessage("Connection lost: " + reason, "red");
+        setMessages(messages.concat("Connection lost: " + reason));
     });
     socket.send({
         model: "get_rooms",
@@ -41,4 +46,4 @@ function sendPacket(packet) {
     console.debug("Sent packet:", JSON.stringify(packet));
 }
 
-export { initSocket, sendPacket };
+export { InitSocket, sendPacket };

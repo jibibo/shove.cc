@@ -1,16 +1,15 @@
 import React, { useContext } from "react";
 import ReactDOM from "react-dom";
 
-import { UserProvider } from "./components/UserContext";
+import { GlobalContextProvider } from "./components/GlobalContext";
 import App from "./App";
 
 import "./index.css";
 
-
 ReactDOM.render(
-        <UserProvider>
-            <App />
-        </UserProvider>,
+    <GlobalContextProvider>
+        <App />
+    </GlobalContextProvider>,
     document.getElementById("root")
 );
 

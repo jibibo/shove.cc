@@ -2,9 +2,12 @@ function WebsiteStatus() {
     return (
         <div className="website-status">
             Website status:{" "}
-            <span id="website-status">website ping status here</span>
+            <span id="website-status">
+                website ping status here (connection context)
+            </span>
             <div id="online-status" />
-            Session id: <span id="session-id">session id goes here</span>
+            Session id:{" "}
+            <span id="session-id">session id goes here (user context)</span>
             <br />
             <br />
         </div>
@@ -23,4 +26,4 @@ function updateStatus() {
     // img.src = "http://shove.cc/img/icon.png";
 }
 
-export { WebsiteStatus, updateStatus };
+export default WebsiteStatus;

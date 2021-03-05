@@ -1,6 +1,10 @@
-import { addMessage } from "./components/MessageBox";
+import { useContext } from "react";
+
+import { GlobalContext } from "./components/GlobalContext";
 
 function handlePacket(packet) {
+    const { messages, setMessages } = useContext(GlobalContext);
+
     console.debug("Handling received packet:", JSON.stringify(packet));
     const model = packet["model"];
     if (model === undefined) {
@@ -10,16 +14,18 @@ function handlePacket(packet) {
 
     if (model === "client_connected") {
         if (packet["you"]) {
-            addMessage("Connected! Your sid: " + packet["sid"]);
+            setMessages(
+                messages.concat("Connected! Your sid: " + packet["sid"])
+            );
             document.getElementById("session-id").innerHTML = packet["sid"];
         } else {
-            addMessage("Someone connected: " + packet["sid"]);
+            setMessages(messages.concat("Someone connected: " + packet["sid"]));
         }
         return;
     }
 
     if (model === "client_disconnected") {
-        addMessage("Someone disconnected: " + packet["sid"]);
+        setMessages(messages.concat("Someone disconnected: " + packet["sid"]));
         return;
     }
 
@@ -27,10 +33,14 @@ function handlePacket(packet) {
         const success = packet["success"];
         const room_name = packet["room_name"];
         if (success) {
-            addMessage("Joined room " + room_name + "!");
+            setMessages(messages.concat("Joined room " + room_name + "!"));
         } else {
             const reason = packet["reason"];
-            addMessage("Failed to join room " + room_name + ": " + reason);
+            setMessages(
+                messages.concat(
+                    "Failed to join room " + room_name + ": " + reason
+                )
+            );
         }
         return;
     }
@@ -40,17 +50,23 @@ function handlePacket(packet) {
         const username = packet["username"];
 
         if (success) {
-            addMessage("Logged in as " + username + "!");
+            setMessages(messages.concat("Logged in as " + username + "!"));
             // loggedInAs = username;
         } else {
             const reason = packet["reason"];
-            addMessage("Failed to log in as " + username + ": " + reason);
+            setMessages(
+                messages.concat(
+                    "Failed to log in as " + username + ": " + reason
+                )
+            );
         }
         return;
     }
 
     if (model === "message") {
-        addMessage(packet["username"] + ": " + packet["content"]);
+        setMessages(
+            messages.concat(packet["username"] + ": " + packet["content"])
+        );
         return;
     }
 
@@ -58,10 +74,14 @@ function handlePacket(packet) {
         const success = packet["success"];
         const username = packet["username"];
         if (success) {
-            addMessage("Registered as " + username + "!");
+            setMessages(messages.concat("Registered as " + username + "!"));
         } else {
             const reason = packet["reason"];
-            addMessage("Failed to register as " + username + ": " + reason);
+            setMessages(
+                messages.concat(
+                    "Failed to register as " + username + ": " + reason
+                )
+            );
         }
         return;
     }
@@ -79,7 +99,5 @@ function handlePacket(packet) {
 
     console.error("Failed handling packet model: " + model);
 }
-
-let incomingMessageHandler;
 
 export default handlePacket;
