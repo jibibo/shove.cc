@@ -27,7 +27,7 @@ class Shove:
         self.socketio = socketio
 
         self.clients: List[Client] = []
-        self.incoming_packets_queue = Queue()  # (Client, packet: dict)
+        # self.incoming_packets_queue = Queue()  # (Client, packet: dict)
         self.outgoing_packets_queue = Queue()  # ([Client], packet: dict, is_response: bool)
 
         self.default_game = Holdem
@@ -148,7 +148,7 @@ class Shove:
 
             elif type(clients) == list:
                 if clients and type(clients[0]) != Client:
-                    raise ValueError(f"List does not contain 'Client' objects: {type(clients[0])}")
+                    raise ValueError(f"List does not contain 'Client' object(s) but {type(clients[0])}")
 
             else:
                 raise ValueError(f"Invalid 'clients' type: {type(clients)}")
@@ -157,13 +157,13 @@ class Shove:
                 clients.remove(skip)
 
             if not clients:
-                Log.trace(f"Skipped outgoing {packet['model']} packet with no recipients")
+                Log.trace(f"Skipped outgoing packet with no recipients: {packet['model']} ")
                 return
 
             self.outgoing_packets_queue.put((clients, packet, is_response))
 
         except ValueError as ex:
-            Log.error("Error on pending outgoing packet", exception=ex)
+            Log.error("Internal error on adding outgoing packet to queue", exception=ex)
 
         except BaseException as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on pending outgoing packet", exception=ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on adding outgoing packet to queue", exception=ex)

@@ -3,48 +3,44 @@ from client import Client
 from shove import Shove
 
 
+class InvalidPacket(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return str(self.value)
+
+
 class PacketHandlerThread(threading.Thread):
-    def __init__(self, shove):
-        super().__init__(name=f"PacketHandler", daemon=True)
+    """This thread gets created and run to handle a single received packet"""
+
+    def __init__(self, shove, client, packet, packet_number):
+        super().__init__(name=f"PacketHandler/{packet_number}", daemon=True)
         self.shove: Shove = shove
+        self.client = client
+        self.packet= packet
 
     def run(self):
-        Log.trace("Ready")
-        handle_packets(self.shove)
-
-
-def handle_packets(shove, loop=True):
-    executed = False
-
-    while True:
-        if not loop:
-            if executed:
-                break
-
-            executed = True
-
-        client, packet = shove.incoming_packets_queue.get()
+        Log.trace(f"Handling packet from {self.client}: {self.packet}")
 
         try:
-            response_packet = _handle(shove, client, packet)
+            # response_packet = _handle(shove, client, packet)
+            response_packet = _handle_packet(self.shove, self.client, self.packet)
 
         except InvalidPacket as ex:
             Log.error(f"Invalid packet: {ex}", ex)
-            continue
+            return
 
         except BaseException as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on handling packet", ex)
-            continue
+            Log.fatal(f"UNHANDLED {type(ex).__name__} caught", ex)
+            return
 
-        else:
-            if response_packet:
-                shove.send_queue(client, response_packet, is_response=True)
+        if response_packet:
+            self.shove.send_queue(self.client, response_packet, is_response=True)
 
 
-def _handle(shove: Shove, client: Client, packet: dict) -> Optional[dict]:
-    """Handles the packet and returns an optional response packet"""
-
-    Log.trace(f"Handling packet from {client}: {packet}")
+def _handle_packet(shove: Shove, client: Client, packet: dict) -> Optional[dict]:
+    """Handles the packet and returns an optional response packet dict"""
 
     if not packet:
         raise InvalidPacket("Packet has no information")
@@ -123,5 +119,5 @@ def _handle(shove: Shove, client: Client, packet: dict) -> Optional[dict]:
             "username": username
         }
 
-    raise InvalidPacket(f"Failed handling packet model: {packet['model']}")
+    raise InvalidPacket(f"Failed handling packet with model: {packet['model']}")
 

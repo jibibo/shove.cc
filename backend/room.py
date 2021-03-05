@@ -1,6 +1,5 @@
 from convenience import *
 from player import Player
-from room_handler_thread import RoomHandlerThread
 from base_game import BaseGame
 
 
@@ -14,9 +13,6 @@ class Room:
         self.game: BaseGame = server.get_default_game()(table=self)
         self.n_seats = 10
         self.seats_players = dict.fromkeys(range(1, self.n_seats + 1))
-
-        RoomHandlerThread(self).start()
-
         Log.info(f"Created room {self}")
 
     def __repr__(self):

@@ -6,8 +6,8 @@ from flask_socketio import SocketIO
 
 from convenience import *
 from shove import Shove
-from packet_sending import PacketSenderThread
-from packet_handling import PacketHandlerThread
+from packet_sending import PacketSendingThread
+from packet_handler import PacketHandlerThread
 
 
 HOST = "0.0.0.0"
@@ -25,6 +25,7 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", logger=LOG_REQUESTS, engineio_logger=LOG_ENGINEIO)
 updated_socketio_thread_name = False
 global shove
+n_packets_received = 0
 
 
 # Flask requests
@@ -61,10 +62,12 @@ def on_error(e):
 @socketio.on("message")
 def on_message(packet: dict):  # all sent messages should always be a model-containing packet
     update_socketio_thread_name()
+    global n_packets_received
+    n_packets_received += 1
     sender_sid = request.sid
     client = shove.get_client(sender_sid)
-    Log.debug(f"Received packet: {packet}")
-    shove.incoming_packets_queue.put((client, packet))
+    Log.debug(f"Received packet #{n_packets_received}")
+    PacketHandlerThread(shove, client, packet, n_packets_received).start()
 
 
 def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to be changed easily
@@ -75,14 +78,9 @@ def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to b
         updated_socketio_thread_name = True
 
 
-if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':  # runs when run by Werkzeug subprocess
+if __name__ == '__main__':
     Log.start_file_writer_thread()
     shove = Shove(socketio)
-    PacketHandlerThread(shove).start()
-    PacketSenderThread(shove, socketio).start()
+    PacketSendingThread(shove, socketio).start()
     Log.info(f"Starting SocketIO on port {PORT}")
-    socketio.run(app, host=HOST, port=PORT, debug=True, log_output=LOG_REQUESTS, use_reloader=False)
-
-else:  # runs the first time, before Werkzeug starts subprocess
-    Log.trace("Starting reloader child process")
-    socketio.run(app, host=HOST, port=PORT, debug=True, log_output=LOG_REQUESTS)  # todo doesn't work with use_reloader wtf?
+    socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_REQUESTS, use_reloader=False)
