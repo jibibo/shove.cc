@@ -11,30 +11,36 @@ import RoomsList from "./components/RoomsList";
 import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
 
+import "./index.css";
+
 function App() {
     const { user, room } = useContext(GlobalContext);
     initSocket();
 
     return (
-        <div>
-            <Header />
-            <ConnectionStatus />
+        <>
+        <Header />
+        <div className="container">
+            <div>
+                <ConnectionStatus />
 
-            {!user ? <LogInForm /> : ""}
+                {!user ? <LogInForm /> : ""}
 
-            {!room ? (
-                <>
-                    <RoomsList />
-                    <JoinRoomForm />
-                </>
-            ) : (
-                ""
-            )}
-            <br />
-            <MessageBox />
+                {!room ? (
+                    <>
+                        <RoomsList />
+                        <JoinRoomForm />
+                    </>
+                ) : (
+                    ""
+                )}
+                <br />
+                <MessageBox />
 
-            {/* {card ? <img alt="jc" src={`./games/holdem/${card}.svg`} /> : ""} */}
+                {/* {card ? <img alt="jc" src={`./games/holdem/${card}.svg`} /> : ""} */}
+            </div>
         </div>
+        </>
     );
 }
 
