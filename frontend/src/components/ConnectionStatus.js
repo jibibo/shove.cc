@@ -9,7 +9,7 @@ let deaf = true;
 function ConnectionStatus() {
     const [status, setStatus] = useState({
         text: "Ready to connect",
-        color: "yellow",
+        color: "#999622",
     });
 
     if (deaf) {

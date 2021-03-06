@@ -1,9 +1,10 @@
+
 .message-box {
     background-color: rgb(53, 61, 68);
     border-radius: 5px 5px 0px 0px;
     word-break: break-all;
     overflow-y: scroll;
-    max-width: 500px;
+    width: 500px;
     max-height: 500px;
 }
 

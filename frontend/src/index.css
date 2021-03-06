@@ -5,6 +5,8 @@ body {
     padding: 0;
     box-sizing: border-box;
     font-family: Arial, sans-serif;
+    background-color: rgb(32, 32, 44);
+    color: white;
 }
 
 .container {

@@ -1,5 +1,6 @@
 :root {
-    --main-nav-color: #222222;
+    --main-nav-color: rgb(23, 23, 41);
+
 }
 
 header {
@@ -8,6 +9,7 @@ header {
     justify-content: space-between;
     padding: 5px 0;
     margin-bottom: 15px;
+    border-radius: 0 10px;
 }
 
 header h3 {

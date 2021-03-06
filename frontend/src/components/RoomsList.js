@@ -4,6 +4,8 @@ import { socket, sendPacket } from "../connection";
 
 import { GlobalContext } from "./GlobalContext";
 
+import "./RoomsList.css";
+
 let deaf = true;
 
 function RoomsList() {
@@ -36,7 +38,15 @@ function RoomsList() {
             {roomsList.map((room, i) => {
                 return (
                     <div className="room-list-entry" key={i}>
-                        <p key={i}>{room.name}</p>
+                        <div className="room-info">
+                            <div className="room-name">
+                                <p>Room name: </p>
+                                <p style={{ textIndent: 5 }}>{room.name}</p>
+                            </div>
+                            <div className="room-players">
+                                <p>Players: <code>{room.players}/{room.max_players}</code></p>
+                            </div>
+                        </div>
                         <button
                             onClick={() => {
                                 sendPacket("join_room", {
@@ -44,7 +54,7 @@ function RoomsList() {
                                 });
                             }}
                         >
-                            Join room {room.name}!
+                            Join room!
                         </button>
                     </div>
                 );

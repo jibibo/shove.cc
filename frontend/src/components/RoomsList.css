@@ -1,0 +1,42 @@
+.room-list-entry {
+    width: 50%;
+    display: flex;
+    justify-content: space-between;
+    background-color: rgb(42, 49, 54);
+    border-radius: 5px;
+    margin: 5px 0;
+}
+
+.room-info {
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(29, 34, 37);
+    padding: 0 10px;
+}
+
+.room-name { display: flex }
+
+.room-name p { font-size: 14px; margin: 10px 0; }
+
+.room-players {
+    display: flex;
+    flex-direction: row;
+}
+
+.room-players > p { font-size: 14px; margin: 10px 0; }
+
+.room-list-entry button {
+    font-weight: bold;
+    padding: 10px;
+    background-color: rgb(42, 49, 54);
+    border: 2px solid white;
+    color: white;
+    border-radius: 0 5px 5px 0;
+    transition: background ease-out 0.25s;
+}
+
+.room-list-entry button:hover {
+    color: black;
+    background: white;
+    cursor: pointer;
+}

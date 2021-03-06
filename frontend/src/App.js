@@ -35,7 +35,7 @@ function App() {
                     ""
                 )}
                 <br />
-                <MessageBox />
+                <MessageBox/>
 
                 {/* {card ? <img alt="jc" src={`./games/holdem/${card}.svg`} /> : ""} */}
             </div>

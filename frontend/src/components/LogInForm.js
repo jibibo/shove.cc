@@ -4,6 +4,8 @@ import { sendPacket, socket } from "../connection";
 
 import { GlobalContext } from "./GlobalContext";
 
+import "./LoginForm.css";
+
 let deaf = true;
 
 const LogInForm = () => {
@@ -34,7 +36,6 @@ const LogInForm = () => {
 
     return (
         <div className="log-in-form">
-            Log in:
             <form onSubmit={onSubmit}>
                 <input
                     autoFocus

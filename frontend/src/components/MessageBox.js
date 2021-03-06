@@ -78,8 +78,6 @@ function MessageBox() {
 
     return (
         <div className="messages-container">
-            Messages:
-
                 <div ref={messageBox} className="message-box">
                     {messages.map((message, i) => 
                         (
@@ -90,9 +88,8 @@ function MessageBox() {
                         )
                     )}
                 </div>
-
             <form className="message-input" onSubmit={sendMessage}>
-                <input type="textarea" onChange={(event) => setMessage(event.target.value)} value={message} />
+                <input type="textarea" onChange={(event) => setMessage(event.target.value)} value={message} placeholder="Message"/>
             </form>
             
         </div>

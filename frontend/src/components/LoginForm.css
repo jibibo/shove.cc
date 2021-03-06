@@ -1,0 +1,29 @@
+.log-in-form form {
+    display: flex;
+    flex-direction: column;
+}
+
+.log-in-form input {
+    color: white;
+    margin: 5px 0;
+    font-weight: bold;
+    background-color: rgb(42, 49, 54);
+    border: none;
+    padding: 10px 0;
+    text-indent: 10px;
+    transition: outline ease-out 0.25s;
+}
+
+.log-in-form input::placeholder {
+    opacity: 0.8;
+}
+
+.log-in-form input:focus {
+    outline: 1px solid rgb(255, 255, 255);
+}
+
+.log-in-form :nth-child(3) {
+    color: white;
+    background-color: rgb(22, 27, 31);
+    
+}
