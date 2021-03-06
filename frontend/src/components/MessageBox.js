@@ -1,30 +1,39 @@
-import { useContext, useEffect } from "react";
-import { socket } from "../connection";
+import { useState, useContext, useEffect } from "react";
+import { sendPacket, socket } from "../connection";
 import { GlobalContext } from "./GlobalContext";
 
-let deaf = true;
+import "./MessageBox.css";
 
 function MessageBox() {
-    const { messages, setMessages } = useContext(GlobalContext);
+    
+    const { messages, setMessages, user } = useContext(GlobalContext);
+
+    const [ message, setMessage ] = useState(""); 
 
     console.log("MessageBox()");
 
     function addMessage(text) {
-        setMessages((messages) => [text, ...messages]);
+        setMessages((messages) => [...messages, text]);
+    }
+
+    function sendMessage(event) {
+        event.preventDefault();
+        console.log(user)
+        sendPacket("chat_message", {
+            username: user,
+            content: message
+        });
+
+        setMessage("");
+
     }
 
     useEffect(() => {
-        // if (deaf) {
-        deaf = false;
-
-        // socket.on("connect_error", () => {
-        //     addMessage("test");
-        // })
 
         socket.on("chat_message", (packet) => {
             console.debug("> MessageBox chat_message", packet);
             addMessage(
-                "Message from " + packet["username"] + ": " + packet["content"]
+                packet["username"] + ": " + packet["content"]
             );
         });
 
@@ -64,9 +73,20 @@ function MessageBox() {
     return (
         <>
             Messages:
-            {messages.map((message, i) => (
-                <p key={i}>{message}</p>
-            ))}
+            <div className="message-box">
+            {messages.map((message, i) => 
+                (
+                    <div className="message" key={i}>
+                        <p>{message}</p>
+                    </div>
+                )
+            )}
+            </div>
+            
+            <form onSubmit={sendMessage}>
+                <input type="textarea" onChange={(event) => setMessage(event.target.value)} value={message} />
+            </form>
+            
         </>
     );
 }

@@ -1,0 +1,22 @@
+.message-box {
+    background-color: rgb(53, 61, 68);
+    height: 300px;
+    border-radius: 5px;
+    overflow-wrap: break-word;
+    max-width: 500px;
+    max-height: 300px;
+}
+
+.message {
+    background-color: rgb(42, 49, 54);
+    border-radius: 0px 5px 5px 0px;
+    margin-top: 5px
+}
+
+.message p {
+    margin: 0;
+    margin-left: 15px;
+    color: white;
+    font-weight: normal;
+    margin: none;
+}
