@@ -12,6 +12,7 @@ import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
 
 import "./index.css";
+import Room from "./components/Room";
 
 function App() {
 
@@ -30,9 +31,9 @@ function App() {
         <Header />
         <div className="container">
             {
-                width < 650 ? "ROTATE YOUR PHONE! 😡" : (
-                    <img src="./games/holdem/table.png">
-                    </img>
+                width < 650 ? "ROTATE YOUR PHONE! 😡" :
+                (
+                    <Room />
                 )
             }
             <div>
