@@ -8,15 +8,19 @@ function MessageBox() {
     const { messages, setMessages } = useContext(GlobalContext);
 
     console.log("MessageBox()");
+
     function addMessage(text) {
-        const newMessages = [...messages];
-        newMessages.push(text);
-        console.log(newMessages);
-        setMessages(newMessages);
+        
+        setMessages(messages => [text, ...messages])
+
     }
 
     if (deaf) {
         deaf = false;
+
+        socket.on("connect_error", () => {  
+            addMessage("test");
+        })
 
         socket.on("chat_message", (packet) => {
             console.debug("> MessageBox chat_message", packet);
