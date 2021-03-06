@@ -17,7 +17,7 @@ function Header() {
                     Currently in room: <b>{room}</b>
                 </h3>
             </div>
-            <div>
+            <div className="header-button-container">
                 <button className="header-button">
                     {user ? "Log out" : "Log in"}
                 </button>
