@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 
 import { initSocket } from "./connection";
 
@@ -14,13 +14,27 @@ import Header from "./components/Header";
 import "./index.css";
 
 function App() {
+
+    const [ width, setWidth ] = useState(window.innerWidth);
+
+    useEffect(() => {
+        window.addEventListener("resize", () => {
+            setWidth(window.innerWidth);
+        })
+    })
+    
     const { user, room } = useContext(GlobalContext);
     initSocket();
-
     return (
         <>
         <Header />
         <div className="container">
+            {
+                width < 650 ? "ROTATE YOUR PHONE! 😡" : (
+                    <img src="./games/holdem/table.png">
+                    </img>
+                )
+            }
             <div>
                 <ConnectionStatus />
 
@@ -31,10 +45,7 @@ function App() {
                         <RoomsList />
                         <JoinRoomForm />
                     </>
-                ) : (
-                    ""
-                )}
-                <br />
+                ) : null }
                 <MessageBox/>
 
                 {/* {card ? <img alt="jc" src={`./games/holdem/${card}.svg`} /> : ""} */}
