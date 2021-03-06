@@ -1,12 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import { socket } from "../connection";
 
+let deaf = true;
+
 function ConnectionStatus() {
-    const [status, setStatus] = useState("No connection");
+    const [status, setStatus] = useState("Ready to connect");
     const [sid, setSid] = useState();
 
-    useEffect(() => {
+    if (deaf) {
+        deaf = false;
+
         socket.on("connect", () => {
             console.debug("> ConnectionStatus connect event");
             setStatus("Connected!");
@@ -26,11 +30,7 @@ function ConnectionStatus() {
                 setSid(packet["sid"]);
             }
         });
-
-        return () => {
-            socket.off("client_connected");
-        };
-    });
+    }
 
     return (
         <div className="website-status">

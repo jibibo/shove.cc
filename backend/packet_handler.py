@@ -22,7 +22,7 @@ class PacketHandlerThread(threading.Thread):
         self.packet = packet
 
     def run(self):
-        Log.trace(f"Handling {self.model} packet from {self.client}: {self.packet}")
+        Log.trace(f"Handling packet {self.model} from {self.client}: {self.packet}")
 
         try:
             response = _handle_packet(self.shove, self.client, self.model, self.packet)
@@ -70,12 +70,6 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
             }
 
     if model == "join_room":
-        # # temporary
-        # username = packet["room_name"]
-        # account_data = shove.get_account_data(username=username)
-        # Log.test(f"match {account_data}")
-
-        # original
         room_name = packet["room_name"]
         room = shove.get_room(room_name)
 
@@ -94,11 +88,19 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
 
     if model == "log_in":
         username = packet["username"]
-        password = packet["password"]
+        password = packet["password"]  # todo matching password check
+        account_data = shove.get_account_data(username=username)
+
+        if account_data:
+            client.log_in(account_data)
+            return "log_in_status", {
+                "success": True,
+                "username": username
+            }
 
         return "log_in_status", {
             "success": False,
-            "reason": "enter reason here",
+            "reason": "user with username not found",
             "username": username
         }
 
@@ -108,7 +110,7 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
 
         return "register_status", {
             "success": False,
-            "reason": "bad",
+            "reason": "not implemented",
             "username": username
         }
 

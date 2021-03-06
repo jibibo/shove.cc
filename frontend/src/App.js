@@ -5,7 +5,6 @@ import { initSocket } from "./connection";
 import { GlobalContext } from "./components/GlobalContext";
 
 import ConnectionStatus from "./components/ConnectionStatus";
-import RegisterForm from "./components/RegisterForm";
 import LogInForm from "./components/LogInForm";
 import JoinRoomForm from "./components/JoinRoomForm";
 import RoomsList from "./components/RoomsList";
@@ -13,8 +12,7 @@ import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
 
 function App() {
-    // const [card, setCard] = useState();
-    const { user, setUser } = useContext(GlobalContext);
+    const { user, room } = useContext(GlobalContext);
     initSocket();
 
     return (
@@ -22,20 +20,16 @@ function App() {
             <Header />
             <ConnectionStatus />
 
-            {!user ? (
+            {!user ? <LogInForm /> : ""}
+
+            {!room ? (
                 <>
-                    <LogInForm />
-                    <RegisterForm />
+                    <RoomsList />
+                    <JoinRoomForm />
                 </>
             ) : (
-                "Signed in as:" + user
+                ""
             )}
-
-            <RoomsList />
-            <JoinRoomForm />
-            <button onClick={() => setUser("julian")}>
-                sign in yh? {user}
-            </button>
             <br />
             <MessageBox />
 

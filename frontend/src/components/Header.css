@@ -8,6 +8,7 @@ header {
 header h3 {
     color: white;
     margin: 5px;
+    font-weight: normal;
 }
 
 .header-button {

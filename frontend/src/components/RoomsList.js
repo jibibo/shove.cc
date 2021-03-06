@@ -1,27 +1,33 @@
-import { useState, useEffect } from "react";
+import { useState, useContext } from "react";
 
 import { socket, sendPacket } from "../connection";
 
+import { GlobalContext } from "./GlobalContext";
+
+let deaf = true;
+
 function RoomsList() {
     const [roomsList, setRoomsList] = useState([]);
+    const { setRoom } = useContext(GlobalContext);
 
-    useEffect(() => {
+    if (deaf) {
+        deaf = false;
+
         socket.on("connect", () => {
             console.debug("> RoomsList connect event");
             sendPacket("get_rooms", {
                 properties: ["name"],
             });
         });
-
         socket.on("room_list", (packet) => {
             console.debug("> RoomsList room_list", packet);
             setRoomsList(packet["rooms"]);
         });
-
-        return () => {
-            socket.off("room_list");
-        };
-    });
+        socket.on("join_room_status", (packet) => {
+            console.debug("> RoomsList join_room_status", packet);
+            setRoom(packet["room_name"]);
+        });
+    }
 
     return (
         <div className="rooms-list">

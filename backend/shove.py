@@ -5,18 +5,29 @@ from games.holdem import Holdem
 
 
 def get_all_account_data():  # should be a generator if many files
-    all_account_data = []
-    Log.test("get_all_account_data()")
-    for filename in os.listdir(f"{os.getcwd()}/backend/accounts"):
-        if os.path.isfile(f"{os.getcwd()}/backend/accounts/{filename}"):
-            with open(f"{os.getcwd()}/backend/accounts/{filename}", "r") as f:
-                try:
-                    data = json.load(f)
-                except BaseException as ex:
-                    Log.fatal(f"UNHANDLED {type(ex).__name__}", exception=ex)
-                    continue
-
-                all_account_data.append(data)
+    all_account_data = [{
+        "username": "a",
+        "password": "123"
+    }, {
+        "username": "b",
+        "password": "123"
+    }, {
+        "username": "c",
+        "password": "123"
+    }, {
+        "username": "d",
+        "password": "123"
+    }]
+    # for filename in os.listdir(f"{os.getcwd()}/backend/accounts"):
+    #     if os.path.isfile(f"{os.getcwd()}/backend/accounts/{filename}"):
+    #         with open(f"{os.getcwd()}/backend/accounts/{filename}", "r") as f:
+    #             try:
+    #                 data = json.load(f)
+    #             except BaseException as ex:
+    #                 Log.fatal(f"UNHANDLED {type(ex).__name__}", exception=ex)
+    #                 continue
+    #
+    #             all_account_data.append(data)
 
     return all_account_data
 
@@ -51,7 +62,7 @@ class Shove:
         for account_data in get_all_account_data():
             Log.test(account_data)
             if account_data[k] == v:
-                Log.trace(f"Account data {account_data} matched with {k}={v}")
+                Log.trace(f"Account data matched with {k}={v}: {account_data}")
                 return account_data
 
         Log.trace(f"No account data matched with {k}={v}")
@@ -154,7 +165,7 @@ class Shove:
                 clients.remove(skip)
 
             if not clients:
-                Log.trace(f"Skipping outgoing {model} packet with no recipients: {packet} ")
+                Log.trace(f"Skipping outgoing packet {model} with no recipients: {packet} ")
                 return
 
             self.outgoing_packets_queue.put((clients, model, packet, is_response))

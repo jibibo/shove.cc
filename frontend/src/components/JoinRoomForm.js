@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import { sendPacket } from "../connection";
 
 function JoinRoomForm() {
