@@ -8,7 +8,9 @@ function initSocket() {
     }
 
     console.debug("Initializing socket");
-    socket = io.connect(document.domain + ":777");
+    socket = io(document.domain + ":777", {
+        timeout: 1000,
+    });
 }
 
 function sendPacket(model, packet) {
