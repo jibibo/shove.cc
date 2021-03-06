@@ -1,22 +1,48 @@
 .message-box {
     background-color: rgb(53, 61, 68);
-    height: 300px;
-    border-radius: 5px;
-    overflow-wrap: break-word;
+    border-radius: 5px 5px 0px 0px;
+    word-break: break-all;
+    overflow-y: scroll;
     max-width: 500px;
-    max-height: 300px;
+    max-height: 500px;
+}
+
+.message-box::-webkit-scrollbar {
+    display: none;
 }
 
 .message {
+    display: flex;
+    justify-content: left;
+    align-items: flex-start;
     background-color: rgb(42, 49, 54);
     border-radius: 0px 5px 5px 0px;
     margin-top: 5px
 }
 
+.message img {
+    margin: 5px 5px;
+    width: 30px;
+}
+
 .message p {
+    font-size: 12px;
     margin: 0;
     margin-left: 15px;
     color: white;
     font-weight: normal;
     margin: none;
+}
+
+.message-input input {
+    background-color: rgb(29, 34, 37);
+    color: white;
+    overflow-y: scroll;
+    text-indent: 10px;
+    border-radius: 0px 0px 5px 5px;
+    padding: 10px 0px;
+    outline: none;
+    border: none;
+    width: 200px;
+    width: 100%;
 }
