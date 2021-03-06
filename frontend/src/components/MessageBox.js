@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect } from "react";
 import { socket } from "../connection";
 import { GlobalContext } from "./GlobalContext";
 
@@ -10,17 +10,16 @@ function MessageBox() {
     console.log("MessageBox()");
 
     function addMessage(text) {
-        
-        setMessages(messages => [text, ...messages])
-
+        setMessages((messages) => [text, ...messages]);
     }
 
-    if (deaf) {
+    useEffect(() => {
+        // if (deaf) {
         deaf = false;
 
-        socket.on("connect_error", () => {  
-            addMessage("test");
-        })
+        // socket.on("connect_error", () => {
+        //     addMessage("test");
+        // })
 
         socket.on("chat_message", (packet) => {
             console.debug("> MessageBox chat_message", packet);
@@ -28,6 +27,7 @@ function MessageBox() {
                 "Message from " + packet["username"] + ": " + packet["content"]
             );
         });
+
         socket.on("client_connected", (packet) => {
             console.debug("> MessageBox client_connected", packet);
             if (packet["you"]) {
@@ -36,10 +36,12 @@ function MessageBox() {
                 addMessage("Someone connected: " + packet["sid"]);
             }
         });
+
         socket.on("client_disconnected", (packet) => {
             console.debug("> MessageBox client_disconnected", packet);
             addMessage("Someone disconnected: " + packet["sid"]);
         });
+
         socket.on("join_room_status", (packet) => {
             console.debug("> MessageBox join_room_status", packet);
             if (packet["success"]) {
@@ -48,6 +50,7 @@ function MessageBox() {
                 addMessage("Failed to join " + packet["room_name"]);
             }
         });
+
         socket.on("log_in_status", (packet) => {
             console.debug("> MessageBox log_in_status", packet);
             if (packet["success"]) {
@@ -56,7 +59,7 @@ function MessageBox() {
                 addMessage("Failed to sign in as " + packet["username"]);
             }
         });
-    }
+    }, [socket]);
 
     return (
         <>

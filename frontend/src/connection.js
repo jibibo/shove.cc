@@ -13,7 +13,7 @@ function initSocket() {
 
 function sendPacket(model, packet) {
     if (socket === undefined) {
-        console.error(
+        console.warn(
             "Tried to send packet with no connection: " + model,
             packet
         );
