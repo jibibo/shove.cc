@@ -15,9 +15,9 @@ function Room() {
                 <div className="player player-9"></div>
                 <div className="player player-10"></div>
             </div>
-            <img src="./games/holdem/table.png" />
+            <img alt="table" src="./games/holdem/table.png" />
         </div>
-    )
+    );
 }
 
 export default Room;

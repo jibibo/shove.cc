@@ -1,5 +1,30 @@
 :root {
-    --avatar-size: 25px;
+    --margin: 40px;
+    --table-image-height: 312px;
+    --avatar-size: 50px;
+
+    --margin-double: calc(var(--margin) * 2);
+    --avatar-size-half: calc(var(--avatar-size) / 2);
+    --table-image-height-half: calc(var(--table-image-height) / 2);
+
+    --row-1: 0;
+    --row-2: calc(
+        var(--table-image-height-half) - var(--avatar-size-half) - 30px
+    );
+    --row-3: calc(
+        var(--table-image-height-half) + var(--avatar-size-half) + 30px
+    );
+    --row-4: calc(var(--table-image-height) + var(--margin));
+
+    --column-1: calc(7% - var(--avatar-size-half));
+    --column-2: calc(25% - var(--avatar-size-half));
+    --column-3: calc(50% - var(--avatar-size-half));
+    --column-4: calc(75% - var(--avatar-size-half));
+    --column-5: calc(93% - var(--avatar-size-half));
+}
+
+.table img {
+    margin: var(--margin);
 }
 
 .players {
@@ -9,57 +34,57 @@
 .player {
     position: absolute;
     background-color: white;
-    width: 50px;
-    height: 50px;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
     border-radius: 50%;
 }
 
 .player-1 {
-    left: 50%;
+    left: var(--column-3);
+    top: var(--row-1);
 }
 
 .player-2 {
-    left: 73%;
+    left: var(--column-4);
+    top: var(--row-1);
 }
 
 .player-3 {
-    left: 90%;
-    top: 80px;
+    left: var(--column-5);
+    top: var(--row-2);
 }
 
 .player-4 {
-    left: 90%;
-    top: 200px;
+    left: var(--column-5);
+    top: var(--row-3);
 }
 
 .player-5 {
-    left: 73%;
-    top: 260px;
+    left: var(--column-4);
+    top: var(--row-4);
 }
 
 .player-6 {
-    left: 50%;
-    top: 260px;
+    left: var(--column-3);
+    top: var(--row-4);
 }
 
 .player-7 {
-    left: 27%;
-    top: 260px;
+    left: var(--column-2);
+    top: var(--row-4);
 }
 
 .player-8 {
-    right: 90%;
-    top: 200px;
+    left: var(--column-1);
+    top: var(--row-3);
 }
 
 .player-9 {
-    left: calc(10% - 25px);
-    top: 80px; 
+    left: var(--column-1);
+    top: var(--row-2);
 }
 
 .player-10 {
-    left: calc(27% - 50px);
+    left: var(--column-2);
+    top: var(--row-1);
 }
-
-
-

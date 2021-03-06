@@ -79,7 +79,16 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
             }
 
     if model == "join_room":
+        username = packet["username"]
         room_name = packet["room_name"]
+
+        if not username:
+            return "join_room_status", {
+                "success": True,
+                "reason": "not logged in",
+                "room_name": room_name
+            }
+
         room = shove.get_room(room_name)
 
         if room:
@@ -92,7 +101,6 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
         return "join_room_status", {
             "success": False,
             "reason": "enter reason here",
-            "room_name": room_name
         }
 
     if model == "log_in":

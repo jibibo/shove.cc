@@ -1,5 +1,4 @@
 .room-list-entry {
-    width: 50%;
     display: flex;
     justify-content: space-between;
     background-color: rgb(42, 49, 54);
@@ -8,22 +7,26 @@
 }
 
 .room-info {
-    display: flex;
+    display: inline;
     flex-direction: column;
     background-color: rgb(29, 34, 37);
     padding: 0 10px;
 }
 
-.room-name { display: flex }
-
-.room-name p { font-size: 14px; margin: 10px 0; }
+.room-name p {
+    font-size: 14px;
+    margin: 10px 0;
+}
 
 .room-players {
     display: flex;
     flex-direction: row;
 }
 
-.room-players > p { font-size: 14px; margin: 10px 0; }
+.room-players p {
+    font-size: 14px;
+    margin: 10px 0;
+}
 
 .room-list-entry button {
     font-weight: bold;

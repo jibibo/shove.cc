@@ -6,52 +6,42 @@ import { GlobalContext } from "./components/GlobalContext";
 
 import ConnectionStatus from "./components/ConnectionStatus";
 import LogInForm from "./components/LogInForm";
-import JoinRoomForm from "./components/JoinRoomForm";
 import RoomsList from "./components/RoomsList";
 import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
 
-import "./index.css";
+import "./App.css";
 import Room from "./components/Room";
 
 function App() {
-
-    const [ width, setWidth ] = useState(window.innerWidth);
+    const [width, setWidth] = useState(window.innerWidth);
+    const [height, setHeight] = useState(window.innerHeight);
 
     useEffect(() => {
         window.addEventListener("resize", () => {
             setWidth(window.innerWidth);
-        })
-    })
-    
+            setHeight(window.innerHeight);
+        });
+    });
+
     const { user, room } = useContext(GlobalContext);
     initSocket();
     return (
         <>
-        <Header />
-        <div className="container">
-            {
-                width < 650 ? "ROTATE YOUR PHONE! 😡" :
-                (
-                    <Room />
-                )
-            }
-            <div>
-                <ConnectionStatus />
+            <Header />
 
-                {!user ? <LogInForm /> : ""}
+            <div className="container">
+                {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null}
 
-                {!room ? (
-                    <>
-                        <RoomsList />
-                        <JoinRoomForm />
-                    </>
-                ) : null }
-                <MessageBox/>
+                <div>
+                    <ConnectionStatus />
+                    {user ? null : <LogInForm />}
 
-                {/* {card ? <img alt="jc" src={`./games/holdem/${card}.svg`} /> : ""} */}
+                    {room ? <Room /> : <RoomsList />}
+
+                    <MessageBox />
+                </div>
             </div>
-        </div>
         </>
     );
 }
