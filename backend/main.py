@@ -6,7 +6,7 @@ from flask_socketio import SocketIO
 
 from convenience import *
 from shove import Shove
-from packet_sending import PacketSendingThread
+from packet_sender import PacketSenderThread
 from packet_handler import PacketHandlerThread
 
 
@@ -67,8 +67,8 @@ def on_message(model: str, packet: dict):  # all sent messages should always be 
     n_packets_received += 1
     sender_sid = request.sid
     client = shove.get_client(sender_sid)
-    Log.debug(f"Received packet #{n_packets_received}")
-    PacketHandlerThread(shove, client, model, packet, n_packets_received).start()
+    Log.trace(f"Received packet #{n_packets_received}")
+    shove.incoming_packets_queue.put((client, model, packet, n_packets_received))
 
 
 def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to be changed easily
@@ -82,7 +82,8 @@ def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to b
 if __name__ == "__main__":
     Log.start_file_writer_thread()
     shove = Shove(socketio)
-    PacketSendingThread(shove, socketio).start()
+    PacketSenderThread(shove, socketio).start()
+    PacketHandlerThread(shove).start()
     Log.info(f"Running SocketIO on port {PORT}")
 
     try:

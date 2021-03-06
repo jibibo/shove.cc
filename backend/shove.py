@@ -38,11 +38,12 @@ class Shove:
         self.socketio = socketio
 
         self.clients: List[Client] = []
-        # self.incoming_packets_queue = Queue()  # (Client, packet: dict)
-        self.outgoing_packets_queue = Queue()  # ([Client], model: str, packet: dict, is_response: bool)
+        self._packet_number = 0
+        self.incoming_packets_queue = Queue()  # (Client, model, packet, packet_number)
+        self.outgoing_packets_queue = Queue()  # ([Client], model, packet, is_response)
 
         self.default_game = Holdem
-        self.next_bot_number = 1
+        self._bot_number = 0
         self.rooms: List[Room] = []
         self.reset_rooms()
         # self.rooms[0].add_bots(4)
@@ -90,6 +91,9 @@ class Shove:
         old = self.next_bot_number
         self.next_bot_number += 1
         return old
+
+    def get_next_packet_number(self):
+        old = self._packet_number
 
     def get_room(self, room_name: str) -> Room:
         room_name_formatted = room_name.lower().strip()
@@ -143,7 +147,7 @@ class Shove:
         lines.extend([f"{room}" for room in self.rooms])
         Log.info("\n".join(lines))
 
-    def reset_rooms(self, n_rooms=1):
+    def reset_rooms(self, n_rooms=3):
         Log.info("Resetting rooms")
         self.rooms = []  # todo handle removing clients from room
         for _ in range(n_rooms):

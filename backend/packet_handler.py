@@ -14,39 +14,45 @@ class InvalidPacket(Exception):
 class PacketHandlerThread(threading.Thread):
     """This thread gets created and run to handle a single received packet"""
 
-    def __init__(self, shove, client, model, packet, packet_number):
-        super().__init__(name=f"PacketHandler/{packet_number}", daemon=True)
+    def __init__(self, shove):
+        super().__init__(name=f"PacketHandler", daemon=True)
         self.shove: Shove = shove
-        self.client = client
-        self.model = model
-        self.packet = packet
 
     def run(self):
-        Log.trace(f"Handling packet {self.model} from {self.client}: {self.packet}")
+        Log.trace("Ready")
 
-        try:
-            response = _handle_packet(self.shove, self.client, self.model, self.packet)
+        while True:
+            client, model, packet, packet_number = self.shove.incoming_packets_queue.get()
+            threading.current_thread().setName(f"PacketHandler/{packet_number}")
+            Log.debug(f"Handling packet #{packet_number}: '{model}'\n from: {client}\n packet: {packet}")
 
-        except InvalidPacket as ex:
-            Log.error(f"Invalid packet: {ex}", ex)
-            return
+            try:
+                response = _handle_packet(self.shove, client, model, packet)
 
-        except BaseException as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} caught", ex)
-            return
+            except InvalidPacket as ex:
+                Log.error(f"Invalid packet: {ex}", ex)
+                continue
 
-        if response:
-            model, packet = response
-            self.shove.send_queue(self.client, model, packet, is_response=True)
+            except BaseException as ex:
+                Log.fatal(f"UNHANDLED {type(ex).__name__} caught", ex)
+                continue
+
+            model = "нет!"
+
+            if response:
+                model, packet = response
+                self.shove.send_queue(client, model, packet, is_response=True)
+
+            Log.trace(f"Handled packet #{packet_number}, response: '{model}'")
 
 
 def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
     """Handles the packet and returns an optional response packet dict"""
 
     if not model:
-        raise InvalidPacket("No model provided")
+        raise InvalidPacket("no model provided")
     if not packet:
-        raise InvalidPacket("Packet is empty")
+        raise InvalidPacket("packet is empty")
 
     if model == "chat_message":
         Log.info(f"Message from {packet['username']}: {packet['content']}")
@@ -56,17 +62,20 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
         })
         return
 
-    if model == "hello":
-        return "bye", {
-            "bye": "jc"
-        }
-
     if model == "get_rooms":
         if "name" in packet["properties"]:
-            names = shove.get_all_room_names()
+            # names = shove.get_all_room_names()
+            rooms = []
+            for room in shove.rooms:
+                room_data = {
+                    "name": room.name,
+                    "players": len(room.get_taken_seats()),
+                    "max_players": room.n_seats
+                }
+                rooms.append(room_data)
 
             return "room_list", {
-                "rooms": [{"name": name} for name in names]
+                "rooms": rooms
             }
 
     if model == "join_room":
@@ -114,5 +123,5 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
             "username": username
         }
 
-    raise InvalidPacket(f"Failed handling packet with model: {packet['model']}")
+    raise InvalidPacket(f"unknown (or incomplete handler) model: {packet['model']}")
 
