@@ -81,7 +81,7 @@ def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to b
 
 
 if __name__ == "__main__":
-    print("\"waazzaaaaaap\" - Michael Stevens")
+    print("\"Waazzaaaaaap.\" - Michael Stevens")
     Log.start_file_writer_thread()
     shove = Shove(socketio)
     PacketSenderThread(shove, socketio).start()
