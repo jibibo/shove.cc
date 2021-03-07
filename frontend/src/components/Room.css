@@ -1,26 +1,27 @@
 :root {
-    --margin: 40px;
+    --margin: 50px;
     --table-image-height: 312px;
+    --table-image-width: 645px;
     --avatar-size: 50px;
 
-    --margin-double: calc(var(--margin) * 2);
     --avatar-size-half: calc(var(--avatar-size) / 2);
-    --table-image-height-half: calc(var(--table-image-height) / 2);
-
-    --row-1: 0;
-    --row-2: calc(
-        var(--table-image-height-half) - var(--avatar-size-half) - 30px
+    --halfway-x: calc(
+        var(--table-image-width) / 2 + var(--margin) - var(--avatar-size-half)
     );
-    --row-3: calc(
-        var(--table-image-height-half) + var(--avatar-size-half) + 30px
+    --halfway-y: calc(
+        var(--table-image-height) / 2 + var(--margin) - var(--avatar-size-half)
     );
-    --row-4: calc(var(--table-image-height) + var(--margin));
 
-    --column-1: calc(7% - var(--avatar-size-half));
-    --column-2: calc(25% - var(--avatar-size-half));
-    --column-3: calc(50% - var(--avatar-size-half));
-    --column-4: calc(75% - var(--avatar-size-half));
-    --column-5: calc(93% - var(--avatar-size-half));
+    --row-1: calc(var(--halfway-y) - 175px); /* pct doesnt work? */
+    --row-2: calc(var(--halfway-y) - 80px);
+    --row-3: calc(var(--halfway-y) + 80px);
+    --row-4: calc(var(--halfway-y) + 175px);
+
+    --column-1: calc(var(--halfway-x) - 43.5%);
+    --column-2: calc(var(--halfway-x) - 24%);
+    --column-3: calc(var(--halfway-x));
+    --column-4: calc(var(--halfway-x) + 24%);
+    --column-5: calc(var(--halfway-x) + 43.5%);
 }
 
 .table img {

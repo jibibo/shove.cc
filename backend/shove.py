@@ -170,7 +170,7 @@ class Shove:
                 clients.remove(skip)
 
             if not clients:
-                Log.trace(f"Skipping outgoing {'response' if is_response else 'packet'} '{model}' with no recipients\npacket: {packet}")
+                Log.trace(f"Skipping outgoing {'response' if is_response else 'packet'} '{model}' with no recipients\n packet: {packet}")
                 return
 
             self.outgoing_packets_queue.put((clients, model, packet, is_response))

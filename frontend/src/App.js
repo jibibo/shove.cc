@@ -6,7 +6,7 @@ import { GlobalContext } from "./components/GlobalContext";
 
 import ConnectionStatus from "./components/ConnectionStatus";
 import LogInForm from "./components/LogInForm";
-import RoomsList from "./components/RoomsList";
+import RoomList from "./components/RoomList";
 import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
 
@@ -35,9 +35,10 @@ function App() {
 
                 <div>
                     <ConnectionStatus />
+
                     {user ? null : <LogInForm />}
 
-                    {room ? <Room /> : <RoomsList />}
+                    {room ? <Room /> : <RoomList />}
 
                     <MessageBox />
                 </div>

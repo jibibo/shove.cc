@@ -8,7 +8,7 @@ let deaf = true;
 
 function ConnectionStatus() {
     const [status, setStatus] = useState({
-        text: "Ready to connect",
+        text: "ready to connect",
         color: "#999622",
     });
     const [visible, setVisible] = useState(true);
@@ -23,7 +23,7 @@ function ConnectionStatus() {
         socket.on("connect", () => {
             console.debug("> ConnectionStatus connect event");
             setStatus({
-                text: "Connected!",
+                text: "connected!",
                 color: "green",
             });
             setVisible(true);
@@ -32,7 +32,7 @@ function ConnectionStatus() {
         socket.on("connect_error", () => {
             console.debug("> ConnectionStatus connect_error event");
             setStatus({
-                text: "Error on connect, backend offline?",
+                text: "error on connect, backend offline?",
                 color: "#f8d7da",
             });
             setVisible(true);
@@ -41,7 +41,7 @@ function ConnectionStatus() {
         socket.on("disconnect", (reason) => {
             console.debug("> ConnectionStatus disconnected event", reason);
             setStatus({
-                text: "disconnected" + reason,
+                text: "disconnected: " + reason,
                 color: "#f8d7da",
             });
             setVisible(true);

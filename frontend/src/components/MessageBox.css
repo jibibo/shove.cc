@@ -3,7 +3,7 @@
     border-radius: 5px 5px 0px 0px;
     word-break: break-all;
     overflow-y: scroll;
-    max-height: 500px;
+    max-height: 200px;
 }
 
 .message-box::-webkit-scrollbar {
