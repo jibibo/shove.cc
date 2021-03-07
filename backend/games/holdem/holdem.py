@@ -168,7 +168,7 @@ class Holdem(BaseGame):
             if player["seat"] == seat:
                 return player
 
-        Log.error(f"No player in seat: {seat}")
+        Log.warn(f"No player in seat: {seat}")
 
     def get_seats(self):  # always ordered, as self.players is ordered upon hand start
         return [player["seat"] for player in self.players]
@@ -363,7 +363,7 @@ class Holdem(BaseGame):
 
     def update_buttons(self):
         if len(self.get_seats()) < 2:  # safety check
-            Log.error(f"Ignoring update buttons call with < 2 players")
+            Log.warn(f"Ignoring update buttons call with < 2 players")
             return
 
         Log.debug(f"Updating dealer and blind buttons")

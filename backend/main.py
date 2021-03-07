@@ -54,9 +54,9 @@ def on_disconnect():
 
 # todo BrokenPipeErrors?? check out https://stackoverflow.com/questions/47875007/flask-socket-io-frequent-time-outs
 @socketio.on_error_default
-def on_error(e):
+def on_error(ex_):
     update_socketio_thread_name()
-    Log.fatal(f"UNHANDLED {type(e).__name__} caught", exception=e)
+    Log.fatal(f"UNHANDLED {type(ex_).__name__} caught by socketio.on_error_default", ex_)
 
 
 # todo on connect, receive session cookie from client, check if session token valid, log in as that account
@@ -66,7 +66,7 @@ def on_message(model: str, packet: dict):
     sender_sid = request.sid
     client = shove.get_client(sender_sid)
     packet_number = shove.get_next_packet_number()
-    Log.debug(f"Received packet #{packet_number}\nfrom: {client}\npacket: {packet}")
+    Log.debug(f"Received packet #{packet_number}\n from: {client}\n packet: {packet}")
     shove.incoming_packets_queue.put((client, model, packet, packet_number))
 
 
@@ -94,5 +94,6 @@ if __name__ == "__main__":
 
     try:
         socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)
-    except BaseException as ex:
-        Log.fatal(f"UNHANDLED {type(ex).__name__} on running SocketIO", exception=ex)
+
+    except Exception as ex:
+        Log.fatal(f"UNHANDLED {type(ex).__name__} on socketio.run", ex)

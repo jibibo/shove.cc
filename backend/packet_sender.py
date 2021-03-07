@@ -17,8 +17,8 @@ class PacketSenderThread(threading.Thread):
             try:
                 _send_packet(self.socketio, clients, model, packet, is_response)
 
-            except BaseException as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} on sending packet", ex)
+            except Exception as ex:
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on _send_packet", ex)
                 continue
 
 

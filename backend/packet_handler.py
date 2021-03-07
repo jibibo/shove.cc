@@ -30,11 +30,11 @@ class PacketHandlerThread(threading.Thread):
                 response = _handle_packet(self.shove, client, model, packet)
 
             except InvalidPacket as ex:
-                Log.error(f"Invalid packet: {ex}", ex)
+                Log.error(f"Invalid packet: {ex}")
                 continue
 
-            except BaseException as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} caught", ex)
+            except Exception as ex:
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on _handle_packet", ex)
                 continue
 
             model = "нет!"
@@ -62,20 +62,19 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
         })
         return
 
-    if model == "get_rooms":
+    if model == "get_room_list":
         if "name" in packet["properties"]:
-            # names = shove.get_all_room_names()
-            rooms = []
+            room_list = []
             for room in shove.rooms:
                 room_data = {
                     "name": room.name,
                     "players": len(room.get_taken_seats()),
                     "max_players": room.n_seats
                 }
-                rooms.append(room_data)
+                room_list.append(room_data)
 
             return "room_list", {
-                "rooms": rooms
+                "room_list": room_list
             }
 
     if model == "join_room":
@@ -117,8 +116,7 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
 
         return "log_in_status", {
             "success": False,
-            "reason": "user with username not found",
-            "username": username
+            "reason": "user with username not found"
         }
 
     if model == "register":
@@ -127,8 +125,7 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
 
         return "register_status", {
             "success": False,
-            "reason": "not implemented",
-            "username": username
+            "reason": "not implemented"
         }
 
     raise InvalidPacket(f"unknown (or incomplete handler) model: {packet['model']}")

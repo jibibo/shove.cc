@@ -65,11 +65,10 @@ class Log:
 
         if level[0] >= CONSOLE_LOG_LEVEL[0]:  # check log level for console logging
             with Log.PRINT_LOCK:
-                print(f"{level[2]}[{now_str}][{level[1]}]{Style.RESET_ALL}[{thread_name}] {message}")
+                print(f"{level[2]}[{now_str}][{level[1]}][{thread_name}]{Style.RESET_ALL} {message}")
                 if exception:
-                    # print(f"{Fore.CYAN}", end="")
+                    # traceback.print_exc()
                     traceback.print_exception(type(exception), exception, exception.__traceback__)
-                    # print(f"{Style.RESET_ALL}", end="")
 
         if LOG_TO_FILE:  # file logging doesn't require specific log level
             Log.FILE_WRITING_QUEUE.put((now_str, level, thread_name, message))

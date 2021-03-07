@@ -38,12 +38,12 @@ class Shove:
         self.socketio = socketio
 
         self.clients: List[Client] = []
-        self._next_packet_number = 1
+        self._next_packet_number = 0
         self.incoming_packets_queue = Queue()  # (Client, model, packet)
         self.outgoing_packets_queue = Queue()  # ([Client], model, packet, is_response)
 
         self.default_game = Holdem
-        self._next_bot_number = 1
+        self._next_bot_number = 0
         self.rooms: List[Room] = []
         self.reset_rooms()
         # self.rooms[0].add_bots(4)
@@ -56,17 +56,18 @@ class Shove:
 
     @staticmethod
     def get_account_data(**k_v) -> dict:
+        Log.trace(f"Getting account data with k_v: {k_v}")
+
         if len(k_v) != 1:
-            Log.error(f"Invalid k, v length: {k_v}")
+            raise ValueError(f"invalid k_v length: {k_v}")
 
         k, v = list(k_v.items())[0]
         for account_data in get_all_account_data():
-            Log.test(account_data)
             if account_data[k] == v:
-                Log.trace(f"Account data matched with {k}={v}: {account_data}")
+                Log.trace(f"Account data matched: {account_data}")
                 return account_data
 
-        Log.trace(f"No account data matched with {k}={v}")
+        Log.trace(f"No account data matched")
 
     def get_all_clients(self):
         return self.clients.copy()
@@ -107,7 +108,7 @@ class Shove:
     def new_client(self, sid: str):
         sids = [client.sid for client in self.clients]
         if sid in sids:
-            Log.error(f"Attempted to create new client with existing sid {sid}")  # SHOULDN'T happen
+            Log.error(f"Attempted to create new client with existing sid: {sid}")  # SHOULDN'T happen
             return
 
         client = Client(sid)
@@ -175,7 +176,7 @@ class Shove:
             self.outgoing_packets_queue.put((clients, model, packet, is_response))
 
         except ValueError as ex:
-            Log.error("Internal error on adding outgoing packet to queue", exception=ex)
+            Log.error("Internal error on send_packet", ex)
 
-        except BaseException as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on adding outgoing packet to queue", exception=ex)
+        except Exception as ex:
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on send_packet", ex)

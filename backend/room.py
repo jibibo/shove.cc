@@ -142,4 +142,4 @@ class Room:
             self.game.start()
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on game start", ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on self.game.start", ex)
