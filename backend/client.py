@@ -10,7 +10,7 @@ class Client:
     def __repr__(self):
         return f"<Client {self.sid}, account: {self.account_data}>"
 
-    def log_in(self, account_data):
+    def log_in(self, account_data: dict):
         self.account_data = account_data
         Log.trace(f"{self} logged in")
         return

@@ -14,7 +14,7 @@ HOST = "0.0.0.0"
 PORT = 777
 DEBUG = True
 
-# how much red text in console
+# how much red text in console todo use logging module for proper logging
 LOG_EMITS = False
 LOG_SOCKETIO = False
 LOG_ENGINEIO = False
@@ -25,7 +25,6 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", logger=LOG_EMITS, engineio_logger=LOG_ENGINEIO)
 updated_socketio_thread_name = False
 global shove
-n_packets_received = 0
 
 
 # Flask requests
@@ -60,31 +59,38 @@ def on_error(e):
     Log.fatal(f"UNHANDLED {type(e).__name__} caught", exception=e)
 
 
+# todo on connect, receive session cookie from client, check if session token valid, log in as that account
 @socketio.on("message")
-def on_message(model: str, packet: dict):  # all sent messages should always be a model-containing packet
+def on_message(model: str, packet: dict):
     update_socketio_thread_name()
-    global n_packets_received
-    n_packets_received += 1
     sender_sid = request.sid
     client = shove.get_client(sender_sid)
-    Log.trace(f"Received packet #{n_packets_received}")
-    shove.incoming_packets_queue.put((client, model, packet, n_packets_received))
+    packet_number = shove.get_next_packet_number()
+    Log.debug(f"Received packet #{packet_number}\nfrom: {client}\npacket: {packet}")
+    shove.incoming_packets_queue.put((client, model, packet, packet_number))
 
 
 def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to be changed easily
     global updated_socketio_thread_name
-    if not updated_socketio_thread_name:
-        threading.current_thread().setName("SocketIO")
-        Log.trace("Updated SocketIO thread name")
-        updated_socketio_thread_name = True
+    if updated_socketio_thread_name:
+        return
+
+    threading.current_thread().setName("SocketIO")
+    Log.trace("Updated SocketIO thread name")
+    updated_socketio_thread_name = True
 
 
 if __name__ == "__main__":
+    print("\"waazzaaaaaap\" - Michael Stevens")
     Log.start_file_writer_thread()
     shove = Shove(socketio)
     PacketSenderThread(shove, socketio).start()
     PacketHandlerThread(shove).start()
+
     Log.info(f"Running SocketIO on port {PORT}")
+
+    if DEBUG:
+        Log.warn("*** DEBUG MODE ENABLED ***")
 
     try:
         socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)

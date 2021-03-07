@@ -38,12 +38,12 @@ class Shove:
         self.socketio = socketio
 
         self.clients: List[Client] = []
-        self._packet_number = 0
-        self.incoming_packets_queue = Queue()  # (Client, model, packet, packet_number)
+        self._next_packet_number = 1
+        self.incoming_packets_queue = Queue()  # (Client, model, packet)
         self.outgoing_packets_queue = Queue()  # ([Client], model, packet, is_response)
 
         self.default_game = Holdem
-        self._bot_number = 0
+        self._next_bot_number = 1
         self.rooms: List[Room] = []
         self.reset_rooms()
         # self.rooms[0].add_bots(4)
@@ -88,12 +88,12 @@ class Shove:
         return self.default_game
 
     def get_next_bot_number(self) -> int:
-        old = self.next_bot_number
-        self.next_bot_number += 1
-        return old
+        self._next_bot_number += 1
+        return self._next_bot_number
 
-    def get_next_packet_number(self):
-        old = self._packet_number
+    def get_next_packet_number(self) -> int:
+        self._next_packet_number += 1
+        return self._next_packet_number
 
     def get_room(self, room_name: str) -> Room:
         room_name_formatted = room_name.lower().strip()
@@ -119,12 +119,12 @@ class Shove:
         if not client:
             return
 
-        self.send_queue(client, "client_connected", {
+        self.send_packet(client, "client_connected", {
             "you": True,
             "sid": sid,
             "online_count": len(self.clients)
         })
-        self.send_queue(self.get_all_clients(), "client_connected", {
+        self.send_packet(self.get_all_clients(), "client_connected", {
             "you": False,
             "sid": sid,
             "online_count": len(self.clients)
@@ -137,7 +137,7 @@ class Shove:
 
         self.clients.remove(client)
 
-        self.send_queue(self.get_all_clients(), "client_disconnected", {
+        self.send_packet(self.get_all_clients(), "client_disconnected", {
             "sid": sid,
             "online_count": len(self.clients)
         })
@@ -153,7 +153,7 @@ class Shove:
         for _ in range(n_rooms):
             self.rooms.append(Room(self))
 
-    def send_queue(self, clients: Union[Client, list], model: str, packet: dict, skip: Client = None, is_response=False):
+    def send_packet(self, clients: Union[Client, list], model: str, packet: dict, skip: Client = None, is_response=False):
         try:
             if type(clients) == Client:
                 clients = [clients]
@@ -169,7 +169,7 @@ class Shove:
                 clients.remove(skip)
 
             if not clients:
-                Log.trace(f"Skipping outgoing packet {model} with no recipients: {packet} ")
+                Log.trace(f"Skipping outgoing {'response' if is_response else 'packet'} '{model}' with no recipients\npacket: {packet}")
                 return
 
             self.outgoing_packets_queue.put((clients, model, packet, is_response))

@@ -76,10 +76,10 @@ class Log:
 
     @staticmethod
     def start_file_writer_thread():
-        threading.Thread(target=Log.write_to_log_file_thread, name="LogFileWriter", daemon=True).start()
+        threading.Thread(target=Log._file_writer_thread, name="LogFileWriter", daemon=True).start()
 
     @staticmethod
-    def write_to_log_file_thread():
+    def _file_writer_thread():  # todo broken
         try:
             open(LOG_FILE, "w").close()
             print("Emptied latest log file")

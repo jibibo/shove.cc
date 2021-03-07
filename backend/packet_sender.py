@@ -27,4 +27,4 @@ def _send_packet(socketio, clients, model: str, packet: dict, is_response: bool)
     for sid in sids:
         socketio.emit(model, packet, room=sid)
 
-    Log.trace(f"Sent {'response' if is_response else 'packet'} {model}")
+    Log.trace(f"Sent {'response' if is_response else 'packet'} '{model}'")

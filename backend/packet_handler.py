@@ -24,7 +24,7 @@ class PacketHandlerThread(threading.Thread):
         while True:
             client, model, packet, packet_number = self.shove.incoming_packets_queue.get()
             threading.current_thread().setName(f"PacketHandler/{packet_number}")
-            Log.debug(f"Handling packet #{packet_number}: '{model}'\n from: {client}\n packet: {packet}")
+            Log.trace(f"Handling packet #{packet_number}")
 
             try:
                 response = _handle_packet(self.shove, client, model, packet)
@@ -41,7 +41,7 @@ class PacketHandlerThread(threading.Thread):
 
             if response:
                 model, packet = response
-                self.shove.send_queue(client, model, packet, is_response=True)
+                self.shove.send_packet(client, model, packet, is_response=True)
 
             Log.trace(f"Handled packet #{packet_number}, response: '{model}'")
 
@@ -56,7 +56,7 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
 
     if model == "chat_message":
         Log.info(f"Message from {packet['username']}: {packet['content']}")
-        shove.send_queue(shove.get_all_clients(), "chat_message", {
+        shove.send_packet(shove.get_all_clients(), "chat_message", {
             "username": packet["username"],
             "content": packet["content"]
         })
