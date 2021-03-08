@@ -10,9 +10,8 @@ Some lines of code
 
 ## Credits
 
--   avatar.png: ??
 -   icon.png: based on https://www.onlinewebfonts.com/
--   password_icon.png: https://www.flaticon.com/
+-   icons from: https://www.flaticon.com/
 
 ### Holdem
 
