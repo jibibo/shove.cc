@@ -1,21 +1,67 @@
 import "./Room.css";
 
 function Room() {
+    const seats = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const communityCards = ["Js", "Jh", "Jc", "Jd", "Ac"];
     return (
-        <div className="table">
-            <div className="players">
-                <div className="player player-1"></div>
-                <div className="player player-2"></div>
-                <div className="player player-3"></div>
-                <div className="player player-4"></div>
-                <div className="player player-5"></div>
-                <div className="player player-6"></div>
-                <div className="player player-7"></div>
-                <div className="player player-8"></div>
-                <div className="player player-9"></div>
-                <div className="player player-10"></div>
+        <div className="table no-select">
+            <div className="table-elements">
+                {communityCards.map((card, i) => {
+                    return (
+                        <img
+                            className={
+                                "community-card community-card-" + (i + 1)
+                            }
+                            src={"./games/holdem/cards_small/" + card + ".png"}
+                            alt="card"
+                            key={i}
+                        />
+                    );
+                })}
+
+                {seats.map((seatNumber) => {
+                    return (
+                        <div
+                            className={"player player-" + seatNumber}
+                            key={seatNumber}
+                        >
+                            <img
+                                className="user-avatar"
+                                src="./img/avatar.png"
+                                alt="avatar"
+                            />
+                            <div className="hole-cards">
+                                <img
+                                    className="hole-card"
+                                    src="./games/holdem/cards_small/As.png"
+                                    alt="card"
+                                />
+                                <img
+                                    className="hole-card"
+                                    src="./games/holdem/cards_small/Ah.png"
+                                    alt="card"
+                                />
+                            </div>
+                            <span className="username">User_{seatNumber}</span>
+
+                            <img
+                                className="dealer-button"
+                                src="./games/holdem/dealer_button.svg"
+                                alt="dealer button"
+                            />
+                        </div>
+                    );
+                })}
+
+                <div className="pot-text">
+                    Pots: <b>400</b> <i>200</i> <i>12</i>
+                </div>
             </div>
-            <img alt="table" src="./games/holdem/table.png" />
+            <img
+                className="table-image"
+                alt="table"
+                src="./games/holdem/table.png"
+            />
         </div>
     );
 }
