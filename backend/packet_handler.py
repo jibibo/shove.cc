@@ -23,7 +23,7 @@ class PacketHandlerThread(threading.Thread):
 
         while True:
             client, model, packet, packet_number = self.shove.incoming_packets_queue.get()
-            threading.current_thread().setName(f"PacketHandler/{packet_number}")
+            threading.current_thread().setName(f"PacketHandler/#{packet_number}")
             Log.trace(f"Handling packet #{packet_number}")
 
             try:
@@ -84,7 +84,6 @@ def _handle_packet(shove: Shove, client: Client, model: str, packet: dict) -> Op
         if not username:
             return "join_room_status", {
                 "success": True,
-                "reason": "not logged in",
                 "room_name": room_name
             }
 
