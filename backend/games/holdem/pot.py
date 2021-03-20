@@ -9,10 +9,10 @@ class Pot:
 
         if side_pot_number:
             self.pot_name = f"Side Pot #{side_pot_number}"
-            Log.trace(f"{self.pot_name} created, participants: {participants}")
         else:
             self.pot_name = f"Main Pot"
-            Log.trace(f"{self.pot_name} created")
+
+        Log.trace(f"{self.pot_name} created, participants: {participants}")
 
     def __str__(self):
         return f"'{self.pot_name}'"

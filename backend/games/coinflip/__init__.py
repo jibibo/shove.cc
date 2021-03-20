@@ -1,0 +1,1 @@
+from .coinflip import Coinflip

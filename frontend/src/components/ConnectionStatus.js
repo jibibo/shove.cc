@@ -33,16 +33,16 @@ function ConnectionStatus() {
             console.debug("> ConnectionStatus connect_error event");
             setStatus({
                 text: "error on connect, backend offline?",
-                color: "#f8d7da",
+                color: "darkred",
             });
             setVisible(true);
         });
 
         socket.on("disconnect", (reason) => {
-            console.debug("> ConnectionStatus disconnected event", reason);
+            console.debug("> ConnectionStatus disconnect event:", reason);
             setStatus({
                 text: "disconnected: " + reason,
-                color: "#f8d7da",
+                color: "darkred",
             });
             setVisible(true);
         });

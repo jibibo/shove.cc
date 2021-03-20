@@ -26,6 +26,14 @@ const LogInForm = () => {
     if (deaf) {
         deaf = false;
 
+        socket.on("connect", () => { // auto log in on connect
+            console.debug("> LogInForm connect event");
+            sendPacket("log_in", {
+                username: "a",
+                password: null,
+            });
+        });
+
         socket.on("log_in_status", (packet) => {
             console.debug("> LogInForm log_in_status", packet);
             if (packet["success"]) {

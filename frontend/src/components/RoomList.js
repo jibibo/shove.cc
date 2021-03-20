@@ -42,8 +42,8 @@ function RoomList() {
                     <div className="room-list-entry" key={i}>
                         <div className="room-info">
                             <p>
-                                Name: {room.name} - Players: {room.players}/
-                                {room.max_players}
+                                {room.name} - Users: {room.user_count} /{" "}
+                                {room.max_user_count}
                             </p>
                         </div>
                         <button

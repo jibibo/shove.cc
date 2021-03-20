@@ -1,4 +1,4 @@
-import "./Room.css";
+import "./HoldemRoom.css";
 
 function Room() {
     const seats = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -49,6 +49,20 @@ function Room() {
                                 src="./games/holdem/dealer_button.svg"
                                 alt="dealer button"
                             />
+
+                            <div
+                                className={
+                                    "player-bet player-bet-" + seatNumber
+                                }
+                            >
+                                <img
+                                    className="bet-chip"
+                                    src="./games/holdem/chip.svg"
+                                    alt="bet"
+                                />
+                                {/* see py test file for working formatting*/}
+                                <span>9.99M</span>
+                            </div>
                         </div>
                     );
                 })}

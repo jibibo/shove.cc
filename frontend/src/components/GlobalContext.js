@@ -3,13 +3,23 @@ import { useState, createContext } from "react";
 const GlobalContext = createContext();
 
 function GlobalContextProvider({ children }) {
-    const [user, setUser] = useState("");
-    const [room, setRoom] = useState();
     const [messages, setMessages] = useState([]);
+    const [money, setMoney] = useState();
+    const [room, setRoom] = useState();
+    const [user, setUser] = useState();
 
     return (
         <GlobalContext.Provider
-            value={{ user, setUser, room, setRoom, messages, setMessages }}
+            value={{
+                messages,
+                setMessages,
+                money,
+                setMoney,
+                room,
+                setRoom,
+                user,
+                setUser,
+            }}
         >
             {children}
         </GlobalContext.Provider>

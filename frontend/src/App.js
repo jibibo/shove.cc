@@ -11,11 +11,12 @@ import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
 
 import "./App.css";
-import Room from "./components/Room";
+import Room from "./components/CoinflipRoom";
 
 function App() {
     const [width, setWidth] = useState(window.innerWidth);
     const [height, setHeight] = useState(window.innerHeight);
+    const { user, room } = useContext(GlobalContext);
 
     useEffect(() => {
         window.addEventListener("resize", () => {
@@ -24,8 +25,8 @@ function App() {
         });
     });
 
-    const { user, room } = useContext(GlobalContext);
     initSocket();
+
     return (
         <>
             <Header />

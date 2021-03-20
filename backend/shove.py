@@ -1,23 +1,17 @@
 from convenience import *
-from client import Client
+from user import User
+from account import Account
 from room import Room
-from games.holdem import Holdem
+from games.coinflip import Coinflip
 
 
-def get_all_account_data():  # should be a generator if many files
-    all_account_data = [{
-        "username": "a",
-        "password": "123"
-    }, {
-        "username": "b",
-        "password": "123"
-    }, {
-        "username": "c",
-        "password": "123"
-    }, {
-        "username": "d",
-        "password": "123"
-    }]
+_ = [("a", 1000), ("b", 2000), ("c", 3000), ("d", 4000)]
+ACCOUNTS = [Account(username=u, password="1", money=m) for u, m in _]
+
+
+def get_all_accounts():  # should be a generator if many files
+    return ACCOUNTS
+
     # for filename in os.listdir(f"{os.getcwd()}/backend/accounts"):
     #     if os.path.isfile(f"{os.getcwd()}/backend/accounts/{filename}"):
     #         with open(f"{os.getcwd()}/backend/accounts/{filename}", "r") as f:
@@ -29,64 +23,54 @@ def get_all_account_data():  # should be a generator if many files
     #
     #             all_account_data.append(data)
 
-    return all_account_data
-
 
 class Shove:
     def __init__(self, socketio):
         Log.trace("Initializing Shove")
         self.socketio = socketio
 
-        self.clients: List[Client] = []
-        self._next_packet_number = 0
-        self.incoming_packets_queue = Queue()  # (Client, model, packet)
-        self.outgoing_packets_queue = Queue()  # ([Client], model, packet, is_response)
+        self.incoming_packets_queue = Queue()  # (User, model, packet)
+        self.outgoing_packets_queue = Queue()  # ([User], model, packet, is_response)
 
-        self.default_game = Holdem
+        self._default_game = Coinflip
         self._next_bot_number = 0
-        self.rooms: List[Room] = []
-        self.reset_rooms()
-        # self.rooms[0].add_bots(4)
-        # for i in range(0):
-        #     self.rooms[0].events.put("start")
+        self._next_packet_number = 0
+        self._users: List[User] = []
+        self._rooms: List[Room] = []
 
-        self.selected_table = None
+        self.reset_rooms()
+        # self.rooms[0].add_bot(3)
+        # for i in range(1):
+        #     self.rooms[0].events.put("start")
 
         Log.info("Shove initialized")
 
     @staticmethod
-    def get_account_data(**k_v) -> dict:
-        Log.trace(f"Getting account data with k_v: {k_v}")
+    def get_account(**k_v) -> Account:
+        Log.trace(f"Getting account with k_v: {k_v}")
 
         if len(k_v) != 1:
-            raise ValueError(f"invalid k_v length: {k_v}")
+            raise ValueError(f"invalid k_v length: {len(k_v)}")
 
         k, v = list(k_v.items())[0]
-        for account_data in get_all_account_data():
+        for account_data in get_all_accounts():
             if account_data[k] == v:
-                Log.trace(f"Account data matched: {account_data}")
+                Log.trace(f"Account matched: {account_data}")
                 return account_data
 
-        Log.trace(f"No account data matched")
+        Log.trace(f"No account matched with k_v: {k_v}")
 
-    def get_all_clients(self):
-        return self.clients.copy()
+    def get_room_names(self) -> List[str]:
+        return [room.name for room in self.get_rooms()]
 
-    def get_all_room_names(self):
-        return [room.name for room in self.rooms]
+    def get_rooms(self) -> List[Room]:
+        return self._rooms.copy()
 
-    def get_client(self, sid: str) -> Client:
-        for client in self.clients:
-            if client.sid == sid:
-                return client
-
-        Log.warn(f"Could not find client with sid {sid}")
-
-    def get_clients_count(self):
-        return len(self.clients)
+    def get_all_users(self) -> List[User]:
+        return self._users.copy()
 
     def get_default_game(self):
-        return self.default_game
+        return self._default_game
 
     def get_next_bot_number(self) -> int:
         self._next_bot_number += 1
@@ -98,85 +82,125 @@ class Shove:
 
     def get_room(self, room_name: str) -> Room:
         room_name_formatted = room_name.lower().strip()
-        for room in self.rooms:
+        for room in self.get_rooms():
             if room.name.lower() == room_name_formatted:
                 Log.trace(f"Found room with matching name: {room}")
                 return room
 
         Log.trace("Room with matching name not found")
 
-    def new_client(self, sid: str):
-        sids = [client.sid for client in self.clients]
-        if sid in sids:
-            Log.error(f"Attempted to create new client with existing sid: {sid}")  # SHOULDN'T happen
-            return
+    def get_room_count(self) -> int:
+        return len(self.get_rooms())
 
-        client = Client(sid)
-        self.clients.append(client)
-        return client
+    def get_room_of_user(self, user: User) -> Room:
+        Log.trace(f"Getting room of user {user}")
+
+        for room in self.get_rooms():
+            Log.trace(f"Users in {room}: {room.get_users()}")
+            if user in room.get_users():
+                return room
+
+        Log.trace("User is not in a room")
+
+    def get_user(self, **k_v) -> User:
+        Log.trace(f"Getting user with k_v: {k_v}")
+
+        if len(k_v) != 1:
+            raise ValueError(f"invalid k_v length: {len(k_v)}")
+
+        k, v = list(k_v.items())[0]
+        for user in self.get_all_users():
+            if user.account and user.account[k] == v:
+                Log.trace(f"User matched: {user}")
+                return user
+
+        Log.trace(f"No user matched with k_v: {k_v}")
+
+    def get_user_from_sid(self, sid) -> User:
+        for user in self.get_all_users():
+            if user.sid == sid:
+                return user
+
+        Log.warn(f"No user matched with SID: {sid}")
+
+    def get_user_count(self) -> int:
+        return len(self._users)
+
+    def new_user_from_sid(self, sid: str):
+        sids = [user.sid for user in self._users]
+        if sid in sids:
+            raise ValueError(f"SID already exists: {sid}")  # shouldn't ever happen
+
+        user = User(sid)
+        self._users.append(user)
+        return user
 
     def on_connect(self, sid: str):
-        client = self.new_client(sid)
-        if not client:
+        user = self.new_user_from_sid(sid)
+        if not user:
             return
 
-        self.send_packet(client, "client_connected", {
+        self.send_packet(user, "user_connected", {
             "you": True,
             "sid": sid,
-            "online_count": len(self.clients)
+            "user_count": self.get_user_count()
         })
-        self.send_packet(self.get_all_clients(), "client_connected", {
+
+        self.send_packet(self.get_all_users(), "user_connected", {
             "you": False,
             "sid": sid,
-            "online_count": len(self.clients)
-        }, skip=client)
+            "user_count": self.get_user_count()
+        }, skip=user)
 
     def on_disconnect(self, sid: str):
-        client = self.get_client(sid)
-        if not client:
+        user = self.get_user_from_sid(sid=sid)
+        if not user:
             return
 
-        self.clients.remove(client)
+        self._users.remove(user)
 
-        self.send_packet(self.get_all_clients(), "client_disconnected", {
+        self.send_packet(self.get_all_users(), "user_disconnected", {
             "sid": sid,
-            "online_count": len(self.clients)
+            "user_count": self.get_user_count()
         })
-
-    def print_rooms(self):
-        lines = ["Rooms"]
-        lines.extend([f"{room}" for room in self.rooms])
-        Log.info("\n".join(lines))
 
     def reset_rooms(self, n_rooms=3):
         Log.info("Resetting rooms")
-        self.rooms = []  # todo handle removing clients from room
+        self._rooms = []  # todo handle removing users from room
         for _ in range(n_rooms):
-            self.rooms.append(Room(self))
+            self._rooms.append(Room(self))
 
-    def send_packet(self, clients: Union[Client, list], model: str, packet: dict, skip: Client = None, is_response=False):
+    def send_packet(self, users: Union[User, List[User]], model: str, packet: dict, skip: Union[User, List[User]] = None, is_response=False):
         try:
-            if type(clients) == Client:
-                clients = [clients]
+            if type(users) == User:
+                users = [users]
 
-            elif type(clients) == list:
-                if clients and type(clients[0]) != Client:
-                    raise ValueError(f"List does not contain 'Client' object(s) but {type(clients[0])}")
+            elif type(users) == list:
+                if users and type(users[0]) != User:
+                    raise ValueError(f"'users' does not contain 'User' object(s), but: {type(users[0])}")
 
             else:
-                raise ValueError(f"Invalid 'clients' type: {type(clients)}")
+                raise ValueError(f"Invalid 'users' type: {type(users)}")
 
-            if skip and skip in clients:
-                clients.remove(skip)
+            if skip:
+                if type(skip) == User:
+                    skip = [skip]
 
-            if not clients:
+                elif type(skip) == list:
+                    if skip and type(skip[0]) != User:
+                        raise ValueError(f"'skip' does not contain 'User' object(s), but: {type(users[0])}")
+
+                else:
+                    raise ValueError(f"Invalid 'skip' type: {type(users)}")
+
+                for skip_user in skip:
+                    users.remove(skip_user)
+
+            if not users:
                 Log.trace(f"Skipping outgoing {'response' if is_response else 'packet'} '{model}' with no recipients\n packet: {packet}")
                 return
 
-            self.outgoing_packets_queue.put((clients, model, packet, is_response))
-
-        except ValueError as ex:
-            Log.error("Internal error on send_packet", ex)
+            self.outgoing_packets_queue.put((users, model, packet, is_response))
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on send_packet", ex)

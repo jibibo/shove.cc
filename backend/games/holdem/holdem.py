@@ -1,7 +1,7 @@
 from convenience import *
 from base_game import BaseGame
-from player import Player
 
+from .player import Player
 from .deuces_custom import Card, Deck, Evaluator
 from .pot import Pot
 
@@ -21,8 +21,8 @@ class StreetEnded(Exception):
 
 
 class Holdem(BaseGame):
-    def __init__(self, table):
-        super().__init__(table)
+    def __init__(self, room):
+        super().__init__(room)
 
         self.big_blind_seat = 0
         self.blind_amount = 1
@@ -36,6 +36,8 @@ class Holdem(BaseGame):
         self.pots: List[Pot] = []
         self.small_blind_seat = 0
         self.street = None
+        # self.n_seats = 10
+        # self.seats_players = dict.fromkeys(range(1, self.n_seats + 1))
 
         self.total_elapsed = 0  # testing purposes
 
@@ -61,9 +63,9 @@ class Holdem(BaseGame):
                 Log.trace(f"Set other player's had_action to False")
 
         else:  # todo abstract player object should have connection socket (and Account object?)
-            for connection, player in self.table.shove.connections_players.items():
+            for connection, player in self.room.shove.connections_players.items():
                 if action_player == player:
-                    self.table.shove.outgoing_packets.put((connection, {
+                    self.room.shove.outgoing_packets.put((connection, {
                         "model": "action",
                         "street": self.street,
                         "players": self.players
@@ -173,6 +175,49 @@ class Holdem(BaseGame):
     def get_seats(self):  # always ordered, as self.players is ordered upon hand start
         return [player["seat"] for player in self.players]
 
+    # todo implement
+    # def get_empty_seats(self) -> list:
+    #     empty_seats = []
+    #
+    #     for seat, player in self.seats_players.items():
+    #         if player is None:
+    #             empty_seats.append(seat)
+    #
+    #     return empty_seats
+    #
+    # def get_taken_seats(self) -> list:
+    #     taken_seats = []
+    #
+    #     for seat, player in self.seats_players.items():
+    #         if player:
+    #             taken_seats.append(seat)
+    #
+    #     return taken_seats
+    #
+    # def get_taken_seats_players(self) -> dict:
+    #     taken_seats_players = {}
+    #
+    #     for seat, player in self.seats_players.items():
+    #         if player:
+    #             taken_seats_players[seat] = player
+    #
+    #     return taken_seats_players
+    #
+    # def n_empty_seats(self) -> int:
+    #     return len(self.get_empty_seats())
+    #
+    # def n_taken_seats(self) -> int:
+    #     return len(self.get_taken_seats())
+    #
+    # def n_total_seats(self) -> int:
+    #     total_seats = len(self.seats_players.items())
+    #     return total_seats
+    #
+    # def put_player_in_seat(self, player: Player, seat: int):
+    #     player["seat"] = seat
+    #     self.seats_players[seat] = player  # todo should just be a list of player obj with seat property
+    #     Log.info(f"Put player {player} in seat {seat}")
+
     def handle_event(self, event):
         pass
 
@@ -272,7 +317,15 @@ class Holdem(BaseGame):
             Log.info(f"Community cards: {Card.get_pretty_str(self.community_cards)}")
 
     def start(self):  # todo is only called once (as soon as enough players at table)
-        self.players = sorted([player for player in self.table.seats_players.values()
+        # if self.game.running:
+        #     Log.info("Game already started")
+        #     return
+
+        # if self.n_taken_seats() < Room.MIN_PLAYERS:
+        #     Log.info(f"Not enough players to start: {self.n_taken_seats()}/{self.MIN_PLAYERS}")
+        #     return
+
+        self.players = sorted([player for player in self.room.seats_players.values()
                                if player is not None and
                                player["chips"] > 0],
                               key=lambda p: p["seat"],
@@ -395,3 +448,59 @@ class Holdem(BaseGame):
             self.big_blind_seat = seats[(new_dealer_seat_index + 2) % n_seats]
 
         Log.debug(f"Updated button seats, D: {previous_dealer_seat if previous_dealer_seat else '(not set)'} -> {self.dealer_seat}, SB: {self.small_blind_seat}, BB: {self.big_blind_seat}")
+
+    # todo move commented methods to (abstract) game
+    # def add_bot(self, seat=None) -> int:
+    #     bot_player = Player(bot_number=self.shove.get_next_bot_number())
+    #     seat = self.add_player(bot_player, seat)
+    #     return seat
+    #
+    # def add_bots(self, amount=1):
+    #     added_bots = 0
+    #
+    #     seats = []
+    #     for _ in range(amount):
+    #         seat = self.add_bot()
+    #         if seat:
+    #             seats.append(seat)
+    #             added_bots += 1
+    #
+    #     Log.info(f"Added {added_bots}/{amount} bots to seats {seats}")
+
+    # def add_player(self, client_or_bot, seat=None) -> int:
+    #     """Sets and returns player's seat, 0 or AssertionError if fail"""
+    #
+    #     if self.game.running:
+    #         Log.warn("Can't add player: game running")  # todo add to a queue to join next round
+    #         return 0
+    #
+    #     assert client_or_bot, "no player given"
+
+    # if isinstance(client_or_bot, ConnectedClient):
+    #     assert client_or_bot.player, "User is not logged in"
+    #     player = client_or_bot.player
+    #
+    # else:
+    #     assert client_or_bot.is_bot, "Neither connected user nor bot player provided"
+    #     player = client_or_bot
+
+    # empty_seats = self.get_empty_seats()
+    #
+    # if not empty_seats:
+    #     Log.warn("No seats empty, ignoring call")
+    #     return 0
+    #
+    # if seat:
+    #     if seat in empty_seats:
+    #         Log.trace(f"Given seat {seat} is available")
+    #     else:
+    #         Log.warn(f"Given seat {seat} is taken, choosing random seat")
+    #         seat = random.choice(empty_seats)
+    #
+    # else:
+    #     seat = random.choice(empty_seats)
+    #     Log.trace(f"No seat given, chose random seat {seat}")
+    #
+    # self.put_player_in_seat(client_or_bot, seat)
+    # self.events.put("player_added")
+    # return seat

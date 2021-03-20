@@ -10,23 +10,34 @@ function MessageBox() {
     const { messages, setMessages, user } = useContext(GlobalContext);
 
     const [message, setMessage] = useState("");
+    const [visible, setVisible] = useState(true);
 
     const messageBox = useRef(null);
 
     function addMessage(text) {
-        setMessages((messages) => [...messages, text]);
+        if (visible) {
+            // also gets run after typing "hide"?
+            // console.log("Adding message (visible is true)");
+            setMessages((messages) => [...messages, text]);
 
-        // TODO: why does this work??
+            // TODO: why does this work??
 
-        messageBox.current.scrollTo({
-            top: messageBox.current.scrollHeight,
-            behavior: "smooth",
-        });
+            messageBox.current.scrollTo({
+                top: messageBox.current.scrollHeight,
+                behavior: "smooth",
+            });
+        }
     }
 
-    function sendMessage(event) {
+    function onSubmit(event) {
         event.preventDefault();
-        sendPacket("chat_message", {
+        if (message === "hide") {
+            setVisible(false);
+            console.log("MessageBox is now hidden");
+            return;
+        }
+
+        sendPacket("send_message", {
             username: user,
             content: message,
         });
@@ -75,7 +86,7 @@ function MessageBox() {
         });
     }
 
-    return (
+    return visible ? (
         <div className="messages-container">
             <div ref={messageBox} className="message-box">
                 {messages.map((message, i) => (
@@ -85,7 +96,7 @@ function MessageBox() {
                     </div>
                 ))}
             </div>
-            <form className="message-input" onSubmit={sendMessage}>
+            <form className="message-input" onSubmit={onSubmit}>
                 <input
                     type="textarea"
                     onChange={(event) => setMessage(event.target.value)}
@@ -94,7 +105,7 @@ function MessageBox() {
                 />
             </form>
         </div>
-    );
+    ) : null;
 }
 
 export default MessageBox;

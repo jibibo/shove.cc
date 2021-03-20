@@ -1,5 +1,5 @@
 import eventlet
-eventlet.monkey_patch()  # required, threading with socketio *****
+eventlet.monkey_patch()  # required, threading with socketio is ******
 
 from flask import Flask, request
 from flask_socketio import SocketIO
@@ -7,7 +7,7 @@ from flask_socketio import SocketIO
 from convenience import *
 from shove import Shove
 from packet_sender import PacketSenderThread
-from packet_handler import PacketHandlerThread
+from packet_handler_thread import PacketHandlerThread
 
 
 HOST = "0.0.0.0"
@@ -39,16 +39,18 @@ def get_request_777():
 @socketio.on("connect")
 def on_connect():
     update_socketio_thread_name()
+
     sid = request.sid
-    Log.debug(f"{sid} connected")
+    Log.debug(f"SID {sid} connected")
     shove.on_connect(sid)
 
 
 @socketio.on("disconnect")
 def on_disconnect():
     update_socketio_thread_name()
+
     sid = request.sid
-    Log.debug(f"{sid} disconnected")
+    Log.debug(f"SID {sid} disconnected")
     shove.on_disconnect(sid)
 
 
@@ -56,21 +58,23 @@ def on_disconnect():
 @socketio.on_error_default
 def on_error(ex_):
     update_socketio_thread_name()
+
     Log.fatal(f"UNHANDLED {type(ex_).__name__} caught by socketio.on_error_default", ex_)
 
 
-# todo on connect, receive session cookie from client, check if session token valid, log in as that account
+# todo on connect, receive session cookie from user, check if session token valid, log in as that account
 @socketio.on("message")
 def on_message(model: str, packet: dict):
     update_socketio_thread_name()
+
     sender_sid = request.sid
-    client = shove.get_client(sender_sid)
+    user = shove.get_user_from_sid(sid=sender_sid)
     packet_number = shove.get_next_packet_number()
-    Log.debug(f"Received packet #{packet_number}\n from: {client}\n packet: {packet}")
-    shove.incoming_packets_queue.put((client, model, packet, packet_number))
+    Log.debug(f"Received packet #{packet_number}: '{model}'\n from: {user}\n packet: {packet}")
+    shove.incoming_packets_queue.put((user, model, packet, packet_number))
 
 
-def update_socketio_thread_name():  # SocketIO doesn't let it's thread name to be changed easily
+def update_socketio_thread_name():  # SocketIO doesn't let its thread name to be changed easily
     global updated_socketio_thread_name
     if updated_socketio_thread_name:
         return

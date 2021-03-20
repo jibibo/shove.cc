@@ -97,8 +97,8 @@
 .dealer-button {
     position: absolute;
     width: 25px;
-    top: calc(var(--avatar-size) - 12.5px);
-    left: calc(var(--avatar-size) - 12.5px);
+    bottom: calc(var(--avatar-size) - 25px * 0.75);
+    left: calc(var(--avatar-size) - 25px * 0.75);
 }
 
 .user-avatar {
@@ -168,6 +168,57 @@
 .player-10 {
     left: var(--avatar-column-2);
     top: var(--avatar-row-1);
+}
+
+.player-bet {
+    position: absolute;
+    width: var(--avatar-size);
+    height: 13px;
+}
+
+.player-bet img {
+    position: absolute;
+    left: -7.5px;
+    height: 15px;
+}
+
+.player-bet span {
+    position: absolute;
+    font-size: 13px;
+    width: calc(var(--avatar-size));
+    text-align: center;
+}
+
+.player-bet-1,
+.player-bet-2,
+.player-bet-10 {
+    top: 100px;
+}
+
+.player-bet-3 {
+    top: var(--avatar-size);
+    right: 80px;
+}
+
+.player-bet-4 {
+    bottom: var(--avatar-size);
+    right: 80px;
+}
+
+.player-bet-5,
+.player-bet-6,
+.player-bet-7 {
+    bottom: 100px;
+}
+
+.player-bet-8 {
+    bottom: var(--avatar-size);
+    left: 80px;
+}
+
+.player-bet-9 {
+    top: var(--avatar-size);
+    left: 80px;
 }
 
 .pot-text {
