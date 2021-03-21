@@ -2,7 +2,7 @@
 
 Some lines of code
 
-[Trello](https://trello.com/b/n23x0ggq/shove)
+[Trello](https://trello.com/b/n23X0GGq/shove)
 
 ## Dependencies
 
