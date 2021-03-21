@@ -5,7 +5,7 @@ from room import Room
 from games.coinflip import Coinflip
 
 
-_ = [("a", 1000), ("b", 2000), ("c", 3000), ("d", 4000)]
+_ = [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000)]
 ACCOUNTS = [Account(username=u, password="1", money=m) for u, m in _]
 
 

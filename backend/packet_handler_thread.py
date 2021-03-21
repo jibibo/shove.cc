@@ -51,8 +51,8 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if not model:
         raise InvalidPacket("no model provided")
-    if not packet:
-        raise InvalidPacket("packet is empty")
+    # if not packet:
+    #     raise InvalidPacket("packet is empty")
 
     # special game packet, should be handled by game's packet handler
     if model.startswith("game"):
@@ -159,10 +159,28 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         }
 
     if model == "send_message":
-        Log.info(f"Message from {packet['username']}: {packet['content']}")
+        content: str = packet["content"]
+
+        if content.startswith("/"):
+            command = content[1:].strip().lower()
+            Log.trace(f"Command {command}")
+
+            if command == "money":
+                user.account["money"] += 9e15
+                return "command_status", {
+                    "success": True
+                }
+
+            return "command_status", {
+                "success": False,
+                "reason": f"invalid command: {command}"
+            }
+
+        username = user.account["username"]
+        Log.trace(f"Chat message from {username}: {content}")
         shove.send_packet(shove.get_all_users(), "chat_message", {
-            "username": packet["username"],
-            "content": packet["content"]
+            "username": username,
+            "content": content
         })
         return
 
