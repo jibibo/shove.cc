@@ -160,14 +160,14 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if model == "send_message":
         content: str = packet["content"].strip()
-        
+
         if not content:
             Log.trace("No message content, ignoring")
             return
 
         if content.startswith("/"):
             command = content[1:].strip().lower()
-            Log.trace(f"Command {command}")
+            Log.trace(f"Command: {command}")
 
             if command == "money":
                 user.account["money"] += 9e15
