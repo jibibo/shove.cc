@@ -88,7 +88,11 @@ function Room() {
                     }}
                 />
                 <div>
-                    { coin ? <img className="coin" src={`./games/coinflip/${coin}.svg`} alt="coin" /> : null }
+                    { coin ? 
+                    <img className="coin" src={`./games/coinflip/${coin}.svg`} alt="coin" />
+                     : 
+                     <img className="coin spinning" src={`./games/coinflip/spinning.svg`} alt="coin" />
+                    }
                 </div>
                 <input
                     type="button"
