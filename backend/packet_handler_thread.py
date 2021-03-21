@@ -31,19 +31,23 @@ class PacketHandlerThread(threading.Thread):
 
             except InvalidPacket as ex:
                 Log.error(f"Invalid packet: {ex}")
-                continue
+                response = "error", {
+                    "error": "invalid packet sent by user"
+                }
 
             except Exception as ex:
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_packet", ex)
-                continue
-
-            model = "нет!"
+                response = "error", {
+                    "error": "unhandled exception in backend (not good)"
+                }
 
             if response:
-                model, packet = response
-                self.shove.send_packet(user, model, packet, is_response=True)
+                response_model, response_packet = response
+                Log.trace(f"Handled packet #{packet_number}, response model: '{response_model}'")
+                self.shove.send_packet(user, response_model, response_packet, is_response=True)
 
-            Log.trace(f"Handled packet #{packet_number}, response: '{model}'")
+            else:
+                Log.trace(f"Handled packet #{packet_number}, no response")
 
 
 def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
@@ -51,8 +55,8 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if not model:
         raise InvalidPacket("no model provided")
-    # if not packet:
-    #     raise InvalidPacket("packet is empty")
+    if type(packet) != dict:
+        raise InvalidPacket(f"packet type invalid: {type(packet).__name__}")
 
     # special game packet, should be handled by game's packet handler
     if model.startswith("game"):
