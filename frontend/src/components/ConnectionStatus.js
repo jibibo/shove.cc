@@ -13,8 +13,15 @@ function ConnectionStatus() {
     });
     const [visible, setVisible] = useState(true);
 
-    function clicked(e) {
-        setVisible(false);
+    function popup(text, color) {
+        setStatus({
+            text,
+            color
+        })
+        setVisible(true);
+        setTimeout(() => {
+            setVisible(false)
+        }, 2000)
     }
 
     if (deaf) {
@@ -22,29 +29,17 @@ function ConnectionStatus() {
 
         socket.on("connect", () => {
             console.debug("> ConnectionStatus connect event");
-            setStatus({
-                text: "connected!",
-                color: "green",
-            });
-            setVisible(true);
+            popup("connected", "green");
         });
 
         socket.on("connect_error", () => {
             console.debug("> ConnectionStatus connect_error event");
-            setStatus({
-                text: "error on connect, backend offline?",
-                color: "darkred",
-            });
-            setVisible(true);
+            popup("error on connect, backend offline?", "darkred");
         });
 
         socket.on("disconnect", (reason) => {
             console.debug("> ConnectionStatus disconnect event:", reason);
-            setStatus({
-                text: "disconnected: " + reason,
-                color: "darkred",
-            });
-            setVisible(true);
+            popup("disconnected", "darkred");
         });
 
         // socket.on("client_connected", (packet) => {
@@ -59,7 +54,6 @@ function ConnectionStatus() {
         <div
             style={{ backgroundColor: status.color }}
             className="status"
-            onClick={clicked}
             hidden={!visible}
         >
             Connection status: {status.text}
