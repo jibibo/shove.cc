@@ -13,6 +13,7 @@ function Room() {
     const [results, setResults] = useState([]);
     const [timeLeft, setTimeLeft] = useState(0);
     const [betters, setBetters] = useState([]);
+    const [coin, setCoin] = useState(null);
 
     const { user } = useContext(GlobalContext);
 
@@ -45,7 +46,8 @@ function Room() {
 
         socket.on("game_ended", (packet) => {
             console.debug("> CoinflipRoom game_ended", packet);
-            addResult("Game ended! Result: " + packet["result"]);
+            addResult("Game ended! Result: " + packet["coin_result"]);
+            setCoin(packet.coin_result);
             setTimeLeft("Filipino, winners: " + JSON.stringify(packet["winners"]));
             if (user in packet["winners"]) {
                 addResult("You won: gained " + packet["winners"][user]);
@@ -57,16 +59,19 @@ function Room() {
             }
         });
 
-        socket.on("game_started", (packet) => {
-            console.debug("> CoinflipRoom game_started", packet);
-            setTimeLeft(packet["time_left"]);
-            setBetters(packet["betters"]);
-        });
-
         socket.on("game_state", (packet) => {
             console.debug("> CoinflipRoom game_state", packet);
-            setTimeLeft(packet["time_left"]);
-            setBetters(packet["betters"]);
+            setCoin();
+            if (packet["running"]) {
+                setTimeLeft(packet["state"]["time_left"]);
+                setBetters(packet["state"]["betters"]);
+
+                if (packet["state"]["just_started"]) {
+                    addResult("Coin flip started, coin lands in: " + packet.state.time_left)
+                }
+            }
+
+            
         });
     }
 
@@ -82,8 +87,9 @@ function Room() {
                         setBet(e.target.value);
                     }}
                 />
-                {/* <img className="coin" src="./games/coinflip/heads.svg" alt="heads" />
-                <img className="coin" src="./games/coinflip/tails.svg" alt="heads" /> */}
+                <div>
+                    { coin ? <img className="coin" src={`./games/coinflip/${coin}.svg`} alt="coin" /> : null }
+                </div>
                 <input
                     type="button"
                     value="Heads"
