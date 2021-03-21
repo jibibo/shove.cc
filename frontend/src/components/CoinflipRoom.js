@@ -15,7 +15,7 @@ function Room() {
     const [betters, setBetters] = useState([]);
     const [coin, setCoin] = useState(null);
 
-    const { user } = useContext(GlobalContext);
+    const { money, user } = useContext(GlobalContext);
 
     function addResult(result) {
         setResults((results) => [...results, result]);
@@ -31,6 +31,8 @@ function Room() {
 
     if (deaf) {
         deaf = false;
+
+        sendPacket("game_state", {});
 
         socket.on("game_action_status", (packet) => {
             console.debug("> CoinflipRoom game_action_status", packet);
@@ -61,7 +63,7 @@ function Room() {
 
         socket.on("game_state", (packet) => {
             console.debug("> CoinflipRoom game_state", packet);
-            setCoin();
+            setCoin(packet.coin_result);
             if (packet["running"]) {
                 setTimeLeft(packet["state"]["time_left"]);
                 setBetters(packet["state"]["betters"]);
@@ -80,19 +82,32 @@ function Room() {
             <div>
                 Time before flip: {timeLeft}
                 <br />
-                <input
-                    type="number"
-                    value={bet}
-                    onChange={(e) => {
-                        setBet(e.target.value);
-                    }}
-                />
+                {
+                    money 
+                    ?
+                    (
+                        <>
+                            <input type="range" min="1" max={money} value={bet} step="1" onChange={(e) => setBet(e.target.value)}/>
+                            <code>{bet}</code>
+                        </>
+                    )
+                    :
+                    null
+                }
                 <div>
-                    { coin ? 
-                    <img className="coin" src={`./games/coinflip/${coin}.svg`} alt="coin" />
-                     : 
-                     <img className="coin spinning" src={`./games/coinflip/spinning.svg`} alt="coin" />
-                    }
+                    { 
+                    coin !== null
+                     ?
+                     (
+                        coin === "spinning" ?  
+                        <img className="coin spinning" src={`./games/coinflip/spinning.svg`} alt="spinning" />
+                          : 
+                        <img className="coin" src={`./games/coinflip/${coin}.svg`} alt={`${coin}`} />
+                     )
+                     :
+                     null
+                   }
+                    
                 </div>
                 <input
                     type="button"
