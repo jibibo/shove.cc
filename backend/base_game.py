@@ -49,22 +49,22 @@ class BaseGame(ABC):
 
     @abstractmethod
     def handle_event(self, event: str):
-        pass
+        return
 
     @abstractmethod
     def handle_packet(self, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
-        pass
+        return
 
     @abstractmethod
     def try_to_start(self) -> Union[None, str]:
         """Returns a reason if start is denied by ongoing game, otherwise None"""
-        pass
+        return
 
     @abstractmethod
     def user_left_room(self, user: User):
-        pass
+        return
 
     @abstractmethod
     def user_tries_to_join_room(self, user: User) -> Union[None, str]:
         """Returns a reason if user join is denied by ongoing game, otherwise None"""
-        pass
+        return

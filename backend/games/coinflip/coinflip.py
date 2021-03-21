@@ -3,6 +3,7 @@ from base_game import BaseGame, InvalidEvent, InvalidGamePacket
 from user import User
 
 from .player import Player
+from .flip_timer_thread import FlipTimerThread
 
 
 class Coinflip(BaseGame):
@@ -21,7 +22,7 @@ class Coinflip(BaseGame):
 
     def handle_event(self, event: str):
         if event == "timer_done":
-            self.flip_coin()
+            self.resolve_flip()
             return
 
         if event in ["user_bet"]:
@@ -39,7 +40,7 @@ class Coinflip(BaseGame):
             action = packet["action"]
 
             if action == "bet":
-                if self.user_has_already_bet(user):
+                if user in [player.user for player in self.participants]:
                     return "game_action_status", {
                         "success": False,
                         "action": "bet",
@@ -75,7 +76,7 @@ class Coinflip(BaseGame):
                 }
 
         if model == "game_state":
-            return "game_state", self.get_state_packet()[1]
+            return "game_state", self.get_state_packet()
 
         raise InvalidGamePacket(f"unknown (or incomplete handler for) game packet model: '{model}'")
 
@@ -88,36 +89,57 @@ class Coinflip(BaseGame):
             Log.trace("Game is already running, not starting")
             return "game already running"
 
-        self.flip_timer = threading.Thread(target=self.flip_timer_thread,
-                                           name=f"{self.room.name}/FlipTimer",
-                                           daemon=True)
+        self.flip_timer = FlipTimerThread(self, self.flip_timer_duration)
         self.flip_timer.start()
         self.coin_result = "spinning"
         self.winners.clear()
         self.running = True
-
-        self.send_state_packet(just_started=True)
-
         Log.info("Game started!")
 
-    def user_left_room(self, user: User):
-        pass
+        self.send_state_packet(event="started")
 
-    def user_tries_to_join_room(self, user: User) -> Union[None, str]:
-        # self.events.put("user_joined")
+    def user_left_room(self, user: User):
         return
 
-    def flip_coin(self):
-        Log.trace(f"Flipping coin, odds: heads = {self.heads_odds}, tails = {self.tails_odds})")
+    def user_tries_to_join_room(self, user: User) -> Union[None, str]:
+        # users can always join room
+        return
+
+    def get_state_packet(self, event: str = None) -> dict:
+        if self.running or event == "started":
+            state = {
+                "time_left": self.flip_timer_left,
+                "betters": {player.user.account["username"]: player.bet
+                            for player in self.participants}
+            }
+
+        else:
+            state = {
+                "winners": self.winners  # the winners of the last coin flip
+            }
+
+        return {
+            "running": self.running,
+            "event": event,
+            "state": state,
+            "odds": {
+                "heads": self.heads_odds,
+                "tails": self.tails_odds
+            },
+            "coin_result": self.coin_result
+        }
+
+    def resolve_flip(self):
+        Log.trace(f"Resolving flip, odds: heads = {self.heads_odds}, tails = {self.tails_odds})")
         total_odds = self.heads_odds + self.tails_odds
-        if random.random() * total_odds < self.heads_odds:
+        if random.random() * total_odds < self.heads_odds:  # calculate flip result based on odds
             self.coin_result = "heads"
         else:
             self.coin_result = "tails"
 
-        Log.trace(f"Coin result: {self.coin_result}")
+        Log.trace(f"Resolved result: {self.coin_result}")
 
-        for player in self.participants:  # notify each participant of their win/loss
+        for player in self.participants:  # check who won and receives money
             user = player.user
             player_wins = player.choice == self.coin_result
             if player_wins:
@@ -127,64 +149,16 @@ class Coinflip(BaseGame):
 
         Log.trace(f"Winners: {self.winners}")
 
-        self.room.send_packet("game_ended", {
-            "coin_result": self.coin_result,
-            "winners": self.winners
-        })
+        self.send_state_packet(event="ended")
 
         self.participants.clear()
         self.running = False
-        # self.events.put("coin_flipped")
 
-    def flip_timer_thread(self):
-        self.flip_timer_left = self.flip_timer_duration
-        Log.trace(f"Flip timer started, duration: {self.flip_timer_duration}")
-
-        while self.flip_timer_left:
-            time.sleep(1)
-            self.flip_timer_left -= 1
-            if self.flip_timer_left:
-                self.send_state_packet()
-
-        Log.trace("Timer done")
-        self.events.put("timer_done")
-
-    def get_state_packet(self, just_started: bool = False) -> Tuple[str, dict]:
-        if self.running:
-            state = {
-                "just_started": just_started,
-                "time_left": self.flip_timer_left,
-                "betters": {player.user.account["username"]: player.bet
-                            for player in self.participants}
-            }
-
-        else:
-            state = {
-                "winners": self.winners
-            }
-
-        return "game_state", {
-            "running": self.running,
-            "odds": {
-                "heads": self.heads_odds,
-                "tails": self.tails_odds
-            },
-            "coin_result": self.coin_result,
-            "state": state
-        }
-
-    def send_state_packet(self, user=None, just_started=False):
-        model, packet = self.get_state_packet(just_started)
+    def send_state_packet(self, user=None, event=None):
+        packet = self.get_state_packet(event)
 
         if user is None:
-            self.room.send_packet(model, packet)
+            self.room.send_packet("game_state", packet)
 
         else:
-            self.room.shove.send_packet(user, model, packet)
-
-    def user_has_already_bet(self, user) -> bool:
-        for player in self.participants:
-            if player.user == user:
-                return True
-
-        return False
+            self.room.shove.send_packet(user, "game_state", packet)
