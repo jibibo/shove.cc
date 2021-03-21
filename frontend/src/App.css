@@ -8,4 +8,21 @@
 .connection-status {
     position: absolute;
     bottom: 0;
+    right: 0;
+}
+
+.message-box {
+    position: absolute;
+    width: 500px;
+    left: 0;
+    bottom: 0;
+}
+
+@media (max-width: 500px) {
+    .message-box {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+
+    }
 }

@@ -42,6 +42,8 @@ function App() {
 
                     {room ? <Room /> : <RoomList />}
 
+                </div>
+                <div className="message-box">
                     <MessageBox />
                 </div>
             </div>

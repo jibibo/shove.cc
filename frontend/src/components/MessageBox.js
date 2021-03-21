@@ -86,13 +86,17 @@ function MessageBox() {
         });
     }
 
-    return visible ? (
-        <div className="messages-container">
-            <div ref={messageBox} className="message-box">
-                {messages.map((message, i) => (
-                    <div className="message" key={i}>
-                        <img src="/img/avatar.png" alt="donald_duck" />
-                        <p>{message}</p>
+    return (
+        <>
+            <div ref={messageBox} className="messages-container">
+                {messages.map((message, key) => (
+                    <div key={key} className="message">
+                        <div className="profile-picture">
+                            <img className="picture" src="/img/avatar.png" alt="donald_duck" />
+                        </div>
+                        <div className="message-content">
+                            <p>{message}</p>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -101,11 +105,11 @@ function MessageBox() {
                     type="textarea"
                     onChange={(event) => setMessage(event.target.value)}
                     value={message}
-                    placeholder="Message"
+                    placeholder="Send a text message"
                 />
             </form>
-        </div>
-    ) : null;
+        </>
+    )
 }
 
 export default MessageBox;
