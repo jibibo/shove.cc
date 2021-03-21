@@ -4,3 +4,8 @@
     align-items: center;
     flex-direction: column;
 }
+
+.connection-status {
+    position: absolute;
+    bottom: 0;
+}
