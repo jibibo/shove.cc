@@ -82,6 +82,8 @@ function Room() {
                         setBet(e.target.value);
                     }}
                 />
+                {/* <img className="coin" src="./games/coinflip/heads.svg" alt="heads" />
+                <img className="coin" src="./games/coinflip/tails.svg" alt="heads" /> */}
                 <input
                     type="button"
                     value="Heads"
