@@ -25,6 +25,7 @@
     justify-content: left;
     padding: 5px;
     background-color: rgb(40, 40, 66);
+    border-radius: 5px;
     animation: newmessage 1s normal forwards;
 }
 
