@@ -26,12 +26,12 @@ const LogInForm = () => {
     if (deaf) {
         deaf = false;
 
-        socket.on("connect", () => { // auto log in on connect
+        socket.on("connect", () => {
             console.debug("> LogInForm connect event");
-            sendPacket("log_in", {
-                username: "a",
-                password: null,
-            });
+            // sendPacket("log_in", { // auto log in on connect
+            //     username: "a",
+            //     password: null,
+            // });
         });
 
         socket.on("log_in_status", (packet) => {
