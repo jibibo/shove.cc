@@ -24,6 +24,14 @@
     display: flex;
     justify-content: left;
     padding: 5px;
+    background-color: rgb(40, 40, 66);
+    animation: newmessage 1s normal forwards;
+}
+
+@keyframes newmessage {
+    to {
+        background: none;
+    }
 }
 
 .profile-picture {
