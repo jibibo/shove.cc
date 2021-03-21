@@ -25,12 +25,9 @@ function Header() {
 
         socket.on("get_account_data_status", (packet) => {
             console.debug("> Header get_account_data_status", packet);
-            if (packet["success"]) {
-                if (
-                    user === undefined ||
-                    packet["account"]["username"] === user
-                ) {
-                    setMoney(packet["account"]["money"]);
+            if (packet.success) {
+                if (user === undefined || packet.data.username === user) { // "if undef" is really bad, fix this
+                    setMoney(packet.data.money);
                 }
             }
         });

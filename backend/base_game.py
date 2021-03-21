@@ -2,6 +2,11 @@ from convenience import *
 from user import User
 
 
+class GameState:
+    IDLE = "idle"
+    RUNNING = "running"
+
+
 class InvalidEvent(Exception):
     def __init__(self, value):
         self.value = value
@@ -22,8 +27,9 @@ class BaseGame(ABC):
     def __init__(self, room):
         self.room = room
         self.events = Queue()
+        self.state = GameState.IDLE
         threading.Thread(target=self._event_handler_thread,
-                         name=f"EventHandler/{self.room.name}",
+                         name=f"{self.room.name}/EventHandler",
                          daemon=True).start()
         Log.trace(f"Game '{type(self).__name__}' initialized for room {room}")
 

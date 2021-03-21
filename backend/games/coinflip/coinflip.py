@@ -1,31 +1,39 @@
 from convenience import *
-from base_game import BaseGame, InvalidEvent, InvalidGamePacket
+from base_game import BaseGame, InvalidEvent, InvalidGamePacket, GameState
 from user import User
 
-from .player import Player
 from .flip_timer_thread import FlipTimerThread
+
+
+class Player:
+    def __init__(self, user, choice, bet):
+        self.user = user
+        self.choice = choice
+        self.bet = bet
 
 
 class Coinflip(BaseGame):
     def __init__(self, room):
         super().__init__(room)
-        self.running = False
         self.flip_timer = None
         self.participants: List[Player] = []
         self.winners: Dict[str, int] = {}
-        self.flip_timer_left = 0
-        self.coin_result = None
+        self.coin_state = None
 
         self.flip_timer_duration = 2
-        self.heads_odds = 0.5
-        self.tails_odds = 0.5
+        self.heads_odds = 49  # 49/total odds = 49%
+        self.tails_odds = 51  # 51/total odds = 51%
 
     def handle_event(self, event: str):
-        if event == "timer_done":
+        if event == "timer_finished":
             self.resolve_flip()
             return
 
-        if event in ["user_bet"]:
+        if event == "timer_ticked":
+            self.send_state_packet(event="timer_ticked")
+            return
+
+        if event == "user_bet":
             self.try_to_start()
             return
 
@@ -83,82 +91,77 @@ class Coinflip(BaseGame):
     def try_to_start(self) -> Union[None, str]:
         if self.room.is_empty():
             Log.trace("Room is empty, not starting")
-            return "room is empty"
+            return "Room is empty"
 
-        if self.running:
+        if self.state == GameState.RUNNING:
             Log.trace("Game is already running, not starting")
-            return "game already running"
+            return "Game is already running"
 
+        self.state = GameState.RUNNING
+        self.winners.clear()
+        self.coin_state = "spinning"
         self.flip_timer = FlipTimerThread(self, self.flip_timer_duration)
         self.flip_timer.start()
-        self.coin_result = "spinning"
-        self.winners.clear()
-        self.running = True
-        Log.info("Game started!")
 
+        Log.info("Game started")
         self.send_state_packet(event="started")
 
     def user_left_room(self, user: User):
         return
 
     def user_tries_to_join_room(self, user: User) -> Union[None, str]:
-        # users can always join room
+        # users can always join room in this game
         return
 
-    def get_state_packet(self, event: str = None) -> dict:
-        if self.running or event == "started":
-            state = {
-                "time_left": self.flip_timer_left,
+    def get_state_packet(self, event: str = None) -> dict:  # todo should probably be in BaseGame
+        if self.state == GameState.IDLE:
+            info = {
+                "winners": self.winners  # the winners of the last coin flip
+            }
+
+        else:  # self.state == GameState.RUNNING
+            info = {
+                "time_left": self.flip_timer.time_left,
                 "betters": {player.user.account["username"]: player.bet
                             for player in self.participants}
             }
 
-        else:
-            state = {
-                "winners": self.winners  # the winners of the last coin flip
-            }
-
         return {
-            "running": self.running,
+            "state": self.state,
             "event": event,
-            "state": state,
+            "info": info,
             "odds": {
                 "heads": self.heads_odds,
                 "tails": self.tails_odds
             },
-            "coin_result": self.coin_result
+            "coin_state": self.coin_state
         }
 
     def resolve_flip(self):
-        Log.trace(f"Resolving flip, odds: heads = {self.heads_odds}, tails = {self.tails_odds})")
+        Log.trace(f"Resolving flip (odds: heads = {self.heads_odds}, tails = {self.tails_odds})")
         total_odds = self.heads_odds + self.tails_odds
         if random.random() * total_odds < self.heads_odds:  # calculate flip result based on odds
-            self.coin_result = "heads"
+            self.coin_state = "heads"
         else:
-            self.coin_result = "tails"
+            self.coin_state = "tails"
 
-        Log.trace(f"Resolved result: {self.coin_result}")
+        Log.trace(f"Resolved result: {self.coin_state}")
 
         for player in self.participants:  # check who won and receives money
             user = player.user
-            player_wins = player.choice == self.coin_result
+            player_wins = player.choice == self.coin_state
             if player_wins:
                 gain = 2 * player.bet
                 user.account["money"] += gain
                 self.winners[user.account["username"]] = gain
 
         Log.trace(f"Winners: {self.winners}")
+        self.state = GameState.IDLE
+        self.participants.clear()
 
         self.send_state_packet(event="ended")
 
-        self.participants.clear()
-        self.running = False
-
-    def send_state_packet(self, user=None, event=None):
+    def send_state_packet(self, event: str = None):  # todo should probably be in BaseGame
+        Log.trace(f"Queueing outgoing state packet, event: '{event}'")
         packet = self.get_state_packet(event)
-
-        if user is None:
-            self.room.send_packet("game_state", packet)
-
-        else:
-            self.room.shove.send_packet(user, "game_state", packet)
+        self.room.send_packet("game_state", packet)

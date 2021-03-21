@@ -40,40 +40,45 @@ function Room() {
                 addResult(
                     "You bet " + packet["bet"] + " on: " + packet["choice"]
                 );
-                sendPacket("get_account_data", {
-                    username: user,
-                });
-            }
-        });
-
-        socket.on("game_ended", (packet) => {
-            console.debug("> CoinflipRoom game_ended", packet);
-            addResult("Game ended! Result: " + packet["coin_result"]);
-            setCoin(packet.coin_result);
-            setTimeLeft("Filipino, winners: " + JSON.stringify(packet["winners"]));
-            if (user in packet["winners"]) {
-                addResult("You won: gained " + packet["winners"][user]);
-                sendPacket("get_account_data", {
-                    username: user,
-                });
-            } else {
-                addResult("You lost: gained nothing");
+                sendPacket("get_account_data", {});
             }
         });
 
         socket.on("game_state", (packet) => {
             console.debug("> CoinflipRoom game_state", packet);
-            setCoin(packet.coin_result);
-            if (packet["running"]) {
-                setTimeLeft(packet["state"]["time_left"]);
-                setBetters(packet["state"]["betters"]);
+            setCoin(packet.coin_state);
 
-                if (packet["state"]["just_started"]) {
-                    addResult("Coin flip started, coin lands in: " + packet.state.time_left)
+            if (packet.state === "idle") {
+                if (packet.event === "ended") {
+                    addResult(
+                        "Coin landed on " +
+                            packet.coin_state +
+                            ", winners: " +
+                            JSON.stringify(packet.info.winners)
+                    );
+                    setTimeLeft("0!");
+                    if (user in packet.info.winners) {
+                        addResult(
+                            "You won, gained " + packet.info.winners[user] + "!"
+                        );
+                        sendPacket("get_account_data", {});
+                    } else {
+                        addResult("You lost, gained nothing!");
+                    }
+                }
+            } else {
+                // packet.state === "running"
+                setBetters(packet.info.betters);
+                setTimeLeft(packet.info.time_left);
+
+                if (packet.event === "started") {
+                    addResult(
+                        "Coin flipping, lands in " + packet.info.time_left
+                    );
+                } else if (packet.event === "timer_ticked") {
+                    // maybe add a indication the timer just ticked down
                 }
             }
-
-            
         });
     }
 
@@ -82,32 +87,35 @@ function Room() {
             <div>
                 Time before flip: {timeLeft}
                 <br />
-                {
-                    money 
-                    ?
-                    (
-                        <>
-                            <input type="range" min="1" max={money} value={bet} step="1" onChange={(e) => setBet(e.target.value)}/>
-                            <code>{bet}</code>
-                        </>
-                    )
-                    :
-                    null
-                }
+                {money ? (
+                    <>
+                        <input
+                            type="range"
+                            min="1"
+                            max={money}
+                            value={bet}
+                            step="1"
+                            onChange={(e) => setBet(e.target.value)}
+                        />
+                        <code>{bet}</code>
+                    </>
+                ) : null}
                 <div>
-                    { 
-                    coin !== null
-                     ?
-                     (
-                        coin === "spinning" ?  
-                        <img className="coin spinning" src={`./games/coinflip/spinning.svg`} alt="spinning" />
-                          : 
-                        <img className="coin" src={`./games/coinflip/${coin}.svg`} alt={`${coin}`} />
-                     )
-                     :
-                     null
-                   }
-                    
+                    {coin !== null ? (
+                        coin === "spinning" ? (
+                            <img
+                                className="coin spinning"
+                                src={`./games/coinflip/spinning.svg`}
+                                alt="spinning"
+                            />
+                        ) : (
+                            <img
+                                className="coin"
+                                src={`./games/coinflip/${coin}.svg`}
+                                alt={`${coin}`}
+                            />
+                        )
+                    ) : null}
                 </div>
                 <input
                     type="button"

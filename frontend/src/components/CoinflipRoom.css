@@ -1,5 +1,5 @@
 .coin {
-    width: 40px;
+    width: 100px;
 }
 
 .coin.spinning {
@@ -9,7 +9,8 @@
 @keyframes spinning {
     from {
         transform: rotate3d(0, 0, 0, 0deg);
-    } to {
+    }
+    to {
         transform: rotate3d(1, 1, 1, 360deg);
     }
 }

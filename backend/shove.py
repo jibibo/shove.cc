@@ -5,8 +5,8 @@ from room import Room
 from games.coinflip import Coinflip
 
 
-_ = [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000)]
-ACCOUNTS = [Account(username=u, password="1", money=m) for u, m in _]
+ACCOUNTS = [Account(username=u, password="1", money=m)
+            for u, m in [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000)]]
 
 
 def get_all_accounts():  # should be a generator if many files
@@ -50,7 +50,7 @@ class Shove:
         Log.trace(f"Getting account with k_v: {k_v}")
 
         if len(k_v) != 1:
-            raise ValueError(f"invalid k_v length: {len(k_v)}")
+            raise ValueError(f"Invalid k_v length: {len(k_v)}")
 
         k, v = list(k_v.items())[0]
         for account_data in get_all_accounts():
@@ -81,6 +81,7 @@ class Shove:
         return self._next_packet_number
 
     def get_room(self, room_name: str) -> Room:
+        Log.trace(f"Getting room with name: '{room_name}'")
         room_name_formatted = room_name.lower().strip()
         for room in self.get_rooms():
             if room.name.lower() == room_name_formatted:
@@ -96,8 +97,8 @@ class Shove:
         Log.trace(f"Getting room of user {user}")
 
         for room in self.get_rooms():
-            Log.trace(f"Users in {room}: {room.get_users()}")
             if user in room.get_users():
+                Log.trace(f"User is in room: {room}")
                 return room
 
         Log.trace("User is not in a room")
@@ -106,7 +107,7 @@ class Shove:
         Log.trace(f"Getting user with k_v: {k_v}")
 
         if len(k_v) != 1:
-            raise ValueError(f"invalid k_v length: {len(k_v)}")
+            raise ValueError(f"Invalid k_v length: {len(k_v)}")
 
         k, v = list(k_v.items())[0]
         for user in self.get_all_users():

@@ -18,7 +18,7 @@ const LogInForm = () => {
         ev.preventDefault();
         sendPacket("log_in", {
             username: username,
-            password: null,
+            password: password
         });
         setUsername("");
     }

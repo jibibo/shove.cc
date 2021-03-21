@@ -50,38 +50,43 @@ function MessageBox() {
         // useEffect(() => {
         socket.on("chat_message", (packet) => {
             console.debug("> MessageBox chat_message", packet);
-            addMessage(packet["username"] + " > " + packet["content"]);
+            addMessage(packet.username + " > " + packet.content);
         });
 
-        socket.on("client_connected", (packet) => {
-            console.debug("> MessageBox client_connected", packet);
-            if (packet["you"]) {
-                addMessage("Connected!");
-            } else {
-                addMessage("Someone connected: " + packet["sid"]);
+        socket.on("command_status", (packet) => {
+            if (packet.success) {
+                // todo check what command succeeded
+                sendPacket("get_account_data", {});
             }
         });
 
-        socket.on("client_disconnected", (packet) => {
-            console.debug("> MessageBox client_disconnected", packet);
-            addMessage("Someone disconnected: " + packet["sid"]);
+        socket.on("user_connected", (packet) => {
+            console.debug("> MessageBox user_connected", packet);
+            if (!packet.you) {
+                addMessage("Someone connected: " + packet.sid);
+            }
+        });
+
+        socket.on("user_disconnected", (packet) => {
+            console.debug("> MessageBox user_disconnected", packet);
+            addMessage("Someone disconnected: " + packet.sid);
         });
 
         socket.on("join_room_status", (packet) => {
             console.debug("> MessageBox join_room_status", packet);
-            if (packet["success"]) {
-                addMessage("Joined room " + packet["room_name"]);
+            if (packet.success) {
+                addMessage("Joined room " + packet.room_name);
             } else {
-                addMessage("Failed to join room: " + packet["reason"]);
+                addMessage("Failed to join room: " + packet.reason);
             }
         });
 
         socket.on("log_in_status", (packet) => {
             console.debug("> MessageBox log_in_status", packet);
-            if (packet["success"]) {
-                addMessage("Signed in as " + packet["username"]);
+            if (packet.success) {
+                addMessage("Signed in as " + packet.username);
             } else {
-                addMessage("Failed to sign in as " + packet["username"]);
+                addMessage("Failed to sign in as " + packet.username);
             }
         });
     }
@@ -92,7 +97,11 @@ function MessageBox() {
                 {messages.map((message, key) => (
                     <div key={key} className="message">
                         <div className="profile-picture">
-                            <img className="picture" src="/img/avatar.png" alt="donald_duck" />
+                            <img
+                                className="picture"
+                                src="/img/avatar.png"
+                                alt="avatar"
+                            />
                         </div>
                         <div className="message-content">
                             <p>{message}</p>
@@ -109,7 +118,7 @@ function MessageBox() {
                 />
             </form>
         </>
-    )
+    );
 }
 
 export default MessageBox;

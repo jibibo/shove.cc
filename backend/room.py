@@ -53,10 +53,10 @@ class Room:
     def user_tries_to_join(self, user: User) -> Union[None, str]:
         """Returns a reason if could not join room (if rejected by the room's game), otherwise None"""
 
-        Log.trace("Trying to let user join room")
+        Log.trace(f"Trying to let user {user} join room")
 
         if self.game:
-            fail_reason = self.game.user_tries_to_join_room(user)
+            fail_reason = self.game.user_tries_to_join_room(user)  # tries to drop user in the room, if fails, return fail reason
 
             if fail_reason:
                 return fail_reason
@@ -64,5 +64,6 @@ class Room:
         self._users.append(user)  # if game is not set, user can always join
 
     def user_leave(self, user: User):
+        Log.trace(f"User {user} is leaving room")
         self.game.user_left_room(user)
         self._users.remove(user)

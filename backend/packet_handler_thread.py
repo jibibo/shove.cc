@@ -32,13 +32,15 @@ class PacketHandlerThread(threading.Thread):
             except InvalidPacket as ex:
                 Log.error(f"Invalid packet: {ex}")
                 response = "error", {
-                    "error": "invalid packet sent by user"
+                    "error": "invalid_packet",
+                    "description": "Invalid packet sent by user (frontend error)"
                 }
 
             except Exception as ex:
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_packet", ex)
                 response = "error", {
-                    "error": "unhandled exception in backend (not good)"
+                    "error": "unhandled_exception",
+                    "description": "An unhandled exception occurred in the backend on handling the packet"
                 }
 
             if response:
@@ -54,9 +56,9 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     """Handles the packet and returns an optional response model + packet"""
 
     if not model:
-        raise InvalidPacket("no model provided")
+        raise InvalidPacket("No model provided")
     if type(packet) != dict:
-        raise InvalidPacket(f"packet type invalid: {type(packet).__name__}")
+        raise InvalidPacket(f"Packet type invalid: {type(packet).__name__}")
 
     # special game packet, should be handled by game's packet handler
     if model.startswith("game"):
@@ -68,31 +70,38 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
                 return model, packet
 
     if model == "get_account_data":
-        username = packet["username"]
+        try:
+            username = packet["username"]
+        except KeyError:
+            username = user.account["username"]  # todo user can possibly be not logged in, potential error
+
         account = shove.get_account(username=username)
 
         if account:
+            data = account.data.copy()
+            del data["password"]  # remove password from account data
+
             return "get_account_data_status", {
                 "success": True,
-                "account": account.data
+                "data": data
             }
 
         else:
             return "get_account_data_status", {
                 "success": False,
-                "reason": "user not found"
+                "reason": "User not found"
             }
 
     if model == "get_room_list":
         if "name" in packet["properties"]:
             room_list = []
             for room in shove.get_rooms():
-                room_data = {
+                room_list_entry = {
                     "name": room.name,
                     "user_count": room.get_user_count(),
                     "max_user_count": "∞"
                 }
-                room_list.append(room_data)
+                room_list.append(room_list_entry)
 
             return "room_list", {
                 "room_list": room_list
@@ -102,7 +111,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         if not user.account:
             return "join_room_status", {
                 "success": False,
-                "reason": "not logged in",
+                "reason": "Not logged in",
             }
 
         room_name = packet["room_name"]
@@ -128,7 +137,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         else:
             return "join_room_status", {
                 "success": False,
-                "reason": "room not found",
+                "reason": "Room not found",
             }
 
     if model == "leave_room":
@@ -149,7 +158,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
         return "log_in_status", {
             "success": False,
-            "reason": "user with username not found"
+            "reason": "User not found"
         }
 
     if model == "register":
@@ -159,7 +168,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
         return "register_status", {
             "success": False,
-            "reason": "not implemented"
+            "reason": "Not implemented"
         }
 
     if model == "send_message":
@@ -181,7 +190,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
             return "command_status", {
                 "success": False,
-                "reason": f"invalid command: {command}"
+                "reason": f"Invalid command: {command}"
             }
 
         username = user.account["username"]
@@ -192,5 +201,5 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         })
         return
 
-    raise InvalidPacket(f"unknown (or incomplete handler for) packet model: '{model}'")
+    raise InvalidPacket(f"Unknown (or incomplete handler for) packet model: '{model}'")
 

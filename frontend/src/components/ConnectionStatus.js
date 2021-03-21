@@ -19,7 +19,7 @@ function ConnectionStatus() {
             color
         })
         setVisible(true);
-        setTimeout(() => {
+        setTimeout(() => { // this should be cancelled when popup() gets called again, as it will vanish too quickly
             setVisible(false)
         }, 2000)
     }

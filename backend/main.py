@@ -6,13 +6,13 @@ from flask_socketio import SocketIO
 
 from convenience import *
 from shove import Shove
-from packet_sender import PacketSenderThread
+from packet_sender_thread import PacketSenderThread
 from packet_handler_thread import PacketHandlerThread
 
 
 HOST = "0.0.0.0"
 PORT = 777
-DEBUG = True
+DEBUG = False
 
 # how much red text in console todo use logging module for proper logging
 LOG_EMITS = False

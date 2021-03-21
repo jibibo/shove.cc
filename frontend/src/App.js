@@ -30,9 +30,11 @@ function App() {
     return (
         <>
             <Header />
+            
             <div className="connection-status">
                 <ConnectionStatus />
             </div>
+
             <div className="container">
                 {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null}
 
