@@ -46,7 +46,7 @@ function Room() {
         socket.on("game_ended", (packet) => {
             console.debug("> CoinflipRoom game_ended", packet);
             addResult("Game ended! Result: " + packet["result"]);
-            setTimeLeft("Finito, winners: " + packet["winners"].toString());
+            setTimeLeft("Filipino, winners: " + JSON.stringify(packet["winners"]));
             if (user in packet["winners"]) {
                 addResult("You won: gained " + packet["winners"][user]);
                 sendPacket("get_account_data", {
@@ -98,9 +98,9 @@ function Room() {
                 />
                 <br />
                 Betters:{" "}
-                {/* {Object.entries(betters).map(([user, bet]) => {
+                {Object.entries(betters).map(([user, bet]) => {
                     return user + ": " + bet;
-                })} */}
+                })}
             </div>
             <div>
                 {results.map((result, i) => (
