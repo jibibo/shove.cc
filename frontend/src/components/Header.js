@@ -39,15 +39,15 @@ function Header() {
     return (
         <header>
             <div>
-                <h3>
+                <h4>
                     Logged in as: <b>{user}</b>
-                </h3>
-                <h3>
+                </h4>
+                <h4>
                     Money: <b>{money}</b>
-                </h3>
-                <h3>
+                </h4>
+                <h4>
                     Currently in room: <b>{room}</b>
-                </h3>
+                </h4>
             </div>
             <div className="header-button-container">
                 <button className="header-button">

@@ -1,6 +1,5 @@
 :root {
     --main-nav-color: rgb(23, 23, 41);
-
 }
 
 header {
@@ -10,12 +9,14 @@ header {
     padding: 5px 0;
     margin-bottom: 15px;
     border-radius: 0 10px;
+    transition: height 0.2s ease-out;
 }
 
-header h3 {
+header h4 {
     color: white;
     margin: 5px;
-    font-weight: normal;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 500;
 }
 
 .header-button-container {
@@ -24,6 +25,7 @@ header h3 {
 }
 
 .header-button {
+    font-family: 'Work Sans', serif;
     margin-right: 10px;
     font-weight: bold;
     padding: 10px;
