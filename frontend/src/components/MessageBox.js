@@ -105,7 +105,7 @@ function MessageBox() {
                     type="textarea"
                     onChange={(event) => setMessage(event.target.value)}
                     value={message}
-                    placeholder="Send a text message"
+                    placeholder="Type Here..."
                 />
             </form>
         </>
