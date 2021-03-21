@@ -66,7 +66,7 @@ const LogInForm = () => {
                         setPassword(ev.target.value);
                     }}
                 />
-                <input type="submit" value="Submit" />
+                <button className="login-button" type="submit">Submit</button>
             </form>
         </div>
     );
