@@ -17,16 +17,15 @@ function Header() {
         socket.on("log_in_status", (packet) => {
             console.debug("> Header log_in_status", packet);
             if (packet["success"]) {
-                sendPacket("get_account_data", {
-                    username: packet["username"],
-                });
+                sendPacket("get_account_data", {});
             }
         });
 
         socket.on("get_account_data_status", (packet) => {
             console.debug("> Header get_account_data_status", packet);
             if (packet.success) {
-                if (user === undefined || packet.data.username === user) { // "if undef" is really bad, fix this
+                if (user === undefined || packet.data.username === user) {
+                    // "if undef" is really bad, fix this
                     setMoney(packet.data.money);
                 }
             }

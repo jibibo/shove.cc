@@ -2,6 +2,20 @@ from convenience import *
 from user import User
 from shove import Shove
 
+try:
+    from test import API_KEY, API_SECRET, TOKEN
+except ImportError:
+    Log.error("Could not import Trello API credentials")
+    API_KEY = API_SECRET = TOKEN = None
+
+
+class CommandFailed(Exception):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return str(self.value)
+
 
 class InvalidPacket(Exception):
     def __init__(self, value):
@@ -28,6 +42,13 @@ class PacketHandlerThread(threading.Thread):
 
             try:
                 response = handle_packet(self.shove, user, model, packet)
+
+            except CommandFailed as ex:
+                Log.trace(f"Command failed: {ex}")
+                response = "command_status", {
+                    "success": False,
+                    "reason": str(ex)
+                }
 
             except InvalidPacket as ex:
                 Log.error(f"Invalid packet: {ex}")
@@ -70,10 +91,17 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
                 return model, packet
 
     if model == "get_account_data":
-        try:
+        if "username" in packet:
             username = packet["username"]
-        except KeyError:
-            username = user.account["username"]  # todo user can possibly be not logged in, potential error
+
+        elif user.account:
+            username = user.account["username"]
+
+        else:
+            return "get_account_data_status", {
+                "success": False,
+                "reason": "No username given and not signed in"
+            }
 
         account = shove.get_account(username=username)
 
@@ -179,27 +207,61 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             return
 
         if content.startswith("/"):
-            command = content[1:].strip().lower()
+            command = content[1:].strip()
             Log.trace(f"Command: {command}")
+            command_lower = command.lower()
+            command_split = command_lower.split()
 
-            if command == "money":
+            if command_split[0] == "money":
                 user.account["money"] += 9e15
                 return "command_status", {
-                    "success": True
+                    "success": True,
+                    "command": "money"
                 }
 
-            return "command_status", {
-                "success": False,
-                "reason": f"Invalid command: {command}"
-            }
+            if command_split[0] == "trello":
+                Log.trace("Adding card to Trello API list")
 
-        username = user.account["username"]
-        Log.trace(f"Chat message from {username}: {content}")
-        shove.send_packet(shove.get_all_users(), "chat_message", {
-            "username": username,
-            "content": content
-        })
-        return
+                trello_args = " ".join(command_split[1:])
+                trello_args_split = trello_args.split("//")
+                if len(trello_args_split) == 1:
+                    name, desc = trello_args_split[0], None
+
+                elif len(trello_args_split) == 2:
+                    name, desc = trello_args_split
+                    desc = desc.strip()
+
+                else:
+                    raise CommandFailed("Invalid arguments")
+
+                name = name.strip()  # desc is already stripped, or None if it wasn't provided
+
+                client = TrelloClient(  # todo shouldn't be called every time, set as shove.trello_client
+                    api_key=API_KEY,
+                    api_secret=API_SECRET,
+                    token=TOKEN
+                )
+
+                board = client.get_board("603c469a39b5466c51c3a176")  # todo shouldn't be called every time
+                card_list = board.get_list("60587b1f02721f0c7b547f5b")  # todo shouldn't be called every time
+                card_list.add_card(name=name, desc=desc, position="top")
+                Log.trace(f"Added card to Trello API list, name = {name}, desc = {desc}")
+
+                return "command_status", {
+                    "success": True,
+                    "command": "trello"
+                }
+
+            raise CommandFailed("Unknown command")
+
+        else:  # not a command, but a chat message
+            username = user.account["username"]
+            Log.trace(f"Chat message from {username}: {content}")
+            shove.send_packet(shove.get_all_users(), "chat_message", {
+                "username": username,
+                "content": content
+            })
+            return
 
     raise InvalidPacket(f"Unknown (or incomplete handler for) packet model: '{model}'")
 

@@ -26,8 +26,7 @@ function onRegisterFormSubmit(e) {
     const passwordElement = document.getElementById("register-password");
     const password = passwordElement.value;
     passwordElement.value = "";
-    sendPacket({
-        model: "register",
+    sendPacket("register", {
         username: username,
         password: password,
     });

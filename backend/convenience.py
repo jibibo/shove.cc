@@ -9,6 +9,7 @@ from queue import Queue
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Dict, List, Union, Optional, Tuple, Set
+from trello import TrelloClient
 
 from log import Log, LEVEL_TRACE, LEVEL_DEBUG, LEVEL_INFO, LEVEL_WARN, LEVEL_ERROR, LEVEL_FATAL
 

@@ -54,8 +54,8 @@ function MessageBox() {
         });
 
         socket.on("command_status", (packet) => {
-            if (packet.success) {
-                // todo check what command succeeded
+            console.debug("> MessageBox command_status", packet);
+            if (packet.success && packet.command === "money") {
                 sendPacket("get_account_data", {});
             }
         });
