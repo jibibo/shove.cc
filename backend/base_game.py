@@ -7,22 +7,6 @@ class GameState:
     RUNNING = "running"
 
 
-class InvalidEvent(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return str(self.value)
-
-
-class InvalidGamePacket(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return str(self.value)
-
-
 class BaseGame(ABC):
     def __init__(self, room):
         self.room = room
@@ -43,34 +27,48 @@ class BaseGame(ABC):
             try:
                 self.handle_event(event)
 
-            except InvalidEvent as ex:
-                Log.error(f"Invalid event: {ex}")
-                continue
+            except GameEventInvalid as ex:
+                Log.error(f"Event invalid: {ex}")
+
+            except GameEventNotImplemented:
+                Log.error("Event not implemented")
 
             except Exception as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} on self.handle_event", ex)
-                continue
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on base_game.handle_event", ex)
 
-            Log.trace(f"Handled event: '{event}'")
+            else:
+                Log.trace(f"Handled event: '{event}'")
+
+    def get_name(self) -> str:
+        return type(self).__name__
+
+    @abstractmethod
+    def get_state_packet(self, event: str = None) -> dict:
+        pass
 
     @abstractmethod
     def handle_event(self, event: str):
-        return
+        pass
 
     @abstractmethod
     def handle_packet(self, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
-        return
+        pass
+
+    def send_state_packet(self, event: str = None):
+        Log.trace(f"Queueing outgoing state packet, event: '{event}'")
+        packet = self.get_state_packet(event)
+        self.room.send_packet("game_state", packet)
 
     @abstractmethod
-    def try_to_start(self) -> Union[None, str]:
-        """Returns a reason if start is denied by ongoing game, otherwise None"""
-        return
+    def try_to_start(self):
+        """Tries to start the game, throws exception on failure"""
+        pass
 
     @abstractmethod
     def user_left_room(self, user: User):
-        return
+        pass
 
     @abstractmethod
-    def user_tries_to_join_room(self, user: User) -> Union[None, str]:
-        """Returns a reason if user join is denied by ongoing game, otherwise None"""
-        return
+    def user_tries_to_join_room(self, user: User):
+        """Tries to let user join the room, throws exception on failure"""
+        pass

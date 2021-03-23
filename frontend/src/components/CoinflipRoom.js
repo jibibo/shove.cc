@@ -13,16 +13,16 @@ function Room() {
     const [results, setResults] = useState([]);
     const [timeLeft, setTimeLeft] = useState(0);
     const [betters, setBetters] = useState([]);
-    const [coin, setCoin] = useState(null);
+    const [coinState, setCoinState] = useState(null);
 
-    const { money, user } = useContext(GlobalContext);
+    const { accountData } = useContext(GlobalContext);
 
     function addResult(result) {
         setResults((results) => [...results, result]);
     }
 
     function onBet(choice) {
-        sendPacket("game_action", {
+        sendPacket("try_game_action", {
             action: "bet",
             choice: choice,
             bet: bet,
@@ -32,11 +32,11 @@ function Room() {
     if (deaf) {
         deaf = false;
 
-        sendPacket("game_state", {});
+        sendPacket("get_game_state", {});
 
-        socket.on("game_action_status", (packet) => {
-            console.debug("> CoinflipRoom game_action_status", packet);
-            if (packet["success"] && packet["action"] === "bet") {
+        socket.on("game_action_success", (packet) => {
+            console.debug("> CoinflipRoom game_action_success", packet);
+            if (packet["action"] === "bet") {
                 addResult(
                     "You bet " + packet["bet"] + " on: " + packet["choice"]
                 );
@@ -46,7 +46,7 @@ function Room() {
 
         socket.on("game_state", (packet) => {
             console.debug("> CoinflipRoom game_state", packet);
-            setCoin(packet.coin_state);
+            setCoinState(packet.coin_state);
 
             if (packet.state === "idle") {
                 if (packet.event === "ended") {
@@ -56,10 +56,12 @@ function Room() {
                             ", winners: " +
                             JSON.stringify(packet.info.winners)
                     );
-                    setTimeLeft("0!");
-                    if (user in packet.info.winners) {
+                    setTimeLeft("done");
+                    if (accountData.username in packet.info.winners) {
                         addResult(
-                            "You won, gained " + packet.info.winners[user] + "!"
+                            "You won, gained " +
+                                packet.info.winners[accountData.username] +
+                                "!"
                         );
                         sendPacket("get_account_data", {});
                     } else {
@@ -87,22 +89,24 @@ function Room() {
             <div>
                 Time before flip: {timeLeft}
                 <br />
-                {money ? (
+                {accountData.money ? (
                     <>
                         <input
                             type="range"
                             min="1"
-                            max={money}
+                            max={accountData.money}
                             value={bet}
                             step="1"
                             onChange={(e) => setBet(e.target.value)}
                         />
                         <code>{bet}</code>
                     </>
-                ) : null}
+                ) : (
+                    "broke"
+                )}
                 <div>
-                    {coin !== null ? (
-                        coin === "spinning" ? (
+                    {coinState !== null ? (
+                        coinState === "spinning" ? (
                             <img
                                 className="coin spinning"
                                 src={`./games/coinflip/spinning.svg`}
@@ -111,8 +115,8 @@ function Room() {
                         ) : (
                             <img
                                 className="coin"
-                                src={`./games/coinflip/${coin}.svg`}
-                                alt={`${coin}`}
+                                src={`./games/coinflip/${coinState}.svg`}
+                                alt={`${coinState}`}
                             />
                         )
                     ) : null}

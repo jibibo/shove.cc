@@ -2,32 +2,30 @@ import { useContext } from "react";
 
 import { GlobalContext } from "./GlobalContext";
 
-import { sendPacket, socket } from "../connection";
+import RoomList from "./RoomList";
+
+import { socket } from "../connection";
 
 import "./Header.css";
 
 let deaf = true;
 
 function Header() {
-    const { money, setMoney, room, user } = useContext(GlobalContext);
+    const { accountData, setAccountData, roomName } = useContext(GlobalContext);
 
     if (deaf) {
         deaf = false;
 
-        socket.on("log_in_status", (packet) => {
-            console.debug("> Header log_in_status", packet);
-            if (packet["success"]) {
-                sendPacket("get_account_data", {});
-            }
+        socket.on("log_in", (packet) => {
+            console.debug("> Header log_in", packet, accountData);
+            setAccountData(packet.account_data);
         });
 
-        socket.on("get_account_data_status", (packet) => {
-            console.debug("> Header get_account_data_status", packet);
-            if (packet.success) {
-                if (user === undefined || packet.data.username === user) {
-                    // "if undef" is really bad, fix this
-                    setMoney(packet.data.money);
-                }
+        socket.on("account_data", (packet) => {
+            console.debug("> Header account_data", packet, accountData);
+            if (packet.account_data.username === accountData.username) {
+                // "if undefined" is really bad, fix this
+                setAccountData(packet.account_data);
             }
         });
     }
@@ -36,19 +34,17 @@ function Header() {
         <header>
             <div>
                 <h4>
-                    Logged in as: <b>{user}</b>
+                    Logged in as: <b>{accountData.username}</b>
                 </h4>
                 <h4>
-                    Money: <b>{money}</b>
+                    Money: <b>{accountData.money}</b>
                 </h4>
                 <h4>
-                    Currently in room: <b>{room}</b>
+                    Currently in room: <b>{roomName}</b>
                 </h4>
             </div>
-            <div className="header-button-container">
-                <button className="header-button">
-                    {user ? "Log out" : "Log in"}
-                </button>
+            <div className="room-list-container">
+                <RoomList />
             </div>
         </header>
     );

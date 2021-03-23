@@ -15,14 +15,13 @@ class PacketSenderThread(threading.Thread):
             Log.debug(f"Sending {'response' if is_response else 'packet'}: '{model}'\n to: {clients}\n packet: {packet}")
 
             try:
-                send_packet(self.socketio, clients, model, packet, is_response)
+                send_outgoing_packet(self.socketio, clients, model, packet, is_response)
 
             except Exception as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} on send_packet", ex)
-                continue
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on send_outgoing_packet", ex)
 
 
-def send_packet(socketio, clients, model: str, packet: dict, is_response: bool):
+def send_outgoing_packet(socketio, clients, model: str, packet: dict, is_response: bool):
     sids = [client.sid for client in clients]
     for sid in sids:
         socketio.emit(model, packet, room=sid)

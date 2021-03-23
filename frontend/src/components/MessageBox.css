@@ -73,9 +73,10 @@
     transition: transform 0.2s ease-out, border-radius 0.2s ease-out;
 }
 
-@media (min-width: 550px) {
+/* the transform makes it a little unsharp, temporarily removed */
+/* @media (min-width: 550px) {
     .message-input input:focus {
         border-radius: 10px;
         transform: scale(1.05) translateX(5px);
     }
-}
+} */

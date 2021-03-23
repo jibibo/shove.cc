@@ -15,7 +15,7 @@ function initSocket() {
 
 function sendPacket(model, packet) {
     if (socket === undefined) {
-        console.warn("Tried to send packet with no connection", model, packet);
+        console.warn("Tried to send packet with no socket set", model, packet);
         return;
     }
 

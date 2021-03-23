@@ -10,51 +10,41 @@ let deaf = true;
 
 function RoomList() {
     const [roomList, setRoomList] = useState([]);
-    const { setRoom, user } = useContext(GlobalContext);
+    const { setRoomName } = useContext(GlobalContext);
 
     if (deaf) {
         deaf = false;
 
         socket.on("connect", () => {
             console.debug("> RoomList connect event");
-            sendPacket("get_room_list", {
-                properties: ["name"],
-            });
+            sendPacket("get_room_list", {});
         });
+
         socket.on("room_list", (packet) => {
             console.debug("> RoomList room_list", packet);
-            setRoomList(packet["room_list"]);
+            setRoomList(packet.room_list);
         });
-        socket.on("join_room_status", (packet) => {
-            console.debug("> RoomList join_room_status", packet);
-            if (packet["success"]) {
-                setRoom(packet["room_name"]);
-            }
+
+        socket.on("join_room", (packet) => {
+            console.debug("> RoomList join_room", packet);
+            setRoomName(packet.room_name);
         });
     }
 
     return (
         <div className="room-list">
-            Rooms:
-            <br />
             {roomList.map((room, i) => {
                 return (
                     <div className="room-list-entry" key={i}>
-                        <div className="room-info">
-                            <p>
-                                {room.name} - Users: {room.user_count} /{" "}
-                                {room.max_user_count}
-                            </p>
-                        </div>
                         <button
                             onClick={() => {
-                                sendPacket("join_room", {
-                                    username: user,
+                                sendPacket("try_join_room", {
                                     room_name: room.name,
                                 });
                             }}
                         >
-                            Join room {room.name}!
+                            {room.name} ({room.user_count} /{" "}
+                            {room.max_user_count})
                         </button>
                     </div>
                 );

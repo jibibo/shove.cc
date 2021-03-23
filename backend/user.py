@@ -18,6 +18,12 @@ class User:
         else:
             return f"'{self.sid}'"
 
+    def get_username(self) -> str:
+        """Returns None if user is not logged in"""
+
+        if self.account:
+            return self.account["username"]
+
     def log_in(self, account: Account):
         self.account = account
         Log.info(f"{self} logged in")

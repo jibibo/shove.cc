@@ -11,6 +11,7 @@ class Room:
         self.name = f"R{shove.get_room_count() + 1}"
         self.game: BaseGame = shove.get_default_game()(self)
         self._users: List[User] = []
+        self.max_user_count: int = 0
 
         # todo each game should have their own event handler (if needed)
 
@@ -22,6 +23,13 @@ class Room:
     def __str__(self):
         return f"'{self.name}'"
 
+    def get_data(self) -> dict:
+        return {
+            "name": self.name,
+            "user_count": self.get_user_count(),
+            "max_user_count": self.max_user_count
+        }
+
     def get_user_count(self) -> int:
         return len(self._users)
 
@@ -31,37 +39,44 @@ class Room:
     def is_empty(self):
         return self.get_user_count() == 0
 
+    def is_full(self):
+        return self.max_user_count and self.get_user_count() >= self.max_user_count
+
     def send_packet(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
         self.shove.send_packet(self.get_users(), model, packet, skip)
 
     def try_to_start_game(self):
-        Log.trace("Trying to start game")
+        Log.trace(f"Trying to start game in room {self}")
 
         try:
-            fail_reason = self.game.try_to_start()
+            self.game.try_to_start()
+
+        except GameRunning:
+            Log.trace("Game is running, not starting")
+
+        except RoomEmpty:
+            Log.trace("Room is empty, not starting")
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on self.game.try_to_start", ex)
-            return
-
-        if fail_reason:
-            Log.info(f"Could not start game in room {self}, reason: {fail_reason}")
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on room.game.try_to_start", ex)
 
         else:
             Log.info(f"Game started in room {self}")
 
-    def user_tries_to_join(self, user: User) -> Union[None, str]:
-        """Returns a reason if could not join room (if rejected by the room's game), otherwise None"""
+    def user_tries_to_join(self, user: User):
+        """Tries to put user in the room, if fails, throws an exception"""
 
-        Log.trace(f"Trying to let user {user} join room")
+        Log.trace(f"Trying to let user {user} join room {self}")
 
-        if self.game:
-            fail_reason = self.game.user_tries_to_join_room(user)  # tries to drop user in the room, if fails, return fail reason
+        if self.is_full():
+            raise RoomFull
 
-            if fail_reason:
-                return fail_reason
+        if self.game:  # if game is not set, user can join for sure
+            self.game.user_tries_to_join_room(user)  # tries to drop user in the room, if fails, raises exception
 
-        self._users.append(user)  # if game is not set, user can always join
+        self._users.append(user)
+
+        Log.info(f"{user} joined room {self}")
 
     def user_leave(self, user: User):
         Log.trace(f"User {user} is leaving room")

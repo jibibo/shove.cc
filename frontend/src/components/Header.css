@@ -6,9 +6,7 @@ header {
     background: var(--main-nav-color);
     display: flex;
     justify-content: space-between;
-    padding: 5px 0;
     margin-bottom: 15px;
-    border-radius: 0 10px;
     transition: height 0.2s ease-out;
 }
 
@@ -18,23 +16,9 @@ header h4 {
     font-weight: normal;
 }
 
-.header-button-container {
+.room-list-container {
     display: flex;
+    justify-content: center;
     align-items: center;
-}
-
-.header-button {
-    margin-right: 10px;
-    padding: 10px;
-    background-color: var(--main-nav-color);
-    border: 2px solid white;
-    color: white;
-    border-radius: 5px;
-    transition: background ease-out 0.25s;
-}
-
-.header-button:hover {
-    color: black;
-    background: white;
-    cursor: pointer;
+    flex-direction: column;
 }

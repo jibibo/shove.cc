@@ -1,5 +1,5 @@
 from convenience import *
-from base_game import BaseGame, InvalidEvent, InvalidGamePacket, GameState
+from base_game import BaseGame, GameState
 from user import User
 
 from .flip_timer_thread import FlipTimerThread
@@ -24,6 +24,31 @@ class Coinflip(BaseGame):
         self.heads_odds = 49  # 49/total odds = 49%
         self.tails_odds = 51  # 51/total odds = 51%
 
+    def get_state_packet(self, event: str = None) -> dict:
+        if self.state == GameState.IDLE:
+            info = {
+                "winners": self.winners  # the winners of the last coin flip
+            }
+
+        else:  # self.state == GameState.RUNNING
+            info = {
+                "time_left": self.flip_timer.time_left,
+                "betters": {player.user.account["username"]: player.bet
+                            for player in self.participants}
+            }
+
+        return {
+            "name": self.get_name(),
+            "state": self.state,
+            "event": event,
+            "info": info,
+            "odds": {
+                "heads": self.heads_odds,
+                "tails": self.tails_odds
+            },
+            "coin_state": self.coin_state
+        }
+
     def handle_event(self, event: str):
         if event == "timer_finished":
             self.resolve_flip()
@@ -38,64 +63,47 @@ class Coinflip(BaseGame):
             return
 
         if event in ["user_joined", "coin_flipped"]:
-            Log.warn("not implemented")
-            return
+            raise GameEventNotImplemented
 
-        raise InvalidEvent(f"unknown (or incomplete handler for) event: '{event}'")
+        raise GameEventInvalid(f"Unknown event: '{event}'")
 
     def handle_packet(self, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
-        if model == "game_action":
+        if model == "try_game_action":
             action = packet["action"]
 
-            if action == "bet":
-                if user in [player.user for player in self.participants]:
-                    return "game_action_status", {
-                        "success": False,
-                        "action": "bet",
-                        "reason": "already bet"
-                    }
+            if action != "bet":
+                raise PacketInvalid("Invalid action")
 
-                bet = int(packet["bet"])
+            if user in [player.user for player in self.participants]:
+                raise GameActionFailed("Already placed a bet")
 
-                if bet <= 0:
-                    return "game_action_status", {
-                        "success": False,
-                        "action": "bet",
-                        "reason": f"invalid bet amount: {bet}"
-                    }
+            bet = int(packet["bet"])
 
-                if user.account["money"] < bet:
-                    return "game_action_status", {
-                        "success": False,
-                        "action": "bet",
-                        "reason": "not enough money"
-                    }
+            if bet <= 0:
+                raise GameActionFailed(f"Invalid bet amount: {bet}")
 
-                choice = packet["choice"]
-                user.account["money"] -= bet
-                self.participants.append(Player(user, choice, bet))
-                self.events.put("user_bet")
+            if user.account["money"] < bet:
+                raise GameActionFailed("Not enough money to bet")
 
-                return "game_action_status", {
-                    "success": True,
-                    "action": "bet",
-                    "bet": bet,
-                    "choice": choice
-                }
+            choice = packet["choice"]
+            user.account["money"] -= bet
+            self.participants.append(Player(user, choice, bet))
+            self.events.put("user_bet")
 
-        if model == "game_state":
-            return "game_state", self.get_state_packet()
+            return "game_action_success", {
+                "action": "bet",
+                "bet": bet,
+                "choice": choice
+            }
 
-        raise InvalidGamePacket(f"unknown (or incomplete handler for) game packet model: '{model}'")
+        raise PacketInvalid(f"Unknown game packet model: '{model}'")
 
-    def try_to_start(self) -> Union[None, str]:
+    def try_to_start(self):
         if self.room.is_empty():
-            Log.trace("Room is empty, not starting")
-            return "Room is empty"
+            raise RoomEmpty
 
         if self.state == GameState.RUNNING:
-            Log.trace("Game is already running, not starting")
-            return "Game is already running"
+            raise GameRunning
 
         self.state = GameState.RUNNING
         self.winners.clear()
@@ -107,35 +115,11 @@ class Coinflip(BaseGame):
         self.send_state_packet(event="started")
 
     def user_left_room(self, user: User):
-        return
+        pass
 
-    def user_tries_to_join_room(self, user: User) -> Union[None, str]:
+    def user_tries_to_join_room(self, user: User):
         # users can always join room in this game
-        return
-
-    def get_state_packet(self, event: str = None) -> dict:  # todo should probably be in BaseGame
-        if self.state == GameState.IDLE:
-            info = {
-                "winners": self.winners  # the winners of the last coin flip
-            }
-
-        else:  # self.state == GameState.RUNNING
-            info = {
-                "time_left": self.flip_timer.time_left,
-                "betters": {player.user.account["username"]: player.bet
-                            for player in self.participants}
-            }
-
-        return {
-            "state": self.state,
-            "event": event,
-            "info": info,
-            "odds": {
-                "heads": self.heads_odds,
-                "tails": self.tails_odds
-            },
-            "coin_state": self.coin_state
-        }
+        pass
 
     def resolve_flip(self):
         Log.trace(f"Resolving flip (odds: heads = {self.heads_odds}, tails = {self.tails_odds})")
@@ -160,8 +144,3 @@ class Coinflip(BaseGame):
         self.participants.clear()
 
         self.send_state_packet(event="ended")
-
-    def send_state_packet(self, event: str = None):  # todo should probably be in BaseGame
-        Log.trace(f"Queueing outgoing state packet, event: '{event}'")
-        packet = self.get_state_packet(event)
-        self.room.send_packet("game_state", packet)

@@ -1,26 +1,22 @@
-import { useState, useContext } from "react";
+import { useState } from "react";
 
 import { sendPacket, socket } from "../connection";
-
-import { GlobalContext } from "./GlobalContext";
 
 import "./LoginForm.css";
 
 let deaf = true;
 
 const LogInForm = () => {
-    const { setUser } = useContext(GlobalContext);
-
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
+    const [usernameInput, setUsernameInput] = useState("");
+    const [passwordInput, setPasswordInput] = useState("");
 
     function onSubmit(ev) {
         ev.preventDefault();
-        sendPacket("log_in", {
-            username: username,
-            password: password
+        sendPacket("try_log_in", {
+            username: usernameInput,
+            password: passwordInput,
         });
-        setUsername("");
+        setUsernameInput("");
     }
 
     if (deaf) {
@@ -28,17 +24,10 @@ const LogInForm = () => {
 
         socket.on("connect", () => {
             console.debug("> LogInForm connect event");
-            // sendPacket("log_in", { // auto log in on connect
+            // sendPacket("try_log_in", { // auto log in on connect
             //     username: "a",
             //     password: null,
             // });
-        });
-
-        socket.on("log_in_status", (packet) => {
-            console.debug("> LogInForm log_in_status", packet);
-            if (packet["success"]) {
-                setUser(packet["username"]);
-            }
         });
     }
 
@@ -51,9 +40,9 @@ const LogInForm = () => {
                     id="log-in-username"
                     placeholder="Username"
                     autoComplete="off"
-                    value={username}
+                    value={usernameInput}
                     onChange={(ev) => {
-                        setUsername(ev.target.value);
+                        setUsernameInput(ev.target.value);
                     }}
                 />
                 <input
@@ -61,12 +50,14 @@ const LogInForm = () => {
                     id="log-in-password"
                     placeholder="Password"
                     autoComplete="off"
-                    value={password}
+                    value={passwordInput}
                     onChange={(ev) => {
-                        setPassword(ev.target.value);
+                        setPasswordInput(ev.target.value);
                     }}
                 />
-                <button className="login-button" type="submit">Submit</button>
+                <button className="login-button" type="submit">
+                    Submit
+                </button>
             </form>
         </div>
     );

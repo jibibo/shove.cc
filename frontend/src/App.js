@@ -6,7 +6,6 @@ import { GlobalContext } from "./components/GlobalContext";
 
 import ConnectionStatus from "./components/ConnectionStatus";
 import LogInForm from "./components/LogInForm";
-import RoomList from "./components/RoomList";
 import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
 
@@ -16,7 +15,7 @@ import Room from "./components/CoinflipRoom";
 function App() {
     const [width, setWidth] = useState(window.innerWidth);
     const [height, setHeight] = useState(window.innerHeight);
-    const { user, room } = useContext(GlobalContext);
+    const { accountData, roomName } = useContext(GlobalContext);
 
     useEffect(() => {
         window.addEventListener("resize", () => {
@@ -30,23 +29,21 @@ function App() {
     return (
         <>
             <Header />
-            
-            <div className="connection-status">
-                <ConnectionStatus />
-            </div>
 
             <div className="container">
                 {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null}
 
                 <div>
+                    {accountData.username ? null : <LogInForm />}
 
-                    {user ? null : <LogInForm />}
-
-                    {room ? <Room /> : <RoomList />}
-
+                    {roomName ? <Room /> : "join a room yh?"}
                 </div>
-                <div className="message-box">
+                <div className="message-box-container">
                     <MessageBox />
+                </div>
+
+                <div className="connection-status-container">
+                    <ConnectionStatus />
                 </div>
             </div>
         </>

@@ -7,7 +7,7 @@ import "./MessageBox.css";
 let deaf = true;
 
 function MessageBox() {
-    const { messages, setMessages, user } = useContext(GlobalContext);
+    const { messages, setMessages, username } = useContext(GlobalContext);
 
     const [message, setMessage] = useState("");
     const [visible, setVisible] = useState(true);
@@ -37,9 +37,9 @@ function MessageBox() {
             return;
         }
 
-        sendPacket("send_message", {
-            username: user,
-            content: message,
+        sendPacket("try_send_message", {
+            username,
+            message,
         });
 
         setMessage("");
@@ -48,46 +48,52 @@ function MessageBox() {
     if (deaf) {
         deaf = false;
         // useEffect(() => {
-        socket.on("chat_message", (packet) => {
-            console.debug("> MessageBox chat_message", packet);
-            addMessage(packet.username + " > " + packet.content);
+        socket.on("message", (packet) => {
+            console.debug("> MessageBox message", packet);
+            addMessage(packet.username + " > " + packet.message);
         });
 
-        socket.on("command_status", (packet) => {
-            console.debug("> MessageBox command_status", packet);
-            if (packet.success && packet.command === "money") {
+        socket.on("command_success", (packet) => {
+            console.debug("> MessageBox command_success", packet);
+            if (packet.message === "Money added") {
+                // maybe use a "notification" packet with green popup box
                 sendPacket("get_account_data", {});
             }
+        });
+
+        socket.on("error", (packet) => {
+            console.debug("Messagebox error", packet);
+            addMessage("Error: " + packet.description);
         });
 
         socket.on("user_connected", (packet) => {
             console.debug("> MessageBox user_connected", packet);
             if (!packet.you) {
-                addMessage("Someone connected: " + packet.sid);
+                addMessage("Someone connected");
             }
         });
 
         socket.on("user_disconnected", (packet) => {
             console.debug("> MessageBox user_disconnected", packet);
-            addMessage("Someone disconnected: " + packet.sid);
+            let disconnectedUsername;
+
+            if (packet.username) {
+                disconnectedUsername = packet.username;
+            } else {
+                disconnectedUsername = "Someone";
+            }
+
+            addMessage(disconnectedUsername + " disconnected");
         });
 
-        socket.on("join_room_status", (packet) => {
-            console.debug("> MessageBox join_room_status", packet);
-            if (packet.success) {
-                addMessage("Joined room " + packet.room_name);
-            } else {
-                addMessage("Failed to join room: " + packet.reason);
-            }
+        socket.on("join_room", (packet) => {
+            console.debug("> MessageBox join_room", packet);
+            addMessage("Joined room " + packet.room_name);
         });
 
-        socket.on("log_in_status", (packet) => {
-            console.debug("> MessageBox log_in_status", packet);
-            if (packet.success) {
-                addMessage("Signed in as " + packet.username);
-            } else {
-                addMessage("Failed to sign in as " + packet.username);
-            }
+        socket.on("log_in", (packet) => {
+            console.debug("> MessageBox log_in", packet);
+            addMessage("Signed in as " + packet.account_data.username);
         });
     }
 

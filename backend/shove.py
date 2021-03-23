@@ -46,7 +46,7 @@ class Shove:
         Log.info("Shove initialized")
 
     @staticmethod
-    def get_account(**k_v) -> Account:
+    def get_account(fail_silently=False, **k_v) -> Account:
         Log.trace(f"Getting account with k_v: {k_v}")
 
         if len(k_v) != 1:
@@ -58,7 +58,10 @@ class Shove:
                 Log.trace(f"Account matched: {account_data}")
                 return account_data
 
-        Log.trace(f"No account matched with k_v: {k_v}")
+        if fail_silently:
+            Log.trace(f"No account matched with k_v: {k_v}")
+        else:
+            raise AccountNotFound
 
     def get_room_names(self) -> List[str]:
         return [room.name for room in self.get_rooms()]
@@ -143,25 +146,26 @@ class Shove:
 
         self.send_packet(user, "user_connected", {
             "you": True,
-            "sid": sid,
+            "username": user.get_username(),
             "user_count": self.get_user_count()
         })
 
         self.send_packet(self.get_all_users(), "user_connected", {
             "you": False,
-            "sid": sid,
+            "username": user.get_username(),
             "user_count": self.get_user_count()
         }, skip=user)
 
     def on_disconnect(self, sid: str):
         user = self.get_user_from_sid(sid=sid)
         if not user:
+            Log.warn(f"shove.on_disconnect: user with SID {sid} does not exist")
             return
 
         self._users.remove(user)
 
         self.send_packet(self.get_all_users(), "user_disconnected", {
-            "sid": sid,
+            "username": user.get_username(),
             "user_count": self.get_user_count()
         })
 
@@ -197,11 +201,11 @@ class Shove:
                 for skip_user in skip:
                     users.remove(skip_user)
 
-            if not users:
-                Log.trace(f"Skipping outgoing {'response' if is_response else 'packet'} '{model}' with no recipients\n packet: {packet}")
-                return
+            if users:
+                self.outgoing_packets_queue.put((users, model, packet, is_response))
 
-            self.outgoing_packets_queue.put((users, model, packet, is_response))
+            else:
+                Log.trace(f"Skipped outgoing {'response' if is_response else 'packet'} '{model}' with no recipients\n packet: {packet}")
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on send_packet", ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on shove.send_packet", ex)

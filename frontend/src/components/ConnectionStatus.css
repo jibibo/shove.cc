@@ -1,6 +1,5 @@
 .status {
     padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
+    border-radius: 10px 0px 0px 0px;
     text-align: center;
 }
