@@ -38,10 +38,12 @@ class Account:
         return str(self._data)
 
     def get_data(self, filter_sensitive=True) -> dict:
-        copy = self._data.copy()
+        data = self._data.copy()
 
         if filter_sensitive:
             for key in ["password"]:
-                copy[key] = "*"
+                data[key] = "*"
 
-        return copy
+        data["money_formatted"] = formatting.abbreviate_number(data["money"])
+
+        return data

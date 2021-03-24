@@ -2,12 +2,6 @@ from convenience import *
 from user import User
 from shove import Shove
 
-try:
-    from test import API_KEY, API_SECRET, TOKEN
-except ImportError:
-    Log.error("Could not import Trello API credentials")
-    API_KEY = API_SECRET = TOKEN = None
-
 
 class PacketHandlerThread(threading.Thread):
     """This thread handles one received packet at a time"""
@@ -50,7 +44,7 @@ class PacketHandlerThread(threading.Thread):
                 Log.trace(f"Handled packet #{packet_number}, no response")
 
 
-# todo instead of "success": False status packets, give a proper error (unauthorized/invalid command/etc)
+# todo remove try_ from the packets, redundant
 def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
     """Handles the packet and returns an optional response model + packet"""
 
@@ -60,17 +54,29 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
     if type(packet) != dict:
         raise PacketInvalid(f"Invalid packet type: {type(packet).__name__}")
 
+    # special game packet, should be handled by game's packet handler
+    if model == "try_game_action":  # currently the only model for game packets
+        room = shove.get_room_of_user(user)
+
+        if not room:
+            raise PacketInvalid("Not in a room")
+
+        if not room.game:
+            raise GameNotSet
+
+        response = room.game.handle_packet(user, model, packet)  # optionally returns a response (model, packet) tuple
+        return response
+
     if model == "get_account_data":
         if "username" in packet:
-            username = packet["username"]
+            username = packet["username"].strip().lower()
+            account = shove.get_account(username=username)
 
         elif user.account:
-            username = user.account["username"]
+            account = user.account
 
         else:
             raise PacketInvalid("Not logged in and no username provided")
-
-        account = shove.get_account(username=username)
 
         account_data = account.get_data()
 
@@ -87,35 +93,21 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
         if not room.game:
             raise GameNotSet
 
-        return "game_state", room.game.get_state_packet()
+        return "game_state", room.game.get_info_packet()
 
     if model == "get_room_list":  # send a list of dicts with each room's data
         return "room_list", {
             "room_list": [room.get_data() for room in shove.get_rooms()]
         }
 
-    if model == "leave_room":
-        raise PacketNotImplemented
-
-    # special game packet, should be handled by game's packet handler
-    if model == "try_game_action":  # currently the only model for game packets
-        room = shove.get_room_of_user(user)
-
-        if not room:
-            raise PacketInvalid("Not in a room")
-
-        if not room.game:
-            raise GameNotSet
-
-        response = room.game.handle_packet(user, model, packet)  # optionally returns a response (model, packet) tuple
-        return response
-
     if model == "try_join_room":
         if not user.account:
-            raise PacketUserUnauthorized("Not logged in")
+            raise UserUnauthorized("Not logged in")
 
-        room_name = packet["room_name"]
-        room = shove.get_room(room_name)
+        if shove.get_room_of_user(user):
+            raise UserAlreadyInRoom
+
+        room = shove.get_room(packet["room_name"])
 
         if not room:
             raise RoomNotFound
@@ -123,13 +115,34 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
         room.user_tries_to_join(user)  # this throws an exception if user can't join room
 
         return "join_room", {
-            "room_name": room_name,
+            "room_name": room.name,
+            "room_data": None,  # todo implement, safes sending 1 packet
+            "game_state": None
+        }
+
+    if model == "try_leave_room":
+        if not user.account:
+            raise UserUnauthorized("Not logged in")
+
+        room = shove.get_room_of_user(user)
+
+        if not room:
+            raise UserNotInRoom
+
+        room.user_leave(user)
+
+        return "leave_room", {
+            "room_name": room.name
         }
 
     if model == "try_log_in":
-        username = packet["username"]
-        # password = packet["password"]  # todo matching password check
+        username = packet["username"].strip().lower()
+        password = packet["password"]
         account = shove.get_account(username=username)
+
+        if account["password"] != password:
+            # raise PasswordInvalid  # comment out to disable password checking
+            pass
 
         user.log_in(account)
 
@@ -157,12 +170,12 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
 
         # not a command, so it is a chat message
         if not user.account:
-            raise PacketUserUnauthorized("Not logged in")
+            raise UserUnauthorized("Not logged in")
 
         username = user.account["username"]
         Log.trace(f"Chat message from {username}: '{message}'")
-        shove.send_packet(shove.get_all_users(), "message", {
-            "username": username,
+        shove.send_packet_all("message", {
+            "author": username,
             "message": message
         })
         return
@@ -172,41 +185,26 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
 
 def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
     Log.trace(f"Handling command: '{message}'")
-    command = message[1:].strip()
-    command_lower = command.lower()
-    command_split = command_lower.split()
+    command = message[1:].strip().lower()
+    command_split = command.split()
 
-    if command_lower == "money":
+    if command == "money":
         user.account["money"] += 9e15
         return "Money added"
 
     if command_split[0] == "trello":
-        Log.trace("Adding card to Trello API list")
-
         trello_args = " ".join(command_split[1:])
         trello_args_split = trello_args.split("//")
         if len(trello_args_split) == 1:
-            name, desc = trello_args_split[0], None
+            name, description = trello_args_split[0], None
 
         elif len(trello_args_split) == 2:
-            name, desc = trello_args_split
-            desc = desc.strip()
+            name, description = trello_args_split
 
         else:
-            raise PacketCommandInvalid("Invalid arguments")
+            raise CommandInvalid("Invalid arguments")
 
-        name = name.strip()  # desc is already stripped, or None if it wasn't provided
-
-        client = TrelloClient(  # todo shouldn't be called every time, set as shove.trello_client
-            api_key=API_KEY,
-            api_secret=API_SECRET,
-            token=TOKEN
-        )
-
-        board = client.get_board("603c469a39b5466c51c3a176")  # todo shouldn't be called every time
-        card_list = board.get_list("60587b1f02721f0c7b547f5b")  # todo shouldn't be called every time
-        card_list.add_card(name=name, desc=desc, position="top")
-        Log.trace(f"Added card to Trello API list, name = {name}, desc = {desc}")
+        shove.add_trello_card(name, description)
         return
 
-    raise PacketCommandInvalid(f"Unknown command: '{command_lower}'")
+    raise CommandInvalid(f"Unknown command: '{command}'")

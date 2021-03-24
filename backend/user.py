@@ -6,6 +6,7 @@ class User:
     def __init__(self, sid: str):
         self.sid = sid
         self.account = None
+        self.game_data: dict = {}
         Log.trace(f"Created new User object for SID {sid}")
 
     def __repr__(self):
@@ -17,6 +18,9 @@ class User:
 
         else:
             return f"'{self.sid}'"
+
+    def clear_game_data(self):
+        self.game_data = {}
 
     def get_username(self) -> str:
         """Returns None if user is not logged in"""

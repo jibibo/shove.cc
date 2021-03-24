@@ -16,14 +16,15 @@ LEVEL_ERROR = 4, "ERROR", Fore.RED
 LEVEL_FATAL = 5, "FATAL", Fore.RED + Style.BRIGHT
 LEVEL_TEST = 6, "TEST", Fore.MAGENTA
 CONSOLE_LOG_LEVEL = LEVEL_TRACE
-LOG_TO_FILE = False
+LOG_TO_FILE = True
 MESSAGE_LENGTH_CUTOFF = 1000
-LOG_FILE = "/logs/_latest.log"
+LOGS_DIRECTORY = "logs"
+LOG_FILE = f"{LOGS_DIRECTORY}/_latest.log"
 
 
 class Log:
     PRINT_LOCK = threading.Lock()
-    FILE_WRITING_QUEUE = Queue()
+    FILE_WRITING_QUEUE = Queue()  # now_str, level, thread_name, message
 
     @staticmethod
     def trace(message, exception=None):
@@ -75,7 +76,11 @@ class Log:
 
     @staticmethod
     def start_file_writer_thread():
-        threading.Thread(target=Log._file_writer_thread, name="LogFileWriter", daemon=True).start()
+        if LOG_TO_FILE:
+            threading.Thread(target=Log._file_writer_thread, name="LogFileWriter", daemon=True).start()
+
+        else:
+            print("Logging to file is DISABLED")
 
     @staticmethod
     def _file_writer_thread():  # todo broken
@@ -84,14 +89,14 @@ class Log:
             print("Emptied latest log file")
 
         except FileNotFoundError:
-            os.mkdir("/logs")
-            print("Created /logs directory")
+            os.mkdir("logs")
+            print("Created 'logs' directory")
             open(LOG_FILE, "w").close()
-            print("Created latest log file")
+            print(f"Created {LOG_FILE}")
 
         Log.trace("Ready")
         while True:
             now_str, level, thread_name, message = Log.FILE_WRITING_QUEUE.get()
 
             with open(LOG_FILE, "a", encoding="utf-8") as f:
-                f.write(f"[{now_str}][SERVER/{level[1]}][{thread_name}] {message}\n")
+                f.write(f"[{now_str}][{level[1]}][{thread_name}] {message}\n")
