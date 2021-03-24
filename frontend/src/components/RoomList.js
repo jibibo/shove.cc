@@ -38,7 +38,7 @@ function RoomList() {
                     <div className="room-list-entry" key={i}>
                         <button
                             onClick={() => {
-                                sendPacket("try_join_room", {
+                                sendPacket("join_room", {
                                     room_name: room.name,
                                 });
                             }}

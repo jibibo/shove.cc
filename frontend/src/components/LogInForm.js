@@ -1,10 +1,8 @@
 import { useState } from "react";
 
-import { sendPacket, socket } from "../connection";
+import { sendPacket } from "../connection";
 
 import "./LoginForm.css";
-
-let deaf = true;
 
 const LogInForm = () => {
     const [usernameInput, setUsernameInput] = useState("");
@@ -12,23 +10,11 @@ const LogInForm = () => {
 
     function onSubmit(ev) {
         ev.preventDefault();
-        sendPacket("try_log_in", {
+        sendPacket("log_in", {
             username: usernameInput,
             password: passwordInput,
         });
         setUsernameInput("");
-    }
-
-    if (deaf) {
-        deaf = false;
-
-        socket.on("connect", () => {
-            console.debug("> LogInForm connect event");
-            // sendPacket("try_log_in", { // auto log in on connect
-            //     username: "a",
-            //     password: null,
-            // });
-        });
     }
 
     return (

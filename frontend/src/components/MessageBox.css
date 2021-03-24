@@ -42,7 +42,6 @@
 }
 
 .profile-picture {
-
     height: 100%;
 }
 
@@ -52,6 +51,7 @@
 }
 
 .picture {
+    border-radius: 50%;
     width: 40px;
 }
 

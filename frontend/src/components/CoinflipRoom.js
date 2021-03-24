@@ -22,7 +22,7 @@ function Room() {
     }
 
     function onBet(choice) {
-        sendPacket("try_game_action", {
+        sendPacket("game_action", {
             action: "bet",
             choice: choice,
             bet: bet,

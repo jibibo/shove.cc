@@ -7,7 +7,7 @@ import "./MessageBox.css";
 let deaf = true;
 
 function MessageBox() {
-    const { messages, setMessages, username } = useContext(GlobalContext);
+    const { messages, setMessages } = useContext(GlobalContext);
 
     const [message, setMessage] = useState("");
     const [visible, setVisible] = useState(true);
@@ -40,7 +40,7 @@ function MessageBox() {
             return;
         }
 
-        sendPacket("try_send_message", {
+        sendPacket("send_message", {
             message,
         });
 
@@ -50,17 +50,15 @@ function MessageBox() {
     if (deaf) {
         deaf = false;
         // useEffect(() => {
+            
         socket.on("message", (packet) => {
             console.debug("> MessageBox message", packet);
-            addMessage(packet.username, packet.message);
+            addMessage(packet.author, packet.content);
         });
 
         socket.on("command_success", (packet) => {
             console.debug("> MessageBox command_success", packet);
-            if (packet.message === "Money added") {
-                // maybe use a "notification" packet with green popup box
-                sendPacket("get_account_data", {});
-            }
+            addMessage(packet.response)
         });
 
         socket.on("error", (packet) => {
@@ -90,7 +88,7 @@ function MessageBox() {
 
         socket.on("join_room", (packet) => {
             console.debug("> MessageBox join_room", packet);
-            addMessage("Joined room " + packet.room_name);
+            addMessage("Joined room " + packet.room_name);  
         });
 
         socket.on("log_in", (packet) => {
