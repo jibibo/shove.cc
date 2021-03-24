@@ -13,8 +13,6 @@ class Room:
         self._users: List[User] = []
         self.max_user_count: int = 0
 
-        # todo each game should have their own event handler (if needed)
-
         Log.info(f"Created room {self}")
 
     def __repr__(self):
@@ -42,7 +40,7 @@ class Room:
     def is_full(self):
         return self.max_user_count and self.get_user_count() >= self.max_user_count
 
-    def send_packet(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
+    def send_packet_all(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
         self.shove.send_packet(self.get_users(), model, packet, skip)
 
     def try_to_start_game(self):
@@ -51,11 +49,8 @@ class Room:
         try:
             self.game.try_to_start()
 
-        except GameRunning:
-            Log.trace("Game is running, not starting")
-
-        except RoomEmpty:
-            Log.trace("Room is empty, not starting")
+        except GameStartError as ex:
+            Log.trace(f"Could not start game: {ex}")
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on room.game.try_to_start", ex)
@@ -76,9 +71,28 @@ class Room:
 
         self._users.append(user)
 
+        self.shove.send_packet_all("room_list", {  # update room list for all connected users
+            "room_list": [room.get_data() for room in self.shove.get_rooms()]
+        })
+
         Log.info(f"{user} joined room {self}")
 
     def user_leave(self, user: User):
-        Log.trace(f"User {user} is leaving room")
-        self.game.user_left_room(user)
+        Log.trace(f"User {user} is leaving room {self}")
+
+        if self.game:
+            try:
+                self.game.user_left_room(user)
+
+            except Exception as ex:
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on room.game.user_left_room", ex)
+
+            user.clear_game_data()  # clear any game data the user could have because of the game they left
+
         self._users.remove(user)
+
+        self.shove.send_packet_all("room_list", {  # update room list for all connected users
+            "room_list": [room.get_data() for room in self.shove.get_rooms()]
+        })
+
+        Log.trace(f"User {user} left room {self}")

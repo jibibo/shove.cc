@@ -6,7 +6,7 @@ from games.coinflip import Coinflip
 
 
 ACCOUNTS = [Account(username=u, password="1", money=m)
-            for u, m in [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000)]]
+            for u, m in [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000), ("badr", 200)]]
 
 
 def get_all_accounts():  # should be a generator if many files
@@ -43,10 +43,35 @@ class Shove:
         # for i in range(1):
         #     self.rooms[0].events.put("start")
 
+        Log.trace("Initializing Trello client, fetching card list")
+        client = TrelloClient(
+            api_key=API_KEY,
+            api_secret=API_SECRET,
+            token=TOKEN
+        )
+        board = client.get_board("603c469a39b5466c51c3a176")
+        self._trello_card_list = board.get_list("60587b1f02721f0c7b547f5b")
+
+        # testing
+        inputs = [int("9" * n) for n in range(1, 9)]
+        # inputs = [int("1" * n) for n in range(1, 9)]
+        # inputs = [10**n for n in range(1, 9)]
+        for n in inputs:
+            formatting.abbreviate_number(n)
+
         Log.info("Shove initialized")
 
+    def add_trello_card(self, name, description=None):
+        name = name.strip()
+        if description is not None:
+            description = description.strip()
+
+        Log.trace(f"Adding card to Trello card list, name = '{name}', description = '{description}'")
+        self._trello_card_list.add_card(name=name, desc=description, position="top")
+        Log.trace(f"Added card")
+
     @staticmethod
-    def get_account(fail_silently=False, **k_v) -> Account:
+    def get_account(fail_silently=False, **k_v) -> Account:  # todo support for multiple kwargs
         Log.trace(f"Getting account with k_v: {k_v}")
 
         if len(k_v) != 1:
@@ -150,7 +175,7 @@ class Shove:
             "user_count": self.get_user_count()
         })
 
-        self.send_packet(self.get_all_users(), "user_connected", {
+        self.send_packet_all("user_connected", {
             "you": False,
             "username": user.get_username(),
             "user_count": self.get_user_count()
@@ -159,12 +184,15 @@ class Shove:
     def on_disconnect(self, sid: str):
         user = self.get_user_from_sid(sid=sid)
         if not user:
-            Log.warn(f"shove.on_disconnect: user with SID {sid} does not exist")
-            return
+            raise ValueError(f"shove.on_disconnect: user with SID {sid} does not exist")
+
+        room = self.get_room_of_user(user)
+        if room:
+            room.user_leave(user)
 
         self._users.remove(user)
 
-        self.send_packet(self.get_all_users(), "user_disconnected", {
+        self.send_packet_all("user_disconnected", {
             "username": user.get_username(),
             "user_count": self.get_user_count()
         })
@@ -209,3 +237,6 @@ class Shove:
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on shove.send_packet", ex)
+
+    def send_packet_all(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
+        self.send_packet(self.get_all_users(), model, packet, skip)

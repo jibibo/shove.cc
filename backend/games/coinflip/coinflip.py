@@ -5,26 +5,18 @@ from user import User
 from .flip_timer_thread import FlipTimerThread
 
 
-class Player:
-    def __init__(self, user, choice, bet):
-        self.user = user
-        self.choice = choice
-        self.bet = bet
-
-
 class Coinflip(BaseGame):
     def __init__(self, room):
         super().__init__(room)
         self.flip_timer = None
-        self.participants: List[Player] = []
         self.winners: Dict[str, int] = {}
         self.coin_state = None
 
         self.flip_timer_duration = 2
-        self.heads_odds = 49  # 49/total odds = 49%
-        self.tails_odds = 51  # 51/total odds = 51%
+        self.heads_odds = 49  # ratio (vs tails) of landing on heads
+        self.tails_odds = 51
 
-    def get_state_packet(self, event: str = None) -> dict:
+    def get_info_packet(self, event: str = None) -> dict:
         if self.state == GameState.IDLE:
             info = {
                 "winners": self.winners  # the winners of the last coin flip
@@ -33,20 +25,21 @@ class Coinflip(BaseGame):
         else:  # self.state == GameState.RUNNING
             info = {
                 "time_left": self.flip_timer.time_left,
-                "betters": {player.user.account["username"]: player.bet
-                            for player in self.participants}
+                "betters": {player.account["username"]: player.game_data["bet"]
+                            for player in self.players}
             }
+
+        info["odds"] = {
+            "heads": self.heads_odds,
+            "tails": self.tails_odds
+        }
+        info["coin_state"] = self.coin_state
 
         return {
             "name": self.get_name(),
             "state": self.state,
             "event": event,
             "info": info,
-            "odds": {
-                "heads": self.heads_odds,
-                "tails": self.tails_odds
-            },
-            "coin_state": self.coin_state
         }
 
     def handle_event(self, event: str):
@@ -59,7 +52,12 @@ class Coinflip(BaseGame):
             return
 
         if event == "user_bet":
-            self.try_to_start()
+            try:
+                self.try_to_start()
+
+            except GameStartError as ex:
+                Log.trace(f"Could not start game: {ex}")
+
             return
 
         if event in ["user_joined", "coin_flipped"]:
@@ -74,7 +72,7 @@ class Coinflip(BaseGame):
             if action != "bet":
                 raise PacketInvalid("Invalid action")
 
-            if user in [player.user for player in self.participants]:
+            if user in self.players:
                 raise GameActionFailed("Already placed a bet")
 
             bet = int(packet["bet"])
@@ -87,7 +85,11 @@ class Coinflip(BaseGame):
 
             choice = packet["choice"]
             user.account["money"] -= bet
-            self.participants.append(Player(user, choice, bet))
+            user.game_data = {
+                "choice": choice,
+                "bet": bet
+            }
+            self.players.append(user)
             self.events.put("user_bet")
 
             return "game_action_success", {
@@ -131,16 +133,16 @@ class Coinflip(BaseGame):
 
         Log.trace(f"Resolved result: {self.coin_state}")
 
-        for player in self.participants:  # check who won and receives money
-            user = player.user
-            player_wins = player.choice == self.coin_state
+        for player in self.players:  # check who won and receives money
+            player_wins = player.game_data["choice"] == self.coin_state
             if player_wins:
-                gain = 2 * player.bet
-                user.account["money"] += gain
-                self.winners[user.account["username"]] = gain
+                gain = 2 * player.game_data["bet"]
+                player.account["money"] += gain
+                self.winners[player.account["username"]] = gain
 
         Log.trace(f"Winners: {self.winners}")
-        self.state = GameState.IDLE
-        self.participants.clear()
 
+        # todo these 3 operations could be in BaseGame.game_ended() or something
+        self.state = GameState.IDLE
+        self.players.clear()
         self.send_state_packet(event="ended")

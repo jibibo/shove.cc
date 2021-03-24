@@ -11,6 +11,7 @@ class BaseGame(ABC):
     def __init__(self, room):
         self.room = room
         self.events = Queue()
+        self.players: List[User] = []
         self.state = GameState.IDLE
         threading.Thread(target=self._event_handler_thread,
                          name=f"{self.room.name}/EventHandler",
@@ -43,7 +44,7 @@ class BaseGame(ABC):
         return type(self).__name__
 
     @abstractmethod
-    def get_state_packet(self, event: str = None) -> dict:
+    def get_info_packet(self, event: str = None) -> dict:
         pass
 
     @abstractmethod
@@ -56,8 +57,8 @@ class BaseGame(ABC):
 
     def send_state_packet(self, event: str = None):
         Log.trace(f"Queueing outgoing state packet, event: '{event}'")
-        packet = self.get_state_packet(event)
-        self.room.send_packet("game_state", packet)
+        packet = self.get_info_packet(event)
+        self.room.send_packet_all("game_state", packet)
 
     @abstractmethod
     def try_to_start(self):
