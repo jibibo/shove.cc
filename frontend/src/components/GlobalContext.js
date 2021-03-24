@@ -4,11 +4,7 @@ const GlobalContext = createContext();
 
 function GlobalContextProvider({ children }) {
     const [messages, setMessages] = useState([]);
-    const [accountData, setAccountData] = useState({
-        username: null,
-        password: null,
-        money: null,
-    });
+    const [accountData, setAccountData] = useState();
     const [roomName, setRoomName] = useState();
 
     return (

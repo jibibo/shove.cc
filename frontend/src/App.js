@@ -34,7 +34,7 @@ function App() {
                 {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null}
 
                 <div>
-                    {accountData.username ? null : <LogInForm />}
+                    {accountData?.username ? null : <LogInForm />}
 
                     {roomName ? <Room /> : "join a room yh?"}
                 </div>

@@ -14,11 +14,14 @@ function MessageBox() {
 
     const messageBox = useRef(null);
 
-    function addMessage(text) {
+    function addMessage(author, text) {
         if (visible) {
             // also gets run after typing "hide"?
             // console.log("Adding message (visible is true)");
-            setMessages((messages) => [...messages, text]);
+            setMessages((messages) => [...messages, {
+                author,
+                text
+            }]);
 
             // TODO: why does this work??
 
@@ -38,7 +41,6 @@ function MessageBox() {
         }
 
         sendPacket("try_send_message", {
-            username,
             message,
         });
 
@@ -50,7 +52,7 @@ function MessageBox() {
         // useEffect(() => {
         socket.on("message", (packet) => {
             console.debug("> MessageBox message", packet);
-            addMessage(packet.username + " > " + packet.message);
+            addMessage(packet.username, packet.message);
         });
 
         socket.on("command_success", (packet) => {
@@ -110,7 +112,7 @@ function MessageBox() {
                             />
                         </div>
                         <div className="message-content">
-                            <p>{message}</p>
+                            <span style={{ fontWeight: 700 }} >{message.author}</span><br /><span style={{ fontWeight: 300 }}>{message.text}</span>
                         </div>
                     </div>
                 ))}

@@ -22,11 +22,9 @@ function Header() {
         });
 
         socket.on("account_data", (packet) => {
-            console.debug("> Header account_data", packet, accountData);
-            if (packet.account_data.username === accountData.username) {
-                // "if undefined" is really bad, fix this
-                setAccountData(packet.account_data);
-            }
+            console.debug("> Header account_data", packet, accountData); 
+            // Possibly going to mess everything up 
+            setAccountData(packet.account_data);
         });
     }
 
@@ -34,10 +32,10 @@ function Header() {
         <header>
             <div>
                 <h4>
-                    Logged in as: <b>{accountData.username}</b>
+                    Logged in as: <b>{accountData?.username}</b>
                 </h4>
                 <h4>
-                    Money: <b>{accountData.money}</b>
+                    Money: <b>{accountData?.money}</b>
                 </h4>
                 <h4>
                     Currently in room: <b>{roomName}</b>

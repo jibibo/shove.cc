@@ -57,10 +57,10 @@ function Room() {
                             JSON.stringify(packet.info.winners)
                     );
                     setTimeLeft("done");
-                    if (accountData.username in packet.info.winners) {
+                    if (accountData?.username in packet.info.winners) {
                         addResult(
                             "You won, gained " +
-                                packet.info.winners[accountData.username] +
+                                packet.info.winners[accountData?.username] +
                                 "!"
                         );
                         sendPacket("get_account_data", {});
@@ -89,12 +89,12 @@ function Room() {
             <div>
                 Time before flip: {timeLeft}
                 <br />
-                {accountData.money ? (
+                {accountData?.money ? (
                     <>
                         <input
                             type="range"
                             min="1"
-                            max={accountData.money}
+                            max={accountData?.money}
                             value={bet}
                             step="1"
                             onChange={(e) => setBet(e.target.value)}
