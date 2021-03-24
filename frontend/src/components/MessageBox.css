@@ -42,18 +42,13 @@
 }
 
 .profile-picture {
-    width: max-content;
+
     height: 100%;
 }
 
-.profile-picture img {
-    border-radius: 100%;
-}
 
-.message-content > p {
-    margin: 0;
+.message-content {
     margin-left: 15px;
-    justify-content: left;
 }
 
 .picture {
