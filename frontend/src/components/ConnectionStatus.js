@@ -26,17 +26,14 @@ function ConnectionStatus() {
         deaf = false;
 
         socket.on("connect", () => {
-            console.debug("> ConnectionStatus connect event");
             popup("connected", "green");
         });
 
         socket.on("connect_error", () => {
-            console.debug("> ConnectionStatus connect_error event");
             popup("websocket offline", "darkred");
         });
 
         socket.on("disconnect", (reason) => {
-            console.debug("> ConnectionStatus disconnect event:", reason);
             popup("disconnected: " + reason, "darkred");
         });
     }

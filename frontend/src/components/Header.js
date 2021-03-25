@@ -1,48 +1,68 @@
 import { useContext } from "react";
 
-import { GlobalContext } from "./GlobalContext";
+import Button from "@material-ui/core/Button";
+import MeetingRoomIcon from "@material-ui/icons/MeetingRoom";
+import ExitToApp from "@material-ui/icons/ExitToApp";
 
+import { GlobalContext } from "./GlobalContext";
 import RoomList from "./RoomList";
 
-import { socket } from "../connection";
+import { sendPacket } from "../connection";
+import { abbreviate } from "../formatting";
 
 import "./Header.css";
 
-let deaf = true;
-
 function Header() {
-    const { accountData, setAccountData, roomName } = useContext(GlobalContext);
+    const { accountData, roomData } = useContext(GlobalContext);
 
-    if (deaf) {
-        deaf = false;
+    function onClickLeaveRoom(e) {
+        sendPacket("leave_room", {});
+    }
 
-        socket.on("log_in", (packet) => {
-            console.debug("> Header log_in", packet, accountData);
-            setAccountData(packet.account_data);
-        });
-
-        socket.on("account_data", (packet) => {
-            console.debug("> Header account_data", packet, accountData); 
-            // Possibly going to mess everything up 
-            setAccountData(packet.account_data);
-        });
+    function onClickLogOut(e) {
+        sendPacket("log_out", {});
     }
 
     return (
         <header>
             <div>
-                <h4>
-                    Logged in as: <b>{accountData?.username}</b>
-                </h4>
-                <h4>
-                    Money: <b>{accountData?.money}</b>
-                </h4>
-                <h4>
-                    Currently in room: <b>{roomName}</b>
-                </h4>
+                <div className="room-buttons">
+                    {roomData ? (
+                        <div className="leave-room-button-container">
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                endIcon={<MeetingRoomIcon />}
+                                onClick={onClickLeaveRoom}
+                            >
+                                Leave {roomData.name}
+                            </Button>
+                        </div>
+                    ) : (
+                        <RoomList />
+                    )}
+                </div>
             </div>
-            <div className="room-list-container">
-                <RoomList />
+            <div>
+                {accountData ? (
+                    <>
+                        <div className="log-out-button-container">
+                            <span className="username-text">
+                                User: <b>{accountData.username}</b>
+                                {" / "}
+                                <b>{abbreviate(accountData.money)}</b>
+                            </span>
+                            <Button
+                                variant="outlined"
+                                color="secondary"
+                                endIcon={<ExitToApp />}
+                                onClick={onClickLogOut}
+                            >
+                                Log out
+                            </Button>
+                        </div>
+                    </>
+                ) : null}
             </div>
         </header>
     );

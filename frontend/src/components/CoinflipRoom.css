@@ -1,5 +1,5 @@
 .coin {
-    width: 100px;
+    width: 120px;
 }
 
 .coin.spinning {
@@ -13,4 +13,13 @@
     to {
         transform: rotate3d(1, 1, 1, 360deg);
     }
+}
+
+.bet-buttons {
+    display: flex;
+    margin: 10px;
+}
+
+.bet-buttons > div + div {
+    margin-left: 10px;
 }

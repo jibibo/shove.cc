@@ -5,6 +5,7 @@ from user import User
 class GameState:
     IDLE = "idle"
     RUNNING = "running"
+    ENDED = "ended"
 
 
 class BaseGame(ABC):
@@ -40,12 +41,12 @@ class BaseGame(ABC):
             else:
                 Log.trace(f"Handled event: '{event}'")
 
+    @abstractmethod
+    def get_data(self, event: str = None) -> dict:
+        pass
+
     def get_name(self) -> str:
         return type(self).__name__
-
-    @abstractmethod
-    def get_info_packet(self, event: str = None) -> dict:
-        pass
 
     @abstractmethod
     def handle_event(self, event: str):
@@ -55,10 +56,10 @@ class BaseGame(ABC):
     def handle_packet(self, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
         pass
 
-    def send_state_packet(self, event: str = None):
-        Log.trace(f"Queueing outgoing state packet, event: '{event}'")
-        packet = self.get_info_packet(event)
-        self.room.send_packet_all("game_state", packet)
+    def send_data_packet(self, event: str = None):
+        Log.trace(f"Queueing game data packet for all users, event: '{event}'")
+        packet = self.get_data(event)
+        self.room.send_packet_all("game_data", packet)
 
     @abstractmethod
     def try_to_start(self):
@@ -66,7 +67,8 @@ class BaseGame(ABC):
         pass
 
     @abstractmethod
-    def user_left_room(self, user: User):
+    def user_leaves_room(self, user: User):
+        """Called when user leaves a room (can't be prevented)"""
         pass
 
     @abstractmethod

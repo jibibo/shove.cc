@@ -41,7 +41,7 @@ def on_connect():
     update_socketio_thread_name()
 
     sid = request.sid
-    Log.debug(f"SID {sid} connected")
+    Log.info(f"SID {sid} connected")
     shove.on_connect(sid)
 
 
@@ -50,19 +50,19 @@ def on_disconnect():
     update_socketio_thread_name()
 
     sid = request.sid
-    Log.debug(f"SID {sid} disconnected")
+    Log.info(f"SID {sid} disconnected")
     shove.on_disconnect(sid)
 
 
 # todo BrokenPipeErrors?? check out https://stackoverflow.com/questions/47875007/flask-socket-io-frequent-time-outs
 @socketio.on_error_default
-def on_error(ex_):
+def on_error(_ex):
     update_socketio_thread_name()
 
-    Log.fatal(f"UNHANDLED {type(ex_).__name__} caught by socketio.on_error_default", ex_)
+    Log.fatal(f"UNHANDLED {type(_ex).__name__} caught by socketio.on_error_default", _ex)
 
 
-# todo on connect, receive session cookie from user, check if session token valid, log in as that account
+# todo on connect, receive session cookie from user, check if session token valid, log in as that _account
 @socketio.on("message")
 def on_message(model: str, packet: dict):
     update_socketio_thread_name()

@@ -18,7 +18,7 @@ LEVEL_TEST = 6, "TEST", Fore.MAGENTA
 CONSOLE_LOG_LEVEL = LEVEL_TRACE
 LOG_TO_FILE = True
 MESSAGE_LENGTH_CUTOFF = 1000
-LOGS_DIRECTORY = "logs"
+LOGS_DIRECTORY = "backend/logs"
 LOG_FILE = f"{LOGS_DIRECTORY}/_latest.log"
 
 
@@ -86,11 +86,11 @@ class Log:
     def _file_writer_thread():  # todo broken
         try:
             open(LOG_FILE, "w").close()
-            print("Emptied latest log file")
+            print(f"Emptied {LOG_FILE}")
 
         except FileNotFoundError:
-            os.mkdir("logs")
-            print("Created 'logs' directory")
+            os.mkdir(LOGS_DIRECTORY)
+            print(f"Created {LOGS_DIRECTORY}")
             open(LOG_FILE, "w").close()
             print(f"Created {LOG_FILE}")
 

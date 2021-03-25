@@ -49,8 +49,8 @@ class Room:
         try:
             self.game.try_to_start()
 
-        except GameStartError as ex:
-            Log.trace(f"Could not start game: {ex}")
+        except GameStartFailed as ex:
+            Log.trace(f"Game start failed: {type(ex).__name__}: {ex.description}")
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on room.game.try_to_start", ex)
@@ -78,11 +78,11 @@ class Room:
         Log.info(f"{user} joined room {self}")
 
     def user_leave(self, user: User):
-        Log.trace(f"User {user} is leaving room {self}")
+        Log.trace(f"Removing user {user} from room {self}")
 
         if self.game:
             try:
-                self.game.user_left_room(user)
+                self.game.user_leaves_room(user)
 
             except Exception as ex:
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on room.game.user_left_room", ex)
@@ -95,4 +95,4 @@ class Room:
             "room_list": [room.get_data() for room in self.shove.get_rooms()]
         })
 
-        Log.trace(f"User {user} left room {self}")
+        Log.trace(f"Removed user {user} from room {self}")

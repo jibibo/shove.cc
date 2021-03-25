@@ -21,18 +21,20 @@ class PacketHandlerThread(threading.Thread):
             try:
                 response = handle_incoming_packet(self.shove, user, model, packet)
 
-            except PacketHandlingError as ex:
-                Log.trace(f"Packet handling error: {ex.error}: {ex.description}")
+            except PacketHandlingFailed as ex:
+                Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")
                 response = "error", {
                     "error": ex.error,
                     "description": ex.description
                 }
 
+            # todo command handling should throw a CommandHandlingFailed exception
+
             except Exception as ex:
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_incoming_packet", ex)
                 response = "error", {
                     "error": "unhandled_exception",
-                    "description": "Unhandled exception in backend (not good)"
+                    "description": "Unhandled server exception on handling user packet (not good)"
                 }
 
             if response:
@@ -44,7 +46,6 @@ class PacketHandlerThread(threading.Thread):
                 Log.trace(f"Handled packet #{packet_number}, no response")
 
 
-# todo remove try_ from the packets, redundant
 def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
     """Handles the packet and returns an optional response model + packet"""
 
@@ -55,7 +56,7 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
         raise PacketInvalid(f"Invalid packet type: {type(packet).__name__}")
 
     # special game packet, should be handled by game's packet handler
-    if model == "try_game_action":  # currently the only model for game packets
+    if model == "game_action":  # currently the only model for game packets
         room = shove.get_room_of_user(user)
 
         if not room:
@@ -72,19 +73,20 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
             username = packet["username"].strip().lower()
             account = shove.get_account(username=username)
 
-        elif user.account:
-            account = user.account
+        elif user.is_logged_in():
+            account = user.get_account()
 
         else:
             raise PacketInvalid("Not logged in and no username provided")
 
-        account_data = account.get_data()
+        return "account_data", account.get_data()
 
-        return "account_data", {
-            "account_data": account_data
+    if model == "get_account_list":
+        return "account_list", {
+            "account_list": [account.get_data() for account in shove.get_all_accounts()]
         }
 
-    if model == "get_game_state":
+    if model == "get_game_data":
         room = shove.get_room_of_user(user)
 
         if not room:
@@ -93,16 +95,19 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
         if not room.game:
             raise GameNotSet
 
-        return "game_state", room.game.get_info_packet()
+        return "game_data", room.game.get_data()
+
+    if model == "get_room_data":
+        raise PacketNotImplemented
 
     if model == "get_room_list":  # send a list of dicts with each room's data
         return "room_list", {
             "room_list": [room.get_data() for room in shove.get_rooms()]
         }
 
-    if model == "try_join_room":
-        if not user.account:
-            raise UserUnauthorized("Not logged in")
+    if model == "join_room":
+        if not user.is_logged_in():
+            raise UserNotLoggedIn
 
         if shove.get_room_of_user(user):
             raise UserAlreadyInRoom
@@ -114,15 +119,19 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
 
         room.user_tries_to_join(user)  # this throws an exception if user can't join room
 
+        if room.game:
+            game_data = room.game.get_data()
+        else:
+            game_data = None
+
         return "join_room", {
-            "room_name": room.name,
-            "room_data": None,  # todo implement, safes sending 1 packet
-            "game_state": None
+            "room_data": room.get_data(),
+            "game_data": game_data
         }
 
-    if model == "try_leave_room":
-        if not user.account:
-            raise UserUnauthorized("Not logged in")
+    if model == "leave_room":
+        if not user.is_logged_in():
+            raise UserNotLoggedIn
 
         room = shove.get_room_of_user(user)
 
@@ -135,7 +144,7 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
             "room_name": room.name
         }
 
-    if model == "try_log_in":
+    if model == "log_in":
         username = packet["username"].strip().lower()
         password = packet["password"]
         account = shove.get_account(username=username)
@@ -146,37 +155,50 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
 
         user.log_in(account)
 
-        account_data = account.get_data()
-
         return "log_in", {
-            "account_data": account_data
+            "account_data": account.get_data()
         }
 
-    if model == "try_register":
+    if model == "log_out":
+        if not user.is_logged_in():
+            raise UserNotLoggedIn
+
+        room = shove.get_room_of_user(user)
+
+        if room:
+            room.user_leave(user)
+
+        user.log_out()
+
+        return "log_out", {}
+
+    if model == "register":
         raise PacketNotImplemented
 
-    if model == "try_send_message":
+    if model == "send_message":
         message: str = packet["message"].strip()
 
         if not message:
             Log.trace("Empty message, ignoring")
             return
 
+        # check if message is a command, as some commands don't require user to be logged in
         if message.startswith("/"):
             response_message = handle_command(shove, user, message)  # returns optional response message to user
+            response = response_message
             return "command_success", {
-                "message": response_message
+                "response": response
             }
 
         # not a command, so it is a chat message
-        if not user.account:
-            raise UserUnauthorized("Not logged in")
+        if not user.is_logged_in():
+            raise UserNotLoggedIn
 
-        username = user.account["username"]
-        Log.trace(f"Chat message from {username}: '{message}'")
+        username = user.get_username()
+        Log.trace(f"Message from {username}: '{message}'")
         shove.send_packet_all("message", {
             "author": username,
-            "message": message
+            "text": message
         })
         return
 
@@ -189,7 +211,11 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
     command_split = command.split()
 
     if command == "money":
-        user.account["money"] += 9e15
+        if not user.is_logged_in():
+            raise UserNotLoggedIn
+
+        user.get_account()["money"] += 9e15
+        shove.send_packet(user, "account_data", user.get_account().get_data())
         return "Money added"
 
     if command_split[0] == "trello":
@@ -203,6 +229,10 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
         else:
             raise CommandInvalid("Invalid arguments")
+
+        if not name:
+            Log.trace("No card name provided, ignoring")
+            return
 
         shove.add_trello_card(name, description)
         return

@@ -1,16 +1,16 @@
 # packet handling errors
 
-class PacketHandlingError(Exception):
-    error = "error_missing"
-    description = "description_missing"
+class PacketHandlingFailed(Exception):
+    error = "unknown"
+    description = "No description provided"
 
 
-class AccountNotFound(PacketHandlingError):
+class AccountNotFound(PacketHandlingFailed):
     error = "account_not_found"
     description = "Account not found"
 
 
-class CommandInvalid(PacketHandlingError):
+class CommandInvalid(PacketHandlingFailed):
     error = "command_invalid"
 
     def __init__(self, description=None):
@@ -20,7 +20,7 @@ class CommandInvalid(PacketHandlingError):
         return str(self.description)
 
 
-class GameActionFailed(PacketHandlingError):
+class GameActionFailed(PacketHandlingFailed):
     error = "game_action_failed"
 
     def __init__(self, description=None):
@@ -30,12 +30,12 @@ class GameActionFailed(PacketHandlingError):
         return str(self.description)
 
 
-class GameNotSet(PacketHandlingError):
+class GameNotSet(PacketHandlingFailed):
     error = "game_not_set"
     description = "Room has no game set"
 
 
-class PacketInvalid(PacketHandlingError):
+class PacketInvalid(PacketHandlingFailed):
     error = "packet_invalid"
 
     def __init__(self, description=None):
@@ -45,27 +45,42 @@ class PacketInvalid(PacketHandlingError):
         return str(self.description)
 
 
-class PacketNotImplemented(PacketHandlingError):
+class PacketNotImplemented(PacketHandlingFailed):
     error = "packet_not_implemented"
     description = "Packet not implemented (yet)"
 
 
-class PasswordInvalid(PacketHandlingError):
+class PasswordInvalid(PacketHandlingFailed):
     error = "password_invalid"
     description = "Invalid password"
 
 
-class RoomFull(PacketHandlingError):
+class RoomFull(PacketHandlingFailed):
     error = "room_full"
     description = "Room is full"
 
 
-class RoomNotFound(PacketHandlingError):
+class RoomNotFound(PacketHandlingFailed):
     error = "room_not_found"
     description = "Room not found"
 
 
-class UserUnauthorized(PacketHandlingError):
+class UserAlreadyInRoom(PacketHandlingFailed):
+    error = "user_already_in_room"
+    description = "Already in a room"
+
+
+class UserNotInRoom(PacketHandlingFailed):
+    error = "user_not_in_room"
+    description = "Not in a room"
+
+
+class UserNotLoggedIn(PacketHandlingFailed):
+    error = "user_not_logged_in"
+    description = "Not logged in"
+
+
+class UserUnauthorized(PacketHandlingFailed):
     error = "user_unauthorized"
 
     def __init__(self, description=None):
@@ -75,24 +90,14 @@ class UserUnauthorized(PacketHandlingError):
         return str(self.description)
 
 
-class UserAlreadyInRoom(PacketHandlingError):
-    error = "user_already_in_room"
-    description = "Already in a room"
-
-
-class UserNotInRoom(PacketHandlingError):
-    error = "user_not_in_room"
-    description = "Not in a room"
-
-
 # game start errors
 
-class GameStartError(Exception):
-    error = "error_missing"
-    description = "description_missing"
+class GameStartFailed(Exception):
+    error = "unknown"
+    description = "No description provided"
 
 
-class GameRunning(GameStartError):
+class GameRunning(GameStartFailed):
     def __init__(self):
         self.description = "Game is already running"
 
@@ -100,7 +105,7 @@ class GameRunning(GameStartError):
         return str(self.description)
 
 
-class RoomEmpty(GameStartError):
+class RoomEmpty(GameStartFailed):
     def __init__(self):
         self.description = "Room is empty"
 

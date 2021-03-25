@@ -1,33 +1,19 @@
-import { useState, useContext } from "react";
+import { useContext } from "react";
 
-import { socket, sendPacket } from "../connection";
+import Button from "@material-ui/core/Button";
+import ArrowRightIcon from "@material-ui/icons/ArrowRight";
 
+import { sendPacket } from "../connection";
 import { GlobalContext } from "./GlobalContext";
 
 import "./RoomList.css";
 
-let deaf = true;
-
 function RoomList() {
-    const [roomList, setRoomList] = useState([]);
-    const { setRoomName } = useContext(GlobalContext);
+    const { roomList } = useContext(GlobalContext);
 
-    if (deaf) {
-        deaf = false;
-
-        socket.on("connect", () => {
-            console.debug("> RoomList connect event");
-            sendPacket("get_room_list", {});
-        });
-
-        socket.on("room_list", (packet) => {
-            console.debug("> RoomList room_list", packet);
-            setRoomList(packet.room_list);
-        });
-
-        socket.on("join_room", (packet) => {
-            console.debug("> RoomList join_room", packet);
-            setRoomName(packet.room_name);
+    function onClickJoinRoom(room_name) {
+        sendPacket("join_room", {
+            room_name,
         });
     }
 
@@ -36,16 +22,16 @@ function RoomList() {
             {roomList.map((room, i) => {
                 return (
                     <div className="room-list-entry" key={i}>
-                        <button
+                        <Button
+                            variant="contained"
+                            endIcon={<ArrowRightIcon />}
                             onClick={() => {
-                                sendPacket("join_room", {
-                                    room_name: room.name,
-                                });
+                                onClickJoinRoom(room.name);
                             }}
                         >
                             {room.name} ({room.user_count} /{" "}
                             {room.max_user_count})
-                        </button>
+                        </Button>
                     </div>
                 );
             })}

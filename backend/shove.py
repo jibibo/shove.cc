@@ -6,7 +6,7 @@ from games.coinflip import Coinflip
 
 
 ACCOUNTS = [Account(username=u, password="1", money=m)
-            for u, m in [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000), ("badr", 200)]]
+            for u, m in [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000), ("badr", 200), ("jul", 777777), ("jim", 420000)]]
 
 
 def get_all_accounts():  # should be a generator if many files
@@ -52,13 +52,6 @@ class Shove:
         board = client.get_board("603c469a39b5466c51c3a176")
         self._trello_card_list = board.get_list("60587b1f02721f0c7b547f5b")
 
-        # testing
-        inputs = [int("9" * n) for n in range(1, 9)]
-        # inputs = [int("1" * n) for n in range(1, 9)]
-        # inputs = [10**n for n in range(1, 9)]
-        for n in inputs:
-            formatting.abbreviate_number(n)
-
         Log.info("Shove initialized")
 
     def add_trello_card(self, name, description=None):
@@ -72,7 +65,7 @@ class Shove:
 
     @staticmethod
     def get_account(fail_silently=False, **k_v) -> Account:  # todo support for multiple kwargs
-        Log.trace(f"Getting account with k_v: {k_v}")
+        Log.trace(f"Trying to get account with k_v: {k_v}")
 
         if len(k_v) != 1:
             raise ValueError(f"Invalid k_v length: {len(k_v)}")
@@ -80,7 +73,7 @@ class Shove:
         k, v = list(k_v.items())[0]
         for account_data in get_all_accounts():
             if account_data[k] == v:
-                Log.trace(f"Account matched: {account_data}")
+                Log.trace(f"Account match with k_v: {account_data}")
                 return account_data
 
         if fail_silently:
@@ -93,6 +86,10 @@ class Shove:
 
     def get_rooms(self) -> List[Room]:
         return self._rooms.copy()
+
+    @staticmethod
+    def get_all_accounts() -> List[Account]:
+        return ACCOUNTS.copy()
 
     def get_all_users(self) -> List[User]:
         return self._users.copy()
@@ -139,7 +136,7 @@ class Shove:
 
         k, v = list(k_v.items())[0]
         for user in self.get_all_users():
-            if user.account and user.account[k] == v:
+            if user.is_logged_in() and user.get_account()[k] == v:
                 Log.trace(f"User matched: {user}")
                 return user
 
@@ -171,13 +168,13 @@ class Shove:
 
         self.send_packet(user, "user_connected", {
             "you": True,
-            "username": user.get_username(),
+            # "username": user.get_username(),
             "user_count": self.get_user_count()
         })
 
         self.send_packet_all("user_connected", {
             "you": False,
-            "username": user.get_username(),
+            # "username": user.get_username(),
             "user_count": self.get_user_count()
         }, skip=user)
 

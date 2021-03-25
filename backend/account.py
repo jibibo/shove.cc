@@ -44,6 +44,4 @@ class Account:
             for key in ["password"]:
                 data[key] = "*"
 
-        data["money_formatted"] = formatting.abbreviate_number(data["money"])
-
         return data
