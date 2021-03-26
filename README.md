@@ -4,7 +4,8 @@
 
 ## Dependencies
 
--   Backend: [requirements.txt](/requirements.txt)
+-   Backend - [requirements.txt](/requirements.txt)
+-   Frontend - [package.json](/frontend/package.json)
 
 ## Credits
 
