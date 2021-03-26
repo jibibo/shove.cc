@@ -10,10 +10,8 @@ Some lines of code
 
 ## Credits
 
--   icon.png: based on https://www.onlinewebfonts.com/
-
-#### Holdem
-
--   icons from: https://www.flaticon.com/
 -   Hand evaluation based on deuces by Will Drevo: https://github.com/worldveil/deuces
--   table.png: https://pngtree.com/
+
+-   https://www.onlinewebfonts.com/
+-   https://pngtree.com/
+-   https://www.flaticon.com/
