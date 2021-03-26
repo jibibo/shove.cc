@@ -53,11 +53,10 @@
     background-color: rgb(7, 7, 33);
     color: rgb(255, 255, 255);
     overflow-y: scroll;
-    text-indent: 10px;
-    padding: 15px 0px;
+    text-indent: 0px;
+    padding: 15px;
     outline: none;
     border: none;
     border-radius: 0 0 10px 10px;
-    width: 100%;
-    transition: transform 0.2s ease-out, border-radius 0.2s ease-out;
+    width: calc(100% - 30px);
 }
