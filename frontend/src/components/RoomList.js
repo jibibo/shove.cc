@@ -1,7 +1,7 @@
 import { useContext } from "react";
 
 import Button from "@material-ui/core/Button";
-import ArrowRightIcon from "@material-ui/icons/ArrowRight";
+import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 
 import { sendPacket } from "../connection";
 import { GlobalContext } from "./GlobalContext";
@@ -24,7 +24,7 @@ function RoomList() {
                     <div className="room-list-entry" key={i}>
                         <Button
                             variant="contained"
-                            endIcon={<ArrowRightIcon />}
+                            startIcon={<PlayArrowIcon />}
                             onClick={() => {
                                 onClickJoinRoom(room.name);
                             }}

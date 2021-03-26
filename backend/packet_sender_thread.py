@@ -11,18 +11,19 @@ class PacketSenderThread(threading.Thread):
         Log.trace("Ready")
 
         while True:
-            clients, model, packet, is_response = self.shove.outgoing_packets_queue.get()
-            Log.debug(f"Sending {'response' if is_response else 'packet'}: '{model}'\n to: {clients}\n packet: {packet}")
+            users, model, packet, is_response = self.shove.outgoing_packets_queue.get()
+            # the str(user)[1:-1] is to remove the two quotes "'user/123123123'"
+            Log.debug(f"Sending {'response' if is_response else 'packet'}: '{model}'\n to: {[str(user)[1:-1] for user in users]}\n packet: {packet}")
 
             try:
-                send_outgoing_packet(self.socketio, clients, model, packet, is_response)
+                send_outgoing_packet(self.socketio, users, model, packet, is_response)
 
             except Exception as ex:
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on send_outgoing_packet", ex)
 
 
-def send_outgoing_packet(socketio, clients, model: str, packet: dict, is_response: bool):
-    sids = [client.sid for client in clients]
+def send_outgoing_packet(socketio, users, model: str, packet: dict, is_response: bool):
+    sids = [user.sid for user in users]
     for sid in sids:
         socketio.emit(model, packet, room=sid)
 

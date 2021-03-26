@@ -1,6 +1,5 @@
 from convenience import *
 from user import User
-from shove import Shove
 
 
 class PacketHandlerThread(threading.Thread):
@@ -8,7 +7,7 @@ class PacketHandlerThread(threading.Thread):
 
     def __init__(self, shove):
         super().__init__(name=f"PacketHandler", daemon=True)
-        self.shove: Shove = shove
+        self.shove = shove
 
     def run(self):
         Log.trace("Ready")
@@ -46,7 +45,7 @@ class PacketHandlerThread(threading.Thread):
                 Log.trace(f"Handled packet #{packet_number}, no response")
 
 
-def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
+def handle_incoming_packet(shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
     """Handles the packet and returns an optional response model + packet"""
 
     if not model:
@@ -57,6 +56,9 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
 
     # special game packet, should be handled by game's packet handler
     if model == "game_action":  # currently the only model for game packets
+        if not user.is_logged_in():
+            raise UserNotLoggedIn
+
         room = shove.get_room_of_user(user)
 
         if not room:
@@ -65,21 +67,21 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
         if not room.game:
             raise GameNotSet
 
-        response = room.game.handle_packet(user, model, packet)  # optionally returns a response (model, packet) tuple
+        response = room.game.handle_packet(user, model, packet)  # can return a response (model, packet) tuple
         return response
 
     if model == "get_account_data":
         if "username" in packet:
             username = packet["username"].strip().lower()
-            account = shove.get_account(username=username)
+            account_data = shove.get_account(username=username).get_data()
 
         elif user.is_logged_in():
-            account = user.get_account()
+            account_data = user.get_account()
 
         else:
             raise PacketInvalid("Not logged in and no username provided")
 
-        return "account_data", account.get_data()
+        return "account_data", account_data
 
     if model == "get_account_list":
         return "account_list", {
@@ -172,6 +174,19 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
 
         return "log_out", {}
 
+    if model == "pong":
+        now = int(time.time() * 1000)
+        round_trip_time = now - user.ping_timestamp
+        Log.trace(f"Pong received from {user} ({user.ping_timestamp}), now: {now}, RTT: {round_trip_time} ms")
+
+        if user in shove.awaiting_pong_users:  # just to be sure
+            shove.awaiting_pong_users.remove(user)
+
+        else:
+            Log.warn(f"User {user} not in shove.awaiting_pong_users, how?")
+
+        return
+
     if model == "register":
         raise PacketNotImplemented
 
@@ -205,17 +220,23 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
     raise PacketInvalid(f"Unknown packet model: '{model}'")
 
 
-def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
+def handle_command(shove, user: User, message: str) -> Optional[str]:
     Log.trace(f"Handling command: '{message}'")
     command = message[1:].strip().lower()
     command_split = command.split()
+
+    if not command:
+        raise CommandInvalid("'/' doesn't do anything")
+
+    if command == "error":  # raises an error to test error handling and logging
+        raise Exception("/error was executed, all good")
 
     if command == "money":
         if not user.is_logged_in():
             raise UserNotLoggedIn
 
         user.get_account()["money"] += 9e15
-        shove.send_packet(user, "account_data", user.get_account().get_data())
+        shove.send_packet(user, "account_data", user.get_account_data())
         return "Money added"
 
     if command_split[0] == "trello":
@@ -235,6 +256,9 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
             return
 
         shove.add_trello_card(name, description)
-        return
+        return "Card added"
+
+    if len(command_split) < 2:  # prevent IndexErrors if not enough command arguments
+        raise CommandInvalid(f"Unknown command: '{command}'")
 
     raise CommandInvalid(f"Unknown command: '{command}'")

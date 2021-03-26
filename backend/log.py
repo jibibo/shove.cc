@@ -15,16 +15,25 @@ LEVEL_WARN = 3, "WARN", Fore.YELLOW
 LEVEL_ERROR = 4, "ERROR", Fore.RED
 LEVEL_FATAL = 5, "FATAL", Fore.RED + Style.BRIGHT
 LEVEL_TEST = 6, "TEST", Fore.MAGENTA
+
+# console logging
 CONSOLE_LOG_LEVEL = LEVEL_TRACE
-LOG_TO_FILE = True
 MESSAGE_LENGTH_CUTOFF = 1000
+
+# sound notification
+SOUND_NOTIFICATION_LEVEL = LEVEL_WARN  # MUST BE HIGHER THAN LEVEL_TRACE, OR INFINITE LOGGING LOOP
+SOUND_FILE = f"{pathlib.Path(__file__).parent.absolute()}\\audio\\error.mp3"
+
+# file logging
+FILE_LOG_LEVEL = LEVEL_WARN
+LOG_TO_FILE = True
 LOGS_DIRECTORY = "backend/logs"
 LOG_FILE = f"{LOGS_DIRECTORY}/_latest.log"
 
 
 class Log:
     PRINT_LOCK = threading.Lock()
-    FILE_WRITING_QUEUE = Queue()  # now_str, level, thread_name, message
+    FILE_WRITING_QUEUE = Queue()  # now_str, level, thread_name, message, exception
 
     @staticmethod
     def trace(message, exception=None):
@@ -68,11 +77,17 @@ class Log:
             with Log.PRINT_LOCK:
                 print(f"{level[2]}[{now_str}][{level[1]}][{thread_name}]{Style.RESET_ALL} {message}")
                 if exception:
-                    # traceback.print_exc()
-                    traceback.print_exception(type(exception), exception, exception.__traceback__)
+                    traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stdout)
 
-        if LOG_TO_FILE:  # file logging doesn't require specific log level
-            Log.FILE_WRITING_QUEUE.put((now_str, level, thread_name, message))
+        if level[0] >= SOUND_NOTIFICATION_LEVEL[0]:
+            Log.trace(f"Playing sound {SOUND_FILE}")
+            try:
+                playsound.playsound(sound=SOUND_FILE, block=False)
+            except playsound.PlaysoundException as ex:
+                Log.trace(f"Sound exception caught: {ex}")
+
+        if LOG_TO_FILE and level[0] >= FILE_LOG_LEVEL[0]:  # file logging doesn't require specific log level
+            Log.FILE_WRITING_QUEUE.put((now_str, level, thread_name, message, exception))
 
     @staticmethod
     def start_file_writer_thread():
@@ -96,7 +111,9 @@ class Log:
 
         Log.trace("Ready")
         while True:
-            now_str, level, thread_name, message = Log.FILE_WRITING_QUEUE.get()
+            now_str, level, thread_name, message, exception = Log.FILE_WRITING_QUEUE.get()
 
             with open(LOG_FILE, "a", encoding="utf-8") as f:
                 f.write(f"[{now_str}][{level[1]}][{thread_name}] {message}\n")
+                if exception:
+                    traceback.print_exception(type(exception), exception, exception.__traceback__, file=f)

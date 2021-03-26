@@ -7,6 +7,7 @@ function GlobalContextProvider({ children }) {
     const [accountList, setAccountList] = useState([]);
     const [gameData, setGameData] = useState();
     const [messages, setMessages] = useState([]);
+    const [ping, setPing] = useState(0);
     const [roomData, setRoomData] = useState();
     const [roomList, setRoomList] = useState([]);
     const [userCount, setUserCount] = useState(0);
@@ -22,6 +23,8 @@ function GlobalContextProvider({ children }) {
                 setGameData,
                 messages,
                 setMessages,
+                ping,
+                setPing,
                 roomData,
                 setRoomData,
                 roomList,

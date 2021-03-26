@@ -13,13 +13,13 @@ import { abbreviate } from "../formatting";
 import "./Header.css";
 
 function Header() {
-    const { accountData, roomData } = useContext(GlobalContext);
+    const { accountData, roomData, ping } = useContext(GlobalContext);
 
-    function onClickLeaveRoom(e) {
+    function onClickLeaveRoom() {
         sendPacket("leave_room", {});
     }
 
-    function onClickLogOut(e) {
+    function onClickLogOut() {
         sendPacket("log_out", {});
     }
 
@@ -51,6 +51,8 @@ function Header() {
                                 User: <b>{accountData.username}</b>
                                 {" / "}
                                 <b>{abbreviate(accountData.money)}</b>
+                                {" / "}
+                                Ping: {ping} ms
                             </span>
                             <Button
                                 variant="outlined"

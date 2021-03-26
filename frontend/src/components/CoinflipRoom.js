@@ -37,7 +37,7 @@ function Room() {
         deaf = false;
 
         socket.on("game_action_success", (packet) => {
-            console.debug("> CoinflipRoom game_action_success", packet);
+            console.debug("> CoinflipRoom > game_action_success", packet);
             if (packet.action === "bet") {
                 // addResult(
                 //     "You bet " +
@@ -49,7 +49,7 @@ function Room() {
         });
 
         socket.on("game_data", (packet) => {
-            console.debug("> CoinflipRoom game_data", packet);
+            console.debug("> CoinflipRoom > game_data", packet);
             setGameData(packet);
 
             if (packet.state === "idle") {

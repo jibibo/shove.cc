@@ -75,6 +75,9 @@ class Coinflip(BaseGame):
             if user in self.players:
                 raise GameActionFailed("Already placed a bet")
 
+            if not user.get_account()["money"]:
+                raise GameActionFailed("You are broke!")
+
             bet = int(packet["bet"])
 
             if bet <= 0:
@@ -96,7 +99,7 @@ class Coinflip(BaseGame):
                 self.force_result = choice  # basically always win
                 Log.warn(f"Set force result to: {choice}")
 
-            self.room.shove.send_packet(user, "account_data", user.get_account().get_data())
+            self.room.shove.send_packet(user, "account_data", user.get_account_data())
 
             return "game_action_success", {
                 "action": "bet",
@@ -150,13 +153,13 @@ class Coinflip(BaseGame):
 
         for player in self.players:  # check who won and receives money
             player_wins = player.game_data["choice"] == self.coin_state
+            bet = player.game_data["bet"]
             if player_wins:
-                bet = player.game_data["bet"]
                 player.get_account()["money"] += 2 * bet
                 self.winners[player.get_username()] = bet
-                self.room.shove.send_packet(player, "account_data", player.get_account().get_data())
+                self.room.shove.send_packet(player, "account_data", player.get_account_data())
             else:
-                self.losers[player.get_username()] = player.game_data["bet"]
+                self.losers[player.get_username()] = bet
 
         Log.trace(f"Winners: {self.winners}, losers: {self.losers}")
         self.force_result = None

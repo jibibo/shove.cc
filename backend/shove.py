@@ -1,7 +1,12 @@
 from convenience import *
+
 from user import User
 from account import Account
 from room import Room
+from packet_sender_thread import PacketSenderThread
+from packet_handler_thread import PacketHandlerThread
+from ping_users_thread import PingUsersThread
+
 from games.coinflip import Coinflip
 
 
@@ -9,19 +14,19 @@ ACCOUNTS = [Account(username=u, password="1", money=m)
             for u, m in [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000), ("badr", 200), ("jul", 777777), ("jim", 420000)]]
 
 
-def get_all_accounts():  # should be a generator if many files
-    return ACCOUNTS
-
-    # for filename in os.listdir(f"{os.getcwd()}/backend/accounts"):
-    #     if os.path.isfile(f"{os.getcwd()}/backend/accounts/{filename}"):
-    #         with open(f"{os.getcwd()}/backend/accounts/{filename}", "r") as f:
-    #             try:
-    #                 data = json.load(f)
-    #             except BaseException as ex:
-    #                 Log.fatal(f"UNHANDLED {type(ex).__name__}", exception=ex)
-    #                 continue
-    #
-    #             all_account_data.append(data)
+# def get_all_accounts():  # should be a generator if many files
+#     return ACCOUNTS
+#
+#     for filename in os.listdir(f"{os.getcwd()}/backend/accounts"):
+#         if os.path.isfile(f"{os.getcwd()}/backend/accounts/{filename}"):
+#             with open(f"{os.getcwd()}/backend/accounts/{filename}", "r") as f:
+#                 try:
+#                     data = json.load(f)
+#                 except BaseException as ex:
+#                     Log.fatal(f"UNHANDLED {type(ex).__name__}", exception=ex)
+#                     continue
+#
+#                 all_account_data.append(data)
 
 
 class Shove:
@@ -52,6 +57,11 @@ class Shove:
         board = client.get_board("603c469a39b5466c51c3a176")
         self._trello_card_list = board.get_list("60587b1f02721f0c7b547f5b")
 
+        PacketSenderThread(self, socketio).start()
+        PacketHandlerThread(self).start()
+        # PingUsersThread(self).start()  # comment out to disable pinging
+        self.awaiting_pong_users: List[User] = []
+
         Log.info("Shove initialized")
 
     def add_trello_card(self, name, description=None):
@@ -63,18 +73,22 @@ class Shove:
         self._trello_card_list.add_card(name=name, desc=description, position="top")
         Log.trace(f"Added card")
 
-    @staticmethod
-    def get_account(fail_silently=False, **k_v) -> Account:  # todo support for multiple kwargs
+    def disconnect_awaiting_pong_users(self):
+        for user in self.awaiting_pong_users:
+            Log.warn(f"Disconnecting user {user} (didn't pong)")
+            self.on_disconnect(user.sid)
+
+    def get_account(self, fail_silently=False, **k_v) -> Account:  # todo support for multiple kwargs
         Log.trace(f"Trying to get account with k_v: {k_v}")
 
         if len(k_v) != 1:
             raise ValueError(f"Invalid k_v length: {len(k_v)}")
 
         k, v = list(k_v.items())[0]
-        for account_data in get_all_accounts():
-            if account_data[k] == v:
-                Log.trace(f"Account match with k_v: {account_data}")
-                return account_data
+        for account in self.get_all_accounts():
+            if account[k] == v:
+                Log.trace(f"Account match with k_v: {account}")
+                return account
 
         if fail_silently:
             Log.trace(f"No account matched with k_v: {k_v}")
@@ -168,13 +182,11 @@ class Shove:
 
         self.send_packet(user, "user_connected", {
             "you": True,
-            # "username": user.get_username(),
             "user_count": self.get_user_count()
         })
 
         self.send_packet_all("user_connected", {
             "you": False,
-            # "username": user.get_username(),
             "user_count": self.get_user_count()
         }, skip=user)
 
@@ -193,6 +205,14 @@ class Shove:
             "username": user.get_username(),
             "user_count": self.get_user_count()
         })
+
+    def ping_all_users(self):
+        Log.trace("Pinging all users")
+        now = int(time.time() * 1000)
+        for user in self.get_all_users():
+            user.ping_timestamp = now
+        self.awaiting_pong_users = self.get_all_users()
+        self.send_packet_all("ping", {"timestamp": now})
 
     def reset_rooms(self, n_rooms=3):
         Log.info("Resetting rooms")
