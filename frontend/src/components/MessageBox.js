@@ -1,4 +1,7 @@
 import { useState, useContext, useEffect, useRef } from "react";
+
+import Avatar from "@material-ui/core/Avatar";
+
 import { sendPacket } from "../connection";
 import { GlobalContext } from "./GlobalContext";
 
@@ -12,11 +15,6 @@ function MessageBox() {
     const messageBox = useRef(null);
 
     function sendMessage(message) {
-        if (message === "/trello") {
-            window.open("https://trello.com/b/n23X0GGq/shove");
-            return;
-        }
-
         sendPacket("send_message", {
             message,
         });
@@ -34,13 +32,12 @@ function MessageBox() {
             <div ref={messageBox} className="messages-container">
                 {messages.map((message, i) => (
                     <div key={i} className="message-container">
-                        <div className="avatar-container">
-                            <img
-                                className="message-avatar"
-                                src="/img/avatar.png"
-                                alt="avatar"
-                            />
-                        </div>
+                        {message.type === "message" ? (
+                            <div className="avatar-container">
+                                <Avatar alt="avatar" src="/images/avatar.png" />
+                            </div>
+                        ) : null}
+
                         <div className="message-content">
                             <span className="message-author">
                                 {message.author}

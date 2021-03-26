@@ -3,9 +3,6 @@ from convenience import *
 from user import User
 from account import Account
 from room import Room
-from packet_sender_thread import PacketSenderThread
-from packet_handler_thread import PacketHandlerThread
-from ping_users_thread import PingUsersThread
 
 from games.coinflip import Coinflip
 
@@ -43,23 +40,20 @@ class Shove:
         self._users: List[User] = []
         self._rooms: List[Room] = []
 
-        self.reset_rooms()
+        self.reset_rooms(2)
         # self.rooms[0].add_bot(3)
         # for i in range(1):
         #     self.rooms[0].events.put("start")
 
         Log.trace("Initializing Trello client, fetching card list")
         client = TrelloClient(
-            api_key=API_KEY,
-            api_secret=API_SECRET,
-            token=TOKEN
+            api_key=TRELLO_API_KEY,
+            api_secret=TRELLO_API_SECRET,
+            token=TRELLO_TOKEN
         )
         board = client.get_board("603c469a39b5466c51c3a176")
         self._trello_card_list = board.get_list("60587b1f02721f0c7b547f5b")
 
-        PacketSenderThread(self, socketio).start()
-        PacketHandlerThread(self).start()
-        # PingUsersThread(self).start()  # comment out to disable pinging
         self.awaiting_pong_users: List[User] = []
 
         Log.info("Shove initialized")
@@ -72,6 +66,18 @@ class Shove:
         Log.trace(f"Adding card to Trello card list, name = '{name}', description = '{description}'")
         self._trello_card_list.add_card(name=name, desc=description, position="top")
         Log.trace(f"Added card")
+
+    def create_random_account(self):
+        return
+
+    def create_new_user_from_sid(self, sid: str):
+        sids = [user.sid for user in self._users]
+        if sid in sids:
+            raise ValueError(f"SID already exists: {sid}")  # shouldn't ever happen
+
+        user = User(sid)
+        self._users.append(user)
+        return user
 
     def disconnect_awaiting_pong_users(self):
         for user in self.awaiting_pong_users:
@@ -150,7 +156,7 @@ class Shove:
 
         k, v = list(k_v.items())[0]
         for user in self.get_all_users():
-            if user.is_logged_in() and user.get_account()[k] == v:
+            if user.is_logged_in() and user.get_account_data_copy()[k] == v:
                 Log.trace(f"User matched: {user}")
                 return user
 
@@ -166,17 +172,8 @@ class Shove:
     def get_user_count(self) -> int:
         return len(self._users)
 
-    def new_user_from_sid(self, sid: str):
-        sids = [user.sid for user in self._users]
-        if sid in sids:
-            raise ValueError(f"SID already exists: {sid}")  # shouldn't ever happen
-
-        user = User(sid)
-        self._users.append(user)
-        return user
-
     def on_connect(self, sid: str):
-        user = self.new_user_from_sid(sid)
+        user = self.create_new_user_from_sid(sid)
         if not user:
             return
 
@@ -210,11 +207,11 @@ class Shove:
         Log.trace("Pinging all users")
         now = int(time.time() * 1000)
         for user in self.get_all_users():
-            user.ping_timestamp = now
+            user.pinged_timestamp = now
         self.awaiting_pong_users = self.get_all_users()
-        self.send_packet_all("ping", {"timestamp": now})
+        self.send_packet_all("ping", {})
 
-    def reset_rooms(self, n_rooms=3):
+    def reset_rooms(self, n_rooms=5):
         Log.info("Resetting rooms")
         self._rooms = []  # todo handle removing users from room
         for _ in range(n_rooms):

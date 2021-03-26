@@ -30,7 +30,7 @@ class Coinflip(BaseGame):
                 "heads": self.heads_odds,
                 "tails": self.tails_odds
             },
-            "players": {player.get_username(): player.game_data["bet"]
+            "players": {player.get_username(): player.get_game_data_copy()["bet"]
                         for player in self.players},
             "time_left": self.time_left,
             "winners": self.winners  # the winners of the last coin flip
@@ -75,7 +75,7 @@ class Coinflip(BaseGame):
             if user in self.players:
                 raise GameActionFailed("Already placed a bet")
 
-            if not user.get_account()["money"]:
+            if not user.get_account_data_copy()["money"]:
                 raise GameActionFailed("You are broke!")
 
             bet = int(packet["bet"])
@@ -83,15 +83,15 @@ class Coinflip(BaseGame):
             if bet <= 0:
                 raise GameActionFailed(f"Invalid bet amount: {bet}")
 
-            if user.get_account()["money"] < bet:  # maybe returns True due to floating point error or something
-                raise GameActionFailed(f"Not enough money to bet {bet} (you have {user.get_account()['money']})")
+            if user.get_account_data_copy()["money"] < bet:  # maybe returns True due to floating point error or something
+                raise GameActionFailed(f"Not enough money to bet {bet} (you have {user.get_account_data_copy()['money']})")
 
             choice = packet["choice"]
             user.get_account()["money"] -= bet
-            user.game_data = {
+            user.set_game_data({
                 "choice": choice,
                 "bet": bet
-            }
+            })
             self.players.append(user)
             self.events.put("user_bet")
 
@@ -99,7 +99,7 @@ class Coinflip(BaseGame):
                 self.force_result = choice  # basically always win
                 Log.warn(f"Set force result to: {choice}")
 
-            self.room.shove.send_packet(user, "account_data", user.get_account_data())
+            self.room.shove.send_packet(user, "account_data", user.get_account_data_copy())
 
             return "game_action_success", {
                 "action": "bet",
@@ -152,12 +152,12 @@ class Coinflip(BaseGame):
         Log.trace(f"Resolved result: {self.coin_state}")
 
         for player in self.players:  # check who won and receives money
-            player_wins = player.game_data["choice"] == self.coin_state
-            bet = player.game_data["bet"]
+            player_wins = player.get_game_data_copy()["choice"] == self.coin_state
+            bet = player.get_game_data_copy()["bet"]
             if player_wins:
                 player.get_account()["money"] += 2 * bet
                 self.winners[player.get_username()] = bet
-                self.room.shove.send_packet(player, "account_data", player.get_account_data())
+                self.room.shove.send_packet(player, "account_data", player.get_account_data_copy())
             else:
                 self.losers[player.get_username()] = bet
 

@@ -2,7 +2,7 @@
 
 class PacketHandlingFailed(Exception):
     error = "unknown"
-    description = "No description provided"
+    description = "Unknown error (no description)"
 
 
 class AccountNotFound(PacketHandlingFailed):
@@ -14,7 +14,7 @@ class CommandInvalid(PacketHandlingFailed):
     error = "command_invalid"
 
     def __init__(self, description=None):
-        self.description = description or "No description provided"
+        self.description = description or "Invalid command"
 
     def __str__(self):
         return str(self.description)
@@ -24,7 +24,7 @@ class GameActionFailed(PacketHandlingFailed):
     error = "game_action_failed"
 
     def __init__(self, description=None):
-        self.description = description or "No description provided"
+        self.description = description or "Game action failed"
 
     def __str__(self):
         return str(self.description)
@@ -39,7 +39,7 @@ class PacketInvalid(PacketHandlingFailed):
     error = "packet_invalid"
 
     def __init__(self, description=None):
-        self.description = description or "No description provided"
+        self.description = description or "Invalid packet"
 
     def __str__(self):
         return str(self.description)
@@ -77,14 +77,19 @@ class UserNotInRoom(PacketHandlingFailed):
 
 class UserNotLoggedIn(PacketHandlingFailed):
     error = "user_not_logged_in"
-    description = "Not logged in"
+
+    def __init__(self, description=None):
+        self.description = description or "Not logged in"
+
+    def __str__(self):
+        return str(self.description)
 
 
 class UserUnauthorized(PacketHandlingFailed):
     error = "user_unauthorized"
 
     def __init__(self, description=None):
-        self.description = description or "No description provided"
+        self.description = description or "Unauthorized"
 
     def __str__(self):
         return str(self.description)
@@ -117,7 +122,7 @@ class RoomEmpty(GameStartFailed):
 
 class GameEventInvalid(Exception):
     def __init__(self, description):
-        self.description = description
+        self.description = description or "Game event failed"
 
     def __str__(self):
         return str(self.description)

@@ -1,26 +1,15 @@
-:root {
-    --main-nav-color: rgb(23, 23, 41);
-}
-
 header {
-    background: var(--main-nav-color);
+    background: rgb(23, 23, 41);
+    margin-bottom: 16px;
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
-    transition: height 0.2s ease-out;
 }
 
-header h4 {
-    color: white;
-    margin: 5px;
-    font-weight: normal;
+.header-child {
+    margin: 16px;
 }
 
-.leave-room-button-container,
-.log-out-button-container {
-    margin: 10px;
-}
-
-.username-text {
-    margin-right: 10px;
+.header-child > div {
+    display: inline-flex;
+    justify-content: space-between;
 }

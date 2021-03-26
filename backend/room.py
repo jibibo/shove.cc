@@ -63,6 +63,9 @@ class Room:
 
         Log.trace(f"Trying to let user {user} join room {self}")
 
+        if not user.is_logged_in():
+            raise UserNotLoggedIn("Log in to join this room")
+
         if self.is_full():
             raise RoomFull
 

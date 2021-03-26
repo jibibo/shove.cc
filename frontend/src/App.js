@@ -21,7 +21,7 @@ function App() {
         setAccountList,
         setGameData,
         setMessages,
-        setPing,
+        setLatency,
         roomData,
         setRoomData,
         setRoomList,
@@ -38,19 +38,45 @@ function App() {
     //     });
     // });
 
-    function addMessage(author, text) {
-        setMessages((currentState) => [
-            ...currentState,
-            {
-                author,
-                text,
-            },
-        ]);
+    function addMessage(type, author, text) {
+        setMessages((currentMessages) => {
+            // todo broken
+            // const maxMessages = 5;
+            // if (currentMessages.length > maxMessages) {
+            //     let splicedMessages = [...currentMessages];
+            //     splicedMessages.splice(0, currentMessages.length - maxMessages);
+            //     return [
+            //         ...splicedMessages,
+            //         {
+            //             author,
+            //             text,
+            //         },
+            //     ];
+            // } else {
+            //     return [
+            //         ...currentMessages,
+            //         {
+            //             author,
+            //             text,
+            //         },
+            //     ];
+            // }
+            return [
+                ...currentMessages,
+                {
+                    type,
+                    author,
+                    text,
+                },
+            ];
+        });
     }
 
     if (deaf) {
         deaf = false;
         initSocket();
+
+        // socket events
 
         socket.on("connect", () => {
             console.debug("> App > connect event");
@@ -69,6 +95,8 @@ function App() {
             setGameData();
         });
 
+        // packet handlers
+
         socket.on("account_data", (packet) => {
             console.debug("> App > account_data", packet);
             // if receiving other user's account data, do not call setAccountData!
@@ -82,37 +110,46 @@ function App() {
 
         socket.on("command_success", (packet) => {
             console.debug("> App > command_success", packet);
-            addMessage("Command success", packet.response);
+            addMessage(null, "Command success", packet.response);
         });
 
         socket.on("error", (packet) => {
             console.error("> App > error", packet);
-            addMessage("Error", packet.description);
+            addMessage(null, "Error", packet.description);
         });
 
         socket.on("join_room", (packet) => {
             console.debug("> App > join_room", packet);
-            addMessage("Joined room " + packet.room_data.name);
+            addMessage(null, "Joined room " + packet.room_data.name, null);
             setRoomData(packet.room_data);
             setGameData(packet.game_data);
         });
 
+        socket.on("latency", (packet) => {
+            console.debug("> App > latency", packet);
+            setLatency(packet.latency);
+        });
+
         socket.on("leave_room", (packet) => {
             console.debug("> App > leave_room", packet);
-            addMessage("Left room " + packet.room_name);
+            addMessage(null, "Left room " + packet.room_name, null);
             setRoomData();
             setGameData();
         });
 
         socket.on("log_in", (packet) => {
             console.debug("> App > log_in", packet);
-            addMessage("Logged in as " + packet.account_data.username);
+            addMessage(
+                null,
+                "Logged in as " + packet.account_data.username,
+                null
+            );
             setAccountData(packet.account_data);
         });
 
         socket.on("log_out", (packet) => {
             console.debug("> App > log_out", packet);
-            addMessage("Logged out");
+            addMessage(null, "Logged out", null);
             setAccountData();
             setRoomData();
             setGameData();
@@ -120,14 +157,12 @@ function App() {
 
         socket.on("message", (packet) => {
             console.debug("> App > message", packet);
-            addMessage(packet.author, packet.text);
+            addMessage("message", packet.author, packet.text);
         });
 
         socket.on("ping", (packet) => {
             console.debug("> App > ping", packet);
             sendPacket("pong", {});
-            const ping = Date.now() - packet.timestamp;
-            setPing(ping);
         });
 
         socket.on("room_list", (packet) => {
@@ -140,9 +175,9 @@ function App() {
             setUserCount(packet.user_count);
 
             if (packet.you) {
-                addMessage("Connected!");
+                addMessage(null, "Connected!", null);
             } else {
-                addMessage("Someone connected");
+                addMessage(null, "Someone connected", null);
             }
         });
 
@@ -151,9 +186,9 @@ function App() {
             setUserCount(packet.user_count);
 
             if (packet.username) {
-                addMessage(packet.username + " disconnected");
+                addMessage(null, packet.username + " disconnected", null);
             } else {
-                addMessage("Someone disconnected");
+                addMessage(null, "Someone disconnected", null);
             }
         });
     }

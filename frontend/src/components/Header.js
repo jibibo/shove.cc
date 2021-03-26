@@ -1,71 +1,31 @@
 import { useContext } from "react";
 
-import Button from "@material-ui/core/Button";
-import MeetingRoomIcon from "@material-ui/icons/MeetingRoom";
-import ExitToApp from "@material-ui/icons/ExitToApp";
-
 import { GlobalContext } from "./GlobalContext";
-import RoomList from "./RoomList";
+import HeaderRoomButtons from "./HeaderRoomButtons";
+import HeaderAccountButtons from "./HeaderAccountButtons";
 
-import { sendPacket } from "../connection";
-import { abbreviate } from "../formatting";
 
 import "./Header.css";
+import HeaderLinkButtons from "./HeaderLinkButtons";
 
 function Header() {
-    const { accountData, roomData, ping } = useContext(GlobalContext);
-
-    function onClickLeaveRoom() {
-        sendPacket("leave_room", {});
-    }
-
-    function onClickLogOut() {
-        sendPacket("log_out", {});
-    }
+    const { accountData } = useContext(GlobalContext);
 
     return (
         <header>
-            <div>
-                <div className="room-buttons">
-                    {roomData ? (
-                        <div className="leave-room-button-container">
-                            <Button
-                                variant="outlined"
-                                color="secondary"
-                                endIcon={<MeetingRoomIcon />}
-                                onClick={onClickLeaveRoom}
-                            >
-                                Leave {roomData.name}
-                            </Button>
-                        </div>
-                    ) : (
-                        <RoomList />
-                    )}
+            <div className="header-child">
+                <HeaderRoomButtons />
+            </div>
+            <div className="header-child">
+                
+                <HeaderLinkButtons />
+            </div>
+
+            {accountData ? (
+                <div className="header-child">
+                    <HeaderAccountButtons />
                 </div>
-            </div>
-            <div>
-                {accountData ? (
-                    <>
-                        <div className="log-out-button-container">
-                            <span className="username-text">
-                                User: <b>{accountData.username}</b>
-                                {" / "}
-                                <b>{abbreviate(accountData.money)}</b>
-                                {" / "}
-                                Ping: {ping} ms
-                            </span>
-                            <Button
-                                variant="outlined"
-                                color="secondary"
-                                endIcon={<ExitToApp />}
-                                onClick={onClickLogOut}
-                            >
-                                Log out
-                            </Button>
-                        </div>
-                    </>
-                ) : null}
-            </div>
+            ) : null}
         </header>
     );
 }

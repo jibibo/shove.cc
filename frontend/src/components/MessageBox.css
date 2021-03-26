@@ -36,11 +36,6 @@
     margin-left: 15px;
 }
 
-.message-avatar {
-    border-radius: 50%;
-    width: 40px;
-}
-
 .message-author {
     font-weight: bold;
 }

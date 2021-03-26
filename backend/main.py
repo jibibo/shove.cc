@@ -6,6 +6,9 @@ from flask_socketio import SocketIO
 
 from convenience import *
 from shove import Shove
+from packet_sender_thread import PacketSenderThread
+from packet_handler_thread import PacketHandlerThread
+from ping_users_thread import PingUsersThread
 
 
 HOST = "0.0.0.0"
@@ -21,8 +24,7 @@ LOG_ENGINEIO = False
 threading.current_thread().setName("Main")
 app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*", logger=LOG_EMITS, engineio_logger=LOG_ENGINEIO)
-updated_socketio_thread_name = False
-global shove
+shove: Union[Shove, None] = None  # Union for editor type hints
 
 
 # Flask requests
@@ -36,8 +38,6 @@ def get_request_777():
 
 @socketio.on("connect")
 def on_connect():
-    update_socketio_thread_name()
-
     sid = request.sid
     Log.info(f"SID {sid} connected")
     shove.on_connect(sid)
@@ -45,8 +45,6 @@ def on_connect():
 
 @socketio.on("disconnect")
 def on_disconnect():
-    update_socketio_thread_name()
-
     sid = request.sid
     user = shove.get_user_from_sid(sid=sid)
     if not user:
@@ -61,16 +59,12 @@ def on_disconnect():
 # todo BrokenPipeErrors?? check out https://stackoverflow.com/questions/47875007/flask-socket-io-frequent-time-outs
 @socketio.on_error_default
 def on_error(_ex):
-    update_socketio_thread_name()
-
     Log.fatal(f"UNHANDLED {type(_ex).__name__} caught by socketio.on_error_default", _ex)
 
 
 # todo on connect, receive session cookie from user, check if session token valid, log in as that _account
 @socketio.on("message")
 def on_message(model: str, packet: dict):
-    update_socketio_thread_name()
-
     sid = request.sid
     user = shove.get_user_from_sid(sid=sid)
     if not user:
@@ -83,28 +77,30 @@ def on_message(model: str, packet: dict):
     shove.incoming_packets_queue.put((user, model, packet, packet_number))
 
 
-def update_socketio_thread_name():  # SocketIO doesn't let its thread name to be changed easily
-    global updated_socketio_thread_name
-    if updated_socketio_thread_name:
-        return
+def main():
+    print("\n\n\t\"Waazzaaaaaap\" - Michael Stevens\n\n")
 
-    threading.current_thread().setName("SocketIO")
-    Log.trace("Updated SocketIO thread name")
-    updated_socketio_thread_name = True
-
-
-if __name__ == "__main__":
-    print("\"Waazzaaaaaap.\" - Michael Stevens")
     Log.start_file_writer_thread()
+    global shove
     shove = Shove(socketio)
+    PacketSenderThread(shove, socketio).start()
+    PacketHandlerThread(shove).start()
+    PingUsersThread(shove)  # .start()  # comment out to disable pinging
 
     Log.info(f"Running SocketIO on port {PORT}")
 
     if DEBUG:
         Log.warn("*** DEBUG MODE ENABLED ***")
 
-    try:
-        socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)
+    socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)
 
-    except Exception as ex:
-        Log.fatal(f"UNHANDLED {type(ex).__name__} on socketio.run", ex)
+
+if __name__ == "__main__":
+    while True:
+        try:
+            main()
+
+        except Exception as ex:
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on main()", ex)
+            Log.trace("Restarting in 10 s")
+            time.sleep(10)

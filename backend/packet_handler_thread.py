@@ -1,4 +1,6 @@
 from convenience import *
+
+from shove import Shove
 from user import User
 
 
@@ -45,7 +47,7 @@ class PacketHandlerThread(threading.Thread):
                 Log.trace(f"Handled packet #{packet_number}, no response")
 
 
-def handle_incoming_packet(shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
+def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
     """Handles the packet and returns an optional response model + packet"""
 
     if not model:
@@ -73,10 +75,10 @@ def handle_incoming_packet(shove, user: User, model: str, packet: dict) -> Optio
     if model == "get_account_data":
         if "username" in packet:
             username = packet["username"].strip().lower()
-            account_data = shove.get_account(username=username).get_data()
+            account_data = shove.get_account(username=username).get_data_copy()
 
         elif user.is_logged_in():
-            account_data = user.get_account()
+            account_data = user.get_account_data_copy()
 
         else:
             raise PacketInvalid("Not logged in and no username provided")
@@ -85,7 +87,7 @@ def handle_incoming_packet(shove, user: User, model: str, packet: dict) -> Optio
 
     if model == "get_account_list":
         return "account_list", {
-            "account_list": [account.get_data() for account in shove.get_all_accounts()]
+            "account_list": [account.get_data_copy() for account in shove.get_all_accounts()]
         }
 
     if model == "get_game_data":
@@ -108,9 +110,6 @@ def handle_incoming_packet(shove, user: User, model: str, packet: dict) -> Optio
         }
 
     if model == "join_room":
-        if not user.is_logged_in():
-            raise UserNotLoggedIn
-
         if shove.get_room_of_user(user):
             raise UserAlreadyInRoom
 
@@ -158,7 +157,7 @@ def handle_incoming_packet(shove, user: User, model: str, packet: dict) -> Optio
         user.log_in(account)
 
         return "log_in", {
-            "account_data": account.get_data()
+            "account_data": user.get_account_data_copy()
         }
 
     if model == "log_out":
@@ -176,16 +175,18 @@ def handle_incoming_packet(shove, user: User, model: str, packet: dict) -> Optio
 
     if model == "pong":
         now = int(time.time() * 1000)
-        round_trip_time = now - user.ping_timestamp
-        Log.trace(f"Pong received from {user} ({user.ping_timestamp}), now: {now}, RTT: {round_trip_time} ms")
+        user.latency = now - user.pinged_timestamp
+        Log.trace(f"Pong received from {user} ({user.pinged_timestamp}), latency: {user.latency} ms")
 
         if user in shove.awaiting_pong_users:  # just to be sure
             shove.awaiting_pong_users.remove(user)
 
         else:
-            Log.warn(f"User {user} not in shove.awaiting_pong_users, how?")
+            Log.warn(f"User {user} not in shove.awaiting_pong_users?")
 
-        return
+        return "latency", {
+            "latency": user.latency
+        }
 
     if model == "register":
         raise PacketNotImplemented
@@ -236,7 +237,7 @@ def handle_command(shove, user: User, message: str) -> Optional[str]:
             raise UserNotLoggedIn
 
         user.get_account()["money"] += 9e15
-        shove.send_packet(user, "account_data", user.get_account_data())
+        shove.send_packet(user, "account_data", user.get_account_data_copy())
         return "Money added"
 
     if command_split[0] == "trello":

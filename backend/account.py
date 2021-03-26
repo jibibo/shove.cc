@@ -37,11 +37,11 @@ class Account:
     def __str__(self):
         return str(self._data)
 
-    def get_data(self, filter_sensitive=True) -> dict:
+    def get_data_copy(self, filter_sensitive=True) -> dict:
         data = self._data.copy()
 
         if filter_sensitive:
             for key in ["password"]:
-                data[key] = "*"
+                data[key] = "<filtered>"
 
         return data
