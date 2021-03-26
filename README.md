@@ -6,7 +6,7 @@ Some lines of code
 
 ## Dependencies
 
-=> see [requirements.txt](/requirements.txt)
+-   Backend: [requirements.txt](/backend/requirements.txt)
 
 ## Credits
 
