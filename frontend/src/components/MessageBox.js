@@ -7,6 +7,8 @@ import { GlobalContext } from "./GlobalContext";
 
 import "./MessageBox.css";
 
+const show = false; // debugging
+
 function MessageBox() {
     const { messages } = useContext(GlobalContext);
 
@@ -21,13 +23,15 @@ function MessageBox() {
     }
 
     useEffect(() => {
-        messageBox.current.scrollTo({
-            top: messageBox.current.scrollHeight,
-            behavior: "smooth",
-        });
+        if (show) {
+            messageBox.current.scrollTo({
+                top: messageBox.current.scrollHeight,
+                behavior: "smooth",
+            });
+        }
     }, [messages]);
 
-    return (
+    return show ? (
         <>
             <div ref={messageBox} className="messages-container">
                 {messages.map((message, i) => (
@@ -64,7 +68,7 @@ function MessageBox() {
                 />
             </form>
         </>
-    );
+    ) : null;
 }
 
 export default MessageBox;

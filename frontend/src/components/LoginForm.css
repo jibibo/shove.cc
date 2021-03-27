@@ -20,6 +20,20 @@
     outline: none;
 }
 
+.log-in-form,
+.account-list {
+    max-width: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.account-list {
+    margin: 10px;
+    display: flex;
+}
+
 .account-list > div + div {
     margin-top: 10px;
 }

@@ -1,9 +1,9 @@
-.container {
+/* .container {
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-}
+} */
 
 .connection-status-container {
     position: fixed;

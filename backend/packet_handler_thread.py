@@ -250,11 +250,10 @@ def handle_command(shove, user: User, message: str) -> Optional[str]:
             name, description = trello_args_split
 
         else:
-            raise CommandInvalid("Invalid arguments")
+            raise CommandInvalid("Invalid arguments: /trello <title> [// description]")
 
         if not name:
-            Log.trace("No card name provided, ignoring")
-            return
+            raise CommandInvalid("No card name: /trello <title> [// description]")
 
         shove.add_trello_card(name, description)
         return "Card added"

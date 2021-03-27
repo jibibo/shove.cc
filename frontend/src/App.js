@@ -201,8 +201,8 @@ function App() {
                 {/* {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null} */}
 
                 <div>
-                    {accountData?.username ? (
-                        roomData?.name ? (
+                    {accountData ? (
+                        roomData ? (
                             <Room />
                         ) : (
                             "join a room yh?"

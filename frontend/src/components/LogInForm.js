@@ -59,8 +59,8 @@ const LogInForm = () => {
                     </Button>
                 </form>
             </div>
+            Quick log in:
             <div className="account-list">
-                One click log-in
                 {accountList.map((account, i) => {
                     return (
                         <div className="account-list-entry" key={i}>

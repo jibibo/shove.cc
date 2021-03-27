@@ -24,9 +24,9 @@ function HeaderAccountButtons() {
                     startIcon={<AccountCircleIcon />}
                     onClick={onClickLogOut}
                 >
-                    {`${accountData.username} | ${abbreviate(
+                    {`${accountData.username} [${abbreviate(
                         accountData.money
-                    )}`}
+                    )}]`}
                 </Button>
             </div>
             <div className="account-button">
