@@ -23,17 +23,17 @@ let deaf = true;
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        flexgrow: 1, // ?
+        flexgrow: 1, // what?
     },
     paper: {
-        flex: 1, // ??
+        flex: 1, // what?
         display: "flex",
         alignItems: "center", // vertically centers content
-        justifyContent: "center", // horizontally content
+        justifyContent: "center", // horizontally centers content?
         padding: theme.spacing(1),
         backgroundColor: "#333333",
         color: "#fff",
-        elevation: 8, // ??
+        elevation: 8, // what?
     },
 }));
 
@@ -283,12 +283,12 @@ function Room() {
                 <Grid
                     container
                     justify="center"
-                    // alignItems="flex-start"
+                    // alignItems="flex-start" // does nothing?
                     spacing={2}
                     className={classes.root}
                 >
                     <Box clone order={{ xs: 2, md: 1 }}>
-                        <Grid item xs={12} sm md lg>
+                        <Grid item xs sm md>
                             <Paper className={classes.paper}>
                                 <span>GAME INFO AND HEADS/TAILS % HERE</span>
                                 <br />
@@ -297,7 +297,7 @@ function Room() {
                         </Grid>
                     </Box>
                     <Box clone order={{ xs: 1, md: 2 }}>
-                        <Grid item xs={12} sm={12} md={6} lg={8}>
+                        <Grid item xs={12} sm={12} md={6}>
                             <Paper className={classes.paper}>
                                 <Typography>Test</Typography>
                                 <span>COIN AND BUTTONS HERE</span>
@@ -306,7 +306,7 @@ function Room() {
                         </Grid>
                     </Box>
                     <Box clone order={{ xs: 3, md: 3 }}>
-                        <Grid item xs={12} sm md lg>
+                        <Grid item xs sm md>
                             <Paper className={classes.paper}>
                                 <span>OTHER WINNERS/LOSERS HERE</span>
                                 <br />
@@ -318,7 +318,7 @@ function Room() {
             </Container>
         </>
     ) : (
-        <h1>gameData not set ???</h1>
+        <h1>gameData not set (very bad)</h1>
     );
 }
 
