@@ -22,10 +22,10 @@ function App() {
         setGameData,
         setMessages,
         setLatency,
+        setOnlineUsers,
         roomData,
         setRoomData,
         setRoomList,
-        setUserCount,
     } = useContext(GlobalContext);
 
     // const [width, setWidth] = useState(window.innerWidth);
@@ -172,7 +172,10 @@ function App() {
 
         socket.on("user_connected", (packet) => {
             console.debug("> App > user_connected", packet);
-            setUserCount(packet.user_count);
+            setOnlineUsers({
+                users: packet.users,
+                user_count: packet.user_count,
+            });
 
             if (packet.you) {
                 addMessage(null, "Connected!", null);
@@ -183,12 +186,15 @@ function App() {
 
         socket.on("user_disconnected", (packet) => {
             console.debug("> App > user_disconnected", packet);
-            setUserCount(packet.user_count);
+            setOnlineUsers({
+                users: packet.users,
+                user_count: packet.user_count,
+            });
 
             if (packet.username) {
                 addMessage(null, packet.username + " disconnected", null);
             } else {
-                addMessage(null, "Someone disconnected", null);
+                addMessage(null, "Someone nameless disconnected", null);
             }
         });
     }

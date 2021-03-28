@@ -8,9 +8,9 @@ function GlobalContextProvider({ children }) {
     const [gameData, setGameData] = useState();
     const [messages, setMessages] = useState([]);
     const [latency, setLatency] = useState(0);
+    const [onlineUsers, setOnlineUsers] = useState({});
     const [roomData, setRoomData] = useState();
     const [roomList, setRoomList] = useState([]);
-    const [userCount, setUserCount] = useState(0);
 
     return (
         <GlobalContext.Provider
@@ -25,12 +25,12 @@ function GlobalContextProvider({ children }) {
                 setMessages,
                 latency,
                 setLatency,
+                onlineUsers,
+                setOnlineUsers,
                 roomData,
                 setRoomData,
                 roomList,
                 setRoomList,
-                userCount,
-                setUserCount,
             }}
         >
             {children}

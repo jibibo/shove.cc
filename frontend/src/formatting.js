@@ -13,7 +13,7 @@ function abbreviate(number) {
 
     if (magnitude < 3) {
         // number is too small to abbreviate
-        return `$${number}`;
+        return `${number}`;
     }
 
     let newNumber = number / Math.pow(10, magnitude);
@@ -32,7 +32,14 @@ function abbreviate(number) {
     let abbreviation = abbreviations[abbreviationIndex];
     // console.log(number, newNumber, abbreviation, abbreviationIndex);
 
-    return `$${newNumber}${abbreviation}`;
+    return `${newNumber}${abbreviation}`;
 }
 
-export { abbreviate };
+function thousandsSeperatorFull(x) {
+    // https://stackoverflow.com/a/2901298/13216113
+    var parts = x.toString().split(".");
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return parts.join(".");
+}
+
+export { abbreviate, thousandsSeperatorFull };

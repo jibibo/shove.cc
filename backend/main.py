@@ -39,8 +39,9 @@ def get_request_777():
 @socketio.on("connect")
 def on_connect():
     sid = request.sid
-    Log.info(f"SID {sid} connected")
+    Log.trace(f"Handling connect of SID {sid}")
     shove.on_connect(sid)
+    Log.info(f"SID {sid} connected")
 
 
 @socketio.on("disconnect")
@@ -48,12 +49,12 @@ def on_disconnect():
     sid = request.sid
     user = shove.get_user_from_sid(sid=sid)
     if not user:
-        Log.warn(f"socketio.on disconnect: User object not found, sending no_pong packet to {sid}")
-        socketio.emit("error", {"error": "no_pong", "description": "You don't exist anymore (not good), refresh!"}, room=sid)
+        Log.warn(f"socketio.on('disconnect'): User object not found/already disconnected, ignoring call")
         return
 
-    Log.info(f"SID {sid} disconnected")
+    Log.trace(f"Handling disconnect of {user}")
     shove.on_disconnect(sid)
+    Log.info(f"{user} disconnected")
 
 
 # todo BrokenPipeErrors?? check out https://stackoverflow.com/questions/47875007/flask-socket-io-frequent-time-outs
@@ -68,8 +69,11 @@ def on_message(model: str, packet: dict):
     sid = request.sid
     user = shove.get_user_from_sid(sid=sid)
     if not user:
-        Log.warn(f"socketio.on message ('{model}'): User object not found, sending no_pong packet to {sid}")
-        socketio.emit("error", {"error": "no_pong", "description": "You don't exist anymore (not good), refresh!"}, room=sid)
+        Log.warn(f"socketio.on('message') (model '{model}'): User object not found/already disconnected, sending no_pong packet to SID {sid}")
+        socketio.emit("error", {
+            "error": "no_user_object",
+            "description": "You don't exist anymore (not good), refresh!"
+        }, room=sid)
         return
 
     packet_number = shove.get_next_packet_number()

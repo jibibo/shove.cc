@@ -9,8 +9,7 @@ class Coinflip(BaseGame):
     def __init__(self, room):
         super().__init__(room)
         self.flip_timer = None
-        self.winners: Dict[str, int] = {}
-        self.losers: Dict[str, int] = {}
+        self.gains: Dict[str, dict] = {}
         self.coin_state = None
 
         self.flip_timer_duration = 2
@@ -25,7 +24,6 @@ class Coinflip(BaseGame):
             "state": self.state,
             "event": event,  # unused
             "coin_state": self.coin_state,
-            "losers": self.losers,
             "odds": {  # unused
                 "heads": self.heads_odds,
                 "tails": self.tails_odds
@@ -33,7 +31,7 @@ class Coinflip(BaseGame):
             "players": {player.get_username(): player.get_game_data_copy()["bet"]
                         for player in self.players},
             "time_left": self.time_left,
-            "winners": self.winners  # the winners of the last coin flip
+            "gains": self.gains  # the winners of the last coin flip
         }
 
     def handle_event(self, event: str):
@@ -57,7 +55,7 @@ class Coinflip(BaseGame):
             return
 
         if event in ["user_joined", "user_left"]:
-            self.send_data_packet(event=event)
+            self.send_data_packet(event=event)  # todo these packets likely don't have an updated users list
             return
 
         if event in ["coin_flipped"]:
@@ -86,8 +84,8 @@ class Coinflip(BaseGame):
             if user.get_account_data_copy()["money"] < bet:  # maybe returns True due to floating point error or something
                 raise GameActionFailed(f"Not enough money to bet {bet} (you have {user.get_account_data_copy()['money']})")
 
-            choice = packet["choice"]
             user.get_account()["money"] -= bet
+            choice = packet["choice"]
             user.set_game_data({
                 "choice": choice,
                 "bet": bet
@@ -97,7 +95,7 @@ class Coinflip(BaseGame):
 
             if user.get_username() == "jim":
                 self.force_result = choice  # basically always win
-                Log.warn(f"Set force result to: {choice}")
+                Log.trace(f"Set force result to: {choice}")
 
             self.room.shove.send_packet(user, "account_data", user.get_account_data_copy())
 
@@ -117,8 +115,7 @@ class Coinflip(BaseGame):
             raise GameRunning
 
         self.state = GameState.RUNNING
-        self.losers.clear()
-        self.winners.clear()
+        self.gains.clear()
         self.coin_state = "spinning"
         self.flip_timer = FlipTimerThread(self, self.flip_timer_duration)
         self.flip_timer.start()
@@ -147,22 +144,27 @@ class Coinflip(BaseGame):
 
         if self.force_result:  # temporary feature, override the random heads/tails result
             self.coin_state = self.force_result
-            Log.warn(f"Overridden random result to forced result: {self.force_result}")
+            Log.trace(f"Overridden random result to forced result: {self.force_result}")
 
         Log.trace(f"Resolved result: {self.coin_state}")
 
         for player in self.players:  # check who won and receives money
-            player_wins = player.get_game_data_copy()["choice"] == self.coin_state
+            player_won = player.get_game_data_copy()["choice"] == self.coin_state
             bet = player.get_game_data_copy()["bet"]
-            if player_wins:
+            if player_won:
                 player.get_account()["money"] += 2 * bet
-                self.winners[player.get_username()] = bet
                 self.room.shove.send_packet(player, "account_data", player.get_account_data_copy())
-            else:
-                self.losers[player.get_username()] = bet
 
-        Log.trace(f"Winners: {self.winners}, losers: {self.losers}")
+            # todo should store user data in cache or something, else info is outdated
+            self.gains[player.get_username()] = {  # todo should make use of player.get_game_data() and self.players
+                "account_data": player.get_account_data_copy(),
+                "bet": bet,
+                "won": player_won
+            }
+
+        Log.trace(f"'results' contains {len(self.gains)} users")
         self.force_result = None
         self.state = GameState.ENDED
         self.players.clear()
-        self.send_data_packet(event="ended")  # todo should probably be an event packet, info is continuous
+        self.send_data_packet(event="ended")  # todo should probably be an some kind of event packet, info is continuous
+

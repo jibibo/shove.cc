@@ -56,7 +56,7 @@ class Shove:
 
         self.awaiting_pong_users: List[User] = []
 
-        Log.info("Shove initialized")
+        Log.trace("Shove initialized")
 
     def add_trello_card(self, name, description=None):
         name = name.strip()
@@ -179,11 +179,15 @@ class Shove:
 
         self.send_packet(user, "user_connected", {
             "you": True,
+            "users": [user.get_account_data_copy()
+                      for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         })
 
         self.send_packet_all("user_connected", {
             "you": False,
+            "users": [user.get_account_data_copy()
+                      for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         }, skip=user)
 
@@ -200,6 +204,8 @@ class Shove:
 
         self.send_packet_all("user_disconnected", {
             "username": user.get_username(),
+            "users": [user.get_account_data_copy()
+                      for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         })
 

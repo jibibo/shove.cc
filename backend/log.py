@@ -86,7 +86,7 @@ class Log:
             except playsound.PlaysoundException as ex:
                 Log.trace(f"Sound exception caught: {ex}")
 
-        if LOG_TO_FILE and level[0] >= FILE_LOG_LEVEL[0]:  # file logging doesn't require specific log level
+        if LOG_TO_FILE and level[0] >= FILE_LOG_LEVEL[0]:
             Log.FILE_WRITING_QUEUE.put((now_str, level, thread_name, message, exception))
 
     @staticmethod
@@ -95,10 +95,10 @@ class Log:
             threading.Thread(target=Log._file_writer_thread, name="LogFileWriter", daemon=True).start()
 
         else:
-            print("Logging to file is DISABLED")
+            Log.trace("Logging to file is DISABLED")
 
     @staticmethod
-    def _file_writer_thread():  # todo broken
+    def _file_writer_thread():
         try:
             open(LOG_FILE, "w").close()
             print(f"Emptied {LOG_FILE}")
