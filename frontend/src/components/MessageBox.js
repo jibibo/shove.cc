@@ -7,7 +7,7 @@ import { GlobalContext } from "./GlobalContext";
 
 import "./MessageBox.css";
 
-const show = false; // debugging
+const show = true; // debugging
 
 function MessageBox() {
     const { messages } = useContext(GlobalContext);
