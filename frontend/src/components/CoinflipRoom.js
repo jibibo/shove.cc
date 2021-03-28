@@ -58,7 +58,7 @@ function Room() {
             choice: choice,
             bet: betInput,
         });
-        setBetInput(1);
+        setBetInput(0);
     }
 
     function onChangeBetSlider(e, value) {
