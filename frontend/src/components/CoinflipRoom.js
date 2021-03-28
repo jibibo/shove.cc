@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
 function Room() {
     const { accountData, gameData, setGameData } = useContext(GlobalContext);
 
-    const [betInput, setBetInput] = useState(1);
+    const [betInput, setBetInput] = useState(0);
 
     const classes = useStyles();
 
@@ -169,7 +169,7 @@ function Room() {
                                             <Grid item xs={12}>
                                                 <Slider
                                                     className="bet-slider"
-                                                    min={1}
+                                                    min={0}
                                                     max={accountData.money}
                                                     step={Math.round(
                                                         accountData.money / 10
@@ -193,7 +193,7 @@ function Room() {
                                                     value={betInput}
                                                     onChange={onChangeBetInput}
                                                     inputProps={{
-                                                        min: 1,
+                                                        min: 0,
                                                         max: accountData.money,
                                                         type: "number",
                                                     }}
@@ -208,6 +208,7 @@ function Room() {
                                                     onClick={() => {
                                                         onBet("heads");
                                                     }}
+                                                    disabled={betInput === 0}
                                                 >
                                                     Heads
                                                 </Button>
@@ -221,6 +222,7 @@ function Room() {
                                                     onClick={() => {
                                                         onBet("tails");
                                                     }}
+                                                    disabled={betInput === 0}
                                                 >
                                                     Tails
                                                 </Button>
@@ -273,7 +275,7 @@ function Room() {
                                                   );
                                                   return (
                                                       <Grid container key={i}>
-                                                          {username}:{icon}
+                                                          {username}:{icon}$
                                                           {abbreviate(data.bet)}
                                                       </Grid>
                                                   );
