@@ -6,9 +6,9 @@ from flask_socketio import SocketIO
 
 from convenience import *
 from shove import Shove
-from packet_sender_thread import PacketSenderThread
-from packet_handler_thread import PacketHandlerThread
-from ping_users_thread import PingUsersThread
+from packet_sender import PacketSenderThread
+from packet_handler import PacketHandlerThread
+from ping_users import PingUsersThread
 
 
 HOST = "0.0.0.0"

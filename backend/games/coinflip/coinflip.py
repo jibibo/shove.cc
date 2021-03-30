@@ -2,7 +2,7 @@ from convenience import *
 from base_game import BaseGame, GameState
 from user import User
 
-from .flip_timer_thread import FlipTimerThread
+from .flip_timer import FlipTimerThread
 
 
 class Coinflip(BaseGame):
