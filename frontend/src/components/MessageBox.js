@@ -1,9 +1,8 @@
 import { useState, useContext, useEffect, useRef } from "react";
 
-import Avatar from "@material-ui/core/Avatar";
-
 import { sendPacket } from "../connection";
 import { GlobalContext } from "./GlobalContext";
+import UserAvatar from "./UserAvatar";
 
 import "./MessageBox.css";
 
@@ -37,9 +36,7 @@ function MessageBox() {
                 {messages.map((message, i) => (
                     <div key={i} className="message-container">
                         {message.type === "message" ? (
-                            <div className="avatar-container">
-                                <Avatar src={`avatars/${message.author}.png`} />
-                            </div>
+                            <UserAvatar username={message.author} />
                         ) : null}
 
                         <div className="message-content">

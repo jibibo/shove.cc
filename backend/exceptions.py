@@ -1,8 +1,12 @@
+_DEFAULT_ERROR = "unknown"
+_DEFAULT_DESCRIPTION = "Unknown error (no description, not good)"
+
+
 # packet handling errors
 
 class PacketHandlingFailed(Exception):
-    error = "unknown"
-    description = "Unknown error (no description, not good)"
+    error = _DEFAULT_ERROR
+    description = _DEFAULT_DESCRIPTION
 
 
 class AccountNotFound(PacketHandlingFailed):
@@ -103,24 +107,18 @@ class UserUnauthorized(PacketHandlingFailed):
 # game start errors
 
 class GameStartFailed(Exception):
-    error = "unknown"
-    description = "No description provided"
+    error = _DEFAULT_ERROR
+    description = _DEFAULT_DESCRIPTION
 
 
 class GameRunning(GameStartFailed):
-    def __init__(self):
-        self.description = "Game is already running"
-
-    def __str__(self):
-        return str(self.description)
+    error = "game_running"
+    description = "Game is already running"
 
 
 class RoomEmpty(GameStartFailed):
-    def __init__(self):
-        self.description = "Room is empty"
-
-    def __str__(self):
-        return str(self.description)
+    error = "room_empty"
+    description = "Room is empty"
 
 
 # other exceptions

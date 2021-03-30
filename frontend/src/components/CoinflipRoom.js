@@ -12,7 +12,6 @@ import AttachMoneyIcon from "@material-ui/icons/AttachMoney";
 import MoneyOffIcon from "@material-ui/icons/MoneyOff";
 import List from "@material-ui/core/List";
 import ListSubheader from "@material-ui/core/ListSubheader";
-import Avatar from "@material-ui/core/Avatar";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
@@ -21,6 +20,7 @@ import Divider from "@material-ui/core/Divider";
 import { socket, sendPacket } from "../connection";
 
 import { GlobalContext } from "./GlobalContext";
+import UserAvatar from "./UserAvatar";
 
 import { abbreviate } from "../formatting";
 
@@ -259,8 +259,8 @@ function Room() {
                                             return (
                                                 <ListItem key={i}>
                                                     <ListItemAvatar>
-                                                        <Avatar
-                                                            src={`avatars/${username}.png`}
+                                                        <UserAvatar
+                                                            username={username}
                                                         />
                                                     </ListItemAvatar>
                                                     <ListItemText
@@ -304,8 +304,8 @@ function Room() {
                                             return (
                                                 <ListItem key={i}>
                                                     <ListItemAvatar>
-                                                        <Avatar
-                                                            src={`avatars/${username}.png`}
+                                                        <UserAvatar
+                                                            username={username}
                                                         />
                                                     </ListItemAvatar>
                                                     <ListItemText
@@ -344,12 +344,10 @@ function Room() {
                                                 <>
                                                     <ListItem key={i}>
                                                         <ListItemAvatar>
-                                                            <Avatar
-                                                                // style={{
-                                                                //     height: "10px",
-                                                                //     width: "10px",
-                                                                // }}
-                                                                src={`avatars/${username}.png`}
+                                                            <UserAvatar
+                                                                username={
+                                                                    username
+                                                                }
                                                             />
                                                         </ListItemAvatar>
                                                         <ListItemText

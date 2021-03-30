@@ -42,8 +42,8 @@ class Shove:
 
         self.reset_rooms(2)
         # self.rooms[0].add_bot(3)
-        # for i in range(1):
-        #     self.rooms[0].events.put("start")
+        for i in range(1):
+            self.get_rooms()[0].try_to_start_game()
 
         if PRIVATE_ACCESS:
             Log.trace("Initializing Trello client, fetching card list")
@@ -256,7 +256,7 @@ class Shove:
                 self.outgoing_packets_queue.put((users, model, packet, is_response))
 
             else:
-                Log.trace(f"Skipped outgoing {'response' if is_response else 'packet'} '{model}' with no recipients\n packet: {packet}")
+                Log.trace(f"No recipients for outgoing {'response' if is_response else 'packet'} '{model}', not queueing\n packet: {packet}")
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on shove.send_packet", ex)

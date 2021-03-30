@@ -50,7 +50,7 @@ class Room:
             self.game.try_to_start()
 
         except GameStartFailed as ex:
-            Log.trace(f"Game start failed: {type(ex).__name__}: {ex.description}")
+            Log.trace(f"Game start failed: {ex.description}")
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on room.game.try_to_start", ex)
