@@ -1,14 +1,24 @@
 import { useState } from "react";
 
+import { makeStyles } from "@material-ui/core/styles";
+
 import { socket } from "../connection";
 
-import "./ConnectionStatus.css";
+const useStyles = makeStyles((theme) => ({
+    status: {
+        padding: "10px",
+        borderRadius: "10px 0px 0px",
+        texAlign: "center",
+    },
+}));
 
 let deaf = true;
 
 function ConnectionStatus() {
     const [status, setStatus] = useState();
     const [visible, setVisible] = useState(false);
+
+    const classes = useStyles();
 
     function popup(text, color) {
         setStatus({
@@ -38,15 +48,15 @@ function ConnectionStatus() {
         });
     }
 
-    return (
+    return status ? (
         <div
-            style={{ backgroundColor: status?.color }}
-            className="status"
+            style={{ backgroundColor: status.color }}
+            className={classes.status}
             hidden={!visible}
         >
-            Connection status: {status?.text}
+            Connection status: {status.text}
         </div>
-    );
+    ) : null;
 }
 
 export default ConnectionStatus;

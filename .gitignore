@@ -2,9 +2,6 @@
 logs/
 test/
 __pycache__/
-private/
 node_modules/
-/backend/private/
-/private
-/private/
-private/__init__.py
+private.py
+avatars/
