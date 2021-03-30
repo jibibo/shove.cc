@@ -1,5 +1,7 @@
 import { useContext } from "react";
 
+import Container from "@material-ui/core/Container";
+
 import { initSocket, socket, sendPacket } from "./connection";
 
 import { GlobalContext } from "./components/GlobalContext";
@@ -73,23 +75,25 @@ function App() {
     }
 
     if (deaf) {
+        // todo memory leak: listeners dont get removed
+        // todo socket listeners shouldn't be stacked in App.js, but the specific file they belong to
         deaf = false;
         initSocket();
 
         // socket events
 
         socket.on("connect", () => {
-            console.debug("> App > connect event");
+            console.debug("> connect event");
             sendPacket("get_room_list", {});
             sendPacket("get_account_list", {});
         });
 
         socket.on("connect_error", () => {
-            console.warn("> App > connect_error event");
+            console.warn("> connect_error event");
         });
 
         socket.on("disconnect", (reason) => {
-            console.warn("> App > disconnect event", reason);
+            console.warn("> disconnect event", reason);
             setAccountData();
             setRoomData();
             setGameData();
@@ -98,47 +102,47 @@ function App() {
         // packet handlers
 
         socket.on("account_data", (packet) => {
-            console.debug("> App > account_data", packet);
+            console.debug("> account_data", packet);
             // if receiving other user's account data, do not call setAccountData!
             setAccountData(packet);
         });
 
         socket.on("account_list", (packet) => {
-            console.debug("> App > account_list", packet);
+            console.debug("> account_list", packet);
             setAccountList(packet.account_list);
         });
 
         socket.on("command_success", (packet) => {
-            console.debug("> App > command_success", packet);
+            console.debug("> command_success", packet);
             addMessage(null, "Command success", packet.response);
         });
 
         socket.on("error", (packet) => {
-            console.error("> App > error", packet);
+            console.error("> error", packet);
             addMessage(null, "Error", packet.description);
         });
 
         socket.on("join_room", (packet) => {
-            console.debug("> App > join_room", packet);
+            console.debug("> join_room", packet);
             addMessage(null, "Joined room " + packet.room_data.name, null);
             setRoomData(packet.room_data);
             setGameData(packet.game_data);
         });
 
         socket.on("latency", (packet) => {
-            console.debug("> App > latency", packet);
+            console.debug("> latency", packet);
             setLatency(packet.latency);
         });
 
         socket.on("leave_room", (packet) => {
-            console.debug("> App > leave_room", packet);
+            console.debug("> leave_room", packet);
             addMessage(null, "Left room " + packet.room_name, null);
             setRoomData();
             setGameData();
         });
 
         socket.on("log_in", (packet) => {
-            console.debug("> App > log_in", packet);
+            console.debug("> log_in", packet);
             addMessage(
                 null,
                 "Logged in as " + packet.account_data.username,
@@ -148,7 +152,7 @@ function App() {
         });
 
         socket.on("log_out", (packet) => {
-            console.debug("> App > log_out", packet);
+            console.debug("> log_out", packet);
             addMessage(null, "Logged out", null);
             setAccountData();
             setRoomData();
@@ -156,22 +160,22 @@ function App() {
         });
 
         socket.on("message", (packet) => {
-            console.debug("> App > message", packet);
+            console.debug("> message", packet);
             addMessage("message", packet.author, packet.text);
         });
 
         socket.on("ping", (packet) => {
-            console.debug("> App > ping", packet);
+            console.debug("> ping", packet);
             sendPacket("pong", {});
         });
 
         socket.on("room_list", (packet) => {
-            console.debug("> App > room_list", packet);
+            console.debug("> room_list", packet);
             setRoomList(packet.room_list);
         });
 
         socket.on("user_connected", (packet) => {
-            console.debug("> App > user_connected", packet);
+            console.debug("> user_connected", packet);
             setOnlineUsers({
                 users: packet.users,
                 user_count: packet.user_count,
@@ -185,7 +189,7 @@ function App() {
         });
 
         socket.on("user_disconnected", (packet) => {
-            console.debug("> App > user_disconnected", packet);
+            console.debug("> user_disconnected", packet);
             setOnlineUsers({
                 users: packet.users,
                 user_count: packet.user_count,
@@ -200,10 +204,10 @@ function App() {
     }
 
     return (
-        <>
+        <Container>
             <Header />
 
-            <div className="container">
+            <div>
                 {/* {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null} */}
 
                 <div>
@@ -225,7 +229,7 @@ function App() {
                     <ConnectionStatus />
                 </div>
             </div>
-        </>
+        </Container>
     );
 }
 

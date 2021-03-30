@@ -12,7 +12,7 @@ class Coinflip(BaseGame):
         self.gains: Dict[str, dict] = {}
         self.coin_state = None
 
-        self.flip_timer_duration = 2
+        self.flip_timer_duration = 7
         self.time_left = None
         self.heads_odds = 50  # ratio (vs tails) of landing on heads
         self.tails_odds = 50
@@ -148,7 +148,7 @@ class Coinflip(BaseGame):
 
         Log.trace(f"Resolved result: {self.coin_state}")
 
-        for player in self.players:  # check who won and receives money
+        for player in self.players:  # check who won/lost
             player_won = player.get_game_data_copy()["choice"] == self.coin_state
             bet = player.get_game_data_copy()["bet"]
             if player_won:
@@ -156,13 +156,14 @@ class Coinflip(BaseGame):
                 self.room.shove.send_packet(player, "account_data", player.get_account_data_copy())
 
             # todo should store user data in cache or something, else info is outdated
+            # todo bug: if username changes of player, big problemo
             self.gains[player.get_username()] = {  # todo should make use of player.get_game_data() and self.players
                 "account_data": player.get_account_data_copy(),
                 "bet": bet,
                 "won": player_won
             }
 
-        Log.trace(f"'results' contains {len(self.gains)} users")
+        Log.trace(f"'gains' contains {len(self.gains)} users")
         self.force_result = None
         self.state = GameState.ENDED
         self.players.clear()

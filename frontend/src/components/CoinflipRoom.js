@@ -1,8 +1,6 @@
 import { useState, useContext } from "react";
 
 import { makeStyles } from "@material-ui/core/styles";
-import Divider from "@material-ui/core/Divider";
-import Container from "@material-ui/core/Container";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import Input from "@material-ui/core/Input";
@@ -12,8 +10,13 @@ import Box from "@material-ui/core/Box";
 import Paper from "@material-ui/core/Paper";
 import AttachMoneyIcon from "@material-ui/icons/AttachMoney";
 import MoneyOffIcon from "@material-ui/icons/MoneyOff";
-import AddIcon from "@material-ui/icons/Add";
-import RemoveIcon from "@material-ui/icons/Remove";
+import List from "@material-ui/core/List";
+import ListSubheader from "@material-ui/core/ListSubheader";
+import Avatar from "@material-ui/core/Avatar";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemAvatar from "@material-ui/core/ListItemAvatar";
+import Divider from "@material-ui/core/Divider";
 
 import { socket, sendPacket } from "../connection";
 
@@ -27,15 +30,18 @@ let deaf = true;
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        flexgrow: 1, // what?
+        // flexgrow: 1, // what?
     },
     paper: {
-        flex: 1, // what?
-        display: "flex",
-        alignItems: "center", // vertically centers content
-        justifyContent: "center", // horizontally centers content?
         padding: theme.spacing(1),
-        backgroundColor: "#333333",
+        backgroundColor: "#333",
+        color: "#fff",
+    },
+    listHeader: {
+        color: "#fff",
+        margin: "0px",
+    },
+    white: {
         color: "#fff",
     },
 }));
@@ -50,6 +56,8 @@ function Room() {
     let userStatus,
         gameStatus,
         showBetters,
+        winners,
+        losers,
         showGains = null;
 
     function onBet(choice) {
@@ -70,270 +78,317 @@ function Room() {
     }
 
     if (deaf) {
+        // todo memory leak: listeners dont get removed
         deaf = false;
 
         socket.on("game_action_success", (packet) => {
-            // todo memory leak: listeners dont get removed
-            console.debug("> CoinflipRoom > game_action_success", packet);
+            console.debug("> game_action_success", packet);
         });
 
         socket.on("game_data", (packet) => {
-            // todo same memory leak here, unlimited listeners
-            console.debug("> CoinflipRoom > game_data", packet);
+            console.debug("> game_data", packet);
             setGameData(packet);
         });
     }
 
     if (gameData) {
+        showBetters = false;
+        showGains = false;
         if (gameData.state === "idle") {
-            userStatus = "Bet to start";
             gameStatus = "Waiting";
-            showBetters = false;
-            showGains = false;
+            userStatus = "Bet to start";
         } else if (gameData.state === "running") {
+            gameStatus = `Coin lands in ${gameData.time_left} seconds!`;
+            showBetters = true;
+
             if (accountData.username in gameData.players) {
                 // user is playing (has placed a bet)
                 userStatus = `Your bet: $${abbreviate(
                     gameData.players[accountData.username]
                 )}`;
             }
-
-            gameStatus = `Coin lands in ${gameData.time_left} seconds!`;
-            showBetters = true;
-            showGains = false;
         } else {
             // state "ended"
+            gameStatus = `Coin landed on ${gameData.coin_state}`;
+            showGains = true;
+
+            winners = [];
+            losers = [];
+
             if (accountData.username in gameData.gains) {
+                // check if this user won/lost
                 const bet = gameData.gains[accountData.username].bet;
                 if (gameData.gains[accountData.username].won) {
                     userStatus = `You won $${abbreviate(bet)}`;
+                    winners.push(accountData.username);
                 } else {
                     userStatus = `You lost $${abbreviate(bet)}`;
+                    losers.push(accountData.username);
                 }
             }
 
-            gameStatus = `Coin landed on ${gameData.coin_state}`;
-            showBetters = false;
-            showGains = true;
+            // check all users to see who won/lost
+            for (var username in gameData.gains) {
+                if (username !== accountData.username) {
+                    // make sure no to add this user twice
+                    if (gameData.gains[username].won) {
+                        winners.push(username);
+                    } else {
+                        losers.push(username);
+                    }
+                }
+            }
         }
     }
 
     return gameData ? (
-        <Container>
-            <Grid
-                container
-                justify="center"
-                // alignItems="flex-start" // does nothing?
-                spacing={2}
-                className={classes.root}
-            >
-                <Box clone order={{ xs: 2, md: 1 }}>
-                    <Grid item xs sm md>
-                        <Paper className={classes.paper} elevation={8}>
-                            <Typography component="p">
-                                State: {gameData.state}
-                            </Typography>
-                            <Typography component="p">{gameStatus}</Typography>
-                            <Typography component="p">{userStatus}</Typography>
-                        </Paper>
-                    </Grid>
-                </Box>
-                <Box clone order={{ xs: 1, md: 2 }}>
-                    <Grid item xs={12} sm={12} md>
-                        <Paper className={classes.paper} elevation={8}>
-                            <div>
-                                {gameData.coin_state !== null ? (
-                                    <Grid container>
-                                        <img
-                                            className={
-                                                "coin " +
-                                                (gameData.coin_state ===
-                                                "spinning"
-                                                    ? "spinning"
-                                                    : null)
-                                            }
-                                            src={`./games/coinflip/${gameData.coin_state}.svg`}
-                                            alt={`${gameData.coin_state}`}
-                                        />
-                                    </Grid>
-                                ) : (
-                                    "Coin hasn't been flipped yet"
-                                )}
-                                {accountData.money ? (
-                                    <div>
-                                        <Grid
-                                            container
-                                            spacing={1}
-                                            justify="center"
-                                        >
-                                            <Grid item xs={12}>
-                                                <Slider
-                                                    className="bet-slider"
-                                                    min={0}
-                                                    max={accountData.money}
-                                                    step={Math.round(
-                                                        accountData.money / 10
-                                                    )}
-                                                    value={betInput}
-                                                    onChange={onChangeBetSlider}
-                                                    valueLabelDisplay="auto"
-                                                    valueLabelFormat={(value) =>
-                                                        `$${abbreviate(value)}`
-                                                    }
-                                                />
-                                            </Grid>
-                                        </Grid>
-                                        <Grid container spacing={1}>
-                                            <Grid item>
-                                                <Input
-                                                    style={{
-                                                        color: "#fff",
-                                                        width: "100%",
-                                                    }}
-                                                    value={betInput}
-                                                    onChange={onChangeBetInput}
-                                                    inputProps={{
-                                                        min: 0,
-                                                        max: accountData.money,
-                                                        type: "number",
-                                                    }}
-                                                />
-                                            </Grid>
-                                            <Grid item>
-                                                <Button
-                                                    variant="contained"
-                                                    startIcon={
-                                                        <AttachMoneyIcon />
-                                                    }
-                                                    onClick={() => {
-                                                        onBet("heads");
-                                                    }}
-                                                    disabled={betInput === 0}
-                                                >
-                                                    Heads
-                                                </Button>
-                                            </Grid>
-                                            <Grid item>
-                                                <Button
-                                                    variant="contained"
-                                                    startIcon={
-                                                        <AttachMoneyIcon />
-                                                    }
-                                                    onClick={() => {
-                                                        onBet("tails");
-                                                    }}
-                                                    disabled={betInput === 0}
-                                                >
-                                                    Tails
-                                                </Button>
-                                            </Grid>
-                                        </Grid>
-                                    </div>
-                                ) : (
-                                    <Grid container>
-                                        <MoneyOffIcon />u broke fam
-                                        <MoneyOffIcon />
-                                    </Grid>
-                                )}
-                                <Divider styles={{ width: "100%" }} />
+        <Grid container spacing={2} className={classes.root}>
+            <Box clone order={{ xs: 2, md: 1 }}>
+                <Grid item xs sm md>
+                    <Paper className={classes.paper} elevation={8}>
+                        <Typography>State: {gameData.state}</Typography>
+                        <Typography>{gameStatus}</Typography>
+                        <Typography>{userStatus}</Typography>
+                    </Paper>
+                </Grid>
+            </Box>
+            <Box clone order={{ xs: 1, md: 2 }}>
+                <Grid item xs={12} sm={12} md>
+                    <Paper className={classes.paper} elevation={8}>
+                        <>
+                            {gameData.coin_state !== null ? (
                                 <Grid container>
-                                    {showBetters
-                                        ? Object.entries(gameData.players).map(
-                                              ([username, bet], i) => {
-                                                  return (
-                                                      <p key={i}>
-                                                          {username} bet $
-                                                          {abbreviate(bet)}
-                                                      </p>
-                                                  );
-                                              }
-                                          )
-                                        : null}
-                                </Grid>
-                            </div>
-                        </Paper>
-                    </Grid>
-                </Box>
-                <Box clone order={{ xs: 3, md: 3 }}>
-                    <Grid item xs sm md>
-                        <Paper className={classes.paper} elevation={8}>
-                            {showGains ? (
-                                <div>
-                                    <p>Gains</p>
-                                    <Divider
-                                        style={{
-                                            backgroundColor: "white",
-                                        }}
+                                    <img
+                                        className={
+                                            "coin " +
+                                            (gameData.coin_state === "spinning"
+                                                ? "spinning"
+                                                : null)
+                                        }
+                                        src={`./games/coinflip/${gameData.coin_state}.svg`}
+                                        alt={`${gameData.coin_state}`}
                                     />
-                                    {gameData.gains
-                                        ? Object.entries(gameData.gains).map(
-                                              ([username, data], i) => {
-                                                  const icon = data.won ? (
-                                                      <AddIcon />
-                                                  ) : (
-                                                      <RemoveIcon />
-                                                  );
-                                                  return (
-                                                      <Grid container key={i}>
-                                                          {username}:{icon}$
-                                                          {abbreviate(data.bet)}
-                                                      </Grid>
-                                                  );
-                                              }
-                                          )
-                                        : "none"}
+                                </Grid>
+                            ) : (
+                                "Coin hasn't been flipped yet"
+                            )}
+                            {accountData.money ? (
+                                <div>
+                                    <Grid
+                                        container
+                                        spacing={1}
+                                        justify="center"
+                                    >
+                                        <Grid item xs={12}>
+                                            <Slider
+                                                className="bet-slider"
+                                                min={0}
+                                                max={accountData.money}
+                                                step={Math.round(
+                                                    accountData.money / 10
+                                                )}
+                                                value={betInput}
+                                                onChange={onChangeBetSlider}
+                                                valueLabelDisplay="auto"
+                                                valueLabelFormat={(value) =>
+                                                    `$${abbreviate(value)}`
+                                                }
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                    <Grid container spacing={1}>
+                                        <Grid item>
+                                            <Input
+                                                style={{
+                                                    color: "#fff",
+                                                }}
+                                                value={betInput}
+                                                onChange={onChangeBetInput}
+                                                inputProps={{
+                                                    min: 0,
+                                                    max: accountData.money,
+                                                    type: "number",
+                                                }}
+                                            />
+                                        </Grid>
+                                        <Grid item>
+                                            <Button
+                                                variant="contained"
+                                                startIcon={<AttachMoneyIcon />}
+                                                onClick={() => {
+                                                    onBet("heads");
+                                                }}
+                                                disabled={betInput === 0}
+                                            >
+                                                Heads
+                                            </Button>
+                                        </Grid>
+                                        <Grid item>
+                                            <Button
+                                                variant="contained"
+                                                startIcon={<AttachMoneyIcon />}
+                                                onClick={() => {
+                                                    onBet("tails");
+                                                }}
+                                                disabled={betInput === 0}
+                                            >
+                                                Tails
+                                            </Button>
+                                        </Grid>
+                                    </Grid>
                                 </div>
                             ) : (
-                                "player gains show up here"
+                                <Grid container>
+                                    <MoneyOffIcon />u broke fam
+                                    <MoneyOffIcon />
+                                </Grid>
                             )}
-                        </Paper>
-                    </Grid>
-                </Box>
-            </Grid>
-        </Container>
+                            {showBetters ? (
+                                <List
+                                    dense
+                                    subheader={
+                                        <ListSubheader
+                                            className={classes.listHeader}
+                                        >
+                                            BETTERS
+                                        </ListSubheader>
+                                    }
+                                >
+                                    {Object.entries(gameData.players).map(
+                                        ([username, bet], i) => {
+                                            return (
+                                                <ListItem key={i}>
+                                                    <ListItemAvatar>
+                                                        <Avatar
+                                                            src={`avatars/${username}.png`}
+                                                        />
+                                                    </ListItemAvatar>
+                                                    <ListItemText
+                                                        primary={username}
+                                                        secondary={
+                                                            "$" +
+                                                            abbreviate(bet)
+                                                        }
+                                                        secondaryTypographyProps={{
+                                                            className:
+                                                                classes.listText,
+                                                        }}
+                                                    />
+                                                </ListItem>
+                                            );
+                                        }
+                                    )}
+                                </List>
+                            ) : null}
+                        </>
+                    </Paper>
+                </Grid>
+            </Box>
+            <Box clone order={{ xs: 3, md: 3 }}>
+                <Grid item xs sm md>
+                    <Paper className={classes.paper} elevation={8}>
+                        {showGains ? (
+                            <Grid container>
+                                <Grid item xs={6}>
+                                    <List
+                                        dense
+                                        subheader={
+                                            <ListSubheader
+                                                className={classes.listHeader}
+                                            >
+                                                WINNERS
+                                            </ListSubheader>
+                                        }
+                                    >
+                                        {winners.map((username, i) => {
+                                            return (
+                                                <ListItem key={i}>
+                                                    <ListItemAvatar>
+                                                        <Avatar
+                                                            src={`avatars/${username}.png`}
+                                                        />
+                                                    </ListItemAvatar>
+                                                    <ListItemText
+                                                        primary={username}
+                                                        secondary={
+                                                            "+ $" +
+                                                            abbreviate(
+                                                                gameData.gains[
+                                                                    username
+                                                                ].bet
+                                                            )
+                                                        }
+                                                        secondaryTypographyProps={{
+                                                            className:
+                                                                classes.white,
+                                                        }}
+                                                    />
+                                                </ListItem>
+                                            );
+                                        })}
+                                    </List>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <List
+                                        dense
+                                        subheader={
+                                            <ListSubheader
+                                                className={classes.listHeader}
+                                            >
+                                                LOSERS
+                                            </ListSubheader>
+                                        }
+                                    >
+                                        {losers.map((username, i) => {
+                                            return (
+                                                <>
+                                                    <ListItem key={i}>
+                                                        <ListItemAvatar>
+                                                            <Avatar
+                                                                // style={{
+                                                                //     height: "10px",
+                                                                //     width: "10px",
+                                                                // }}
+                                                                src={`avatars/${username}.png`}
+                                                            />
+                                                        </ListItemAvatar>
+                                                        <ListItemText
+                                                            primary={username}
+                                                            secondary={
+                                                                "- $" +
+                                                                abbreviate(
+                                                                    gameData
+                                                                        .gains[
+                                                                        username
+                                                                    ].bet
+                                                                )
+                                                            }
+                                                            secondaryTypographyProps={{
+                                                                className:
+                                                                    classes.white,
+                                                            }}
+                                                        />
+                                                    </ListItem>
+                                                    {username ===
+                                                    accountData.username ? (
+                                                        <Divider />
+                                                    ) : null}
+                                                </>
+                                            );
+                                        })}
+                                    </List>
+                                </Grid>
+                            </Grid>
+                        ) : (
+                            "player gains show up here"
+                        )}
+                    </Paper>
+                </Grid>
+            </Box>
+        </Grid>
     ) : (
         <h1>gameData not set (very bad)</h1>
     );
 }
 
 export default Room;
-
-// old game event and game action success code
-// if (packet.action === "bet") { // todo show notification at bottom of screen
-// addResult(
-//     "You bet $" +
-//         abbreviate(packet.bet) +
-//         " on: " +
-//         packet.choice
-// );
-// }
-// if (packet.state === "idle") {
-// if (packet.event === "ended") {
-// addResult(
-//     "Coin landed on " +
-//         packet.coin_state +
-//         ", winners: " +
-//         JSON.stringify(packet.winners)
-// );
-// if (accountData?.username in packet.winners) {
-//     addResult(
-//         "You won, gained $" +
-//             abbreviate(
-//                 packet.winners[accountData?.username]
-//             ) +
-//             "!"
-//     );
-// } else if (accountData?.username in packet.losers) {
-//     addResult("You lost, gained nothing!");
-// } else {
-//     // didn't participate or not logged in
-// }
-// }
-// } else {
-// // packet.state === "running"
-// if (packet.event === "started") {
-//     // addResult("Coin flipping, lands in " + packet.time_left);
-// } else if (packet.event === "timer_ticked") {
-//     // maybe add a indication the timer just ticked down
-// }
-// }

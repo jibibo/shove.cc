@@ -45,14 +45,17 @@ class Shove:
         # for i in range(1):
         #     self.rooms[0].events.put("start")
 
-        Log.trace("Initializing Trello client, fetching card list")
-        client = TrelloClient(
-            api_key=TRELLO_API_KEY,
-            api_secret=TRELLO_API_SECRET,
-            token=TRELLO_TOKEN
-        )
-        board = client.get_board("603c469a39b5466c51c3a176")
-        self._trello_card_list = board.get_list("60587b1f02721f0c7b547f5b")
+        if PRIVATE_ACCESS:
+            Log.trace("Initializing Trello client, fetching card list")
+            client = TrelloClient(
+                api_key=TRELLO_API_KEY,
+                api_secret=TRELLO_API_SECRET,
+                token=TRELLO_TOKEN
+            )
+            board = client.get_board("603c469a39b5466c51c3a176")
+            self._trello_card_list = board.get_list("60587b1f02721f0c7b547f5b")
+        else:
+            Log.trace("No private access, not initializing Trello client")
 
         self.awaiting_pong_users: List[User] = []
 

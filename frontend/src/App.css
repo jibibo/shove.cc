@@ -1,10 +1,3 @@
-/* .container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-} */
-
 .connection-status-container {
     position: fixed;
     bottom: 0;
@@ -21,11 +14,11 @@
     z-index: 1;
 }
 
-@media (max-width: 540px) {
+/* @media (max-width: 540px) {
     .message-box-container {
         position: absolute;
         bottom: 0;
         width: 100%;
         margin: 0;
     }
-}
+} */

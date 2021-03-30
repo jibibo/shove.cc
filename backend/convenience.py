@@ -20,9 +20,10 @@ from exceptions import *
 import formatting
 
 try:
-    from test import TRELLO_API_KEY, TRELLO_API_SECRET, TRELLO_TOKEN
+    from private import *
+    PRIVATE_ACCESS = True
 except ImportError:
-    Log.error("Could not import Trello API credentials")
-    API_KEY = API_SECRET = TOKEN = None
+    Log.error("Could not import 'private.py', functions using private information won't work")
+    PRIVATE_ACCESS = False
 
 # this file should be able to be imported by every .py file for convenience

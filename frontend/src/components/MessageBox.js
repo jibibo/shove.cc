@@ -7,7 +7,7 @@ import { GlobalContext } from "./GlobalContext";
 
 import "./MessageBox.css";
 
-const show = true; // debugging
+const show = true; // for debugging
 
 function MessageBox() {
     const { messages } = useContext(GlobalContext);
@@ -38,7 +38,7 @@ function MessageBox() {
                     <div key={i} className="message-container">
                         {message.type === "message" ? (
                             <div className="avatar-container">
-                                <Avatar alt="avatar" src="/images/avatar.png" />
+                                <Avatar src={`avatars/${message.author}.png`} />
                             </div>
                         ) : null}
 

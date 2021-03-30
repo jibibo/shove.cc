@@ -1,6 +1,6 @@
 import { sendPacket } from "../connection";
 
-function RegisterForm() {
+function RegisterForm() { // todo very outdated
     return (
         <div className="register-form">
             Register:

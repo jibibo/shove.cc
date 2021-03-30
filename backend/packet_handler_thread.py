@@ -35,7 +35,7 @@ class PacketHandlerThread(threading.Thread):
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_incoming_packet", ex)
                 response = "error", {
                     "error": "unhandled_exception",
-                    "description": "Unhandled server exception on handling user packet (not good)"
+                    "description": "Unhandled backend exception on handling user packet (not good)"
                 }
 
             if response:
@@ -222,9 +222,14 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
 
 
 def handle_command(shove, user: User, message: str) -> Optional[str]:
-    Log.trace(f"Handling command: '{message}'")
-    command = message[1:].strip().lower()
-    command_split = command.split()
+    Log.trace(f"Handling command message: '{message}'")
+    _command_full_real = message[1:].strip()  # ignore the leading "/"
+    _command_full = _command_full_real.lower()
+    _command_split_real = _command_full_real.split()
+    _command_split = _command_full.split()
+    command = _command_split[0]
+    command_args = _command_split[1:] if len(_command_split) > 1 else []  # /command [arg0, arg1, ...]
+    command_args_real = _command_split_real[1:] if len(_command_split) > 1 else []
 
     if not command:
         raise CommandInvalid("'/' doesn't do anything")
@@ -240,25 +245,27 @@ def handle_command(shove, user: User, message: str) -> Optional[str]:
         shove.send_packet(user, "account_data", user.get_account_data_copy())
         return "Money added"
 
-    if command_split[0] == "trello":
-        trello_args = " ".join(command_split[1:])
-        trello_args_split = trello_args.split("//")
-        if len(trello_args_split) == 1:
-            name, description = trello_args_split[0], None
+    if command == "trello":
+        if not PRIVATE_ACCESS:  # if backend host doesn't have access to the Shove Trello account
+            raise NoPrivateAccess
 
-        elif len(trello_args_split) == 2:
-            name, description = trello_args_split
+        trello_args = " ".join(command_args_real).split("//")
+        if len(trello_args) == 1:
+            name, description = trello_args[0], None
+
+        elif len(trello_args) == 2:
+            name, description = trello_args
 
         else:
-            raise CommandInvalid("Invalid arguments: /trello <title> [// description]")
+            raise CommandInvalid("Invalid arguments: /trello <title> ['//' description]")
 
         if not name:
-            raise CommandInvalid("No card name: /trello <title> [// description]")
+            raise CommandInvalid("No card name: /trello <title> ['//' description]")
 
         shove.add_trello_card(name, description)
         return "Card added"
 
-    if len(command_split) < 2:  # prevent IndexErrors if not enough command arguments
+    if len(_command_split) < 2:  # prevent IndexErrors if not enough command arguments
         raise CommandInvalid(f"Unknown command: '{command}'")
 
     raise CommandInvalid(f"Unknown command: '{command}'")

@@ -9,6 +9,7 @@ const useStyles = makeStyles((theme) => ({
         padding: "10px",
         borderRadius: "10px 0px 0px",
         texAlign: "center",
+        cursor: "pointer",
     },
 }));
 
@@ -16,20 +17,23 @@ let deaf = true;
 
 function ConnectionStatus() {
     const [status, setStatus] = useState();
-    const [visible, setVisible] = useState(false);
 
     const classes = useStyles();
 
+    var removeTimer;
+
+    function removeStatus() {
+        clearTimeout(removeTimer);
+        setStatus();
+    }
+
     function popup(text, color) {
+        clearTimeout(removeTimer);
         setStatus({
             text,
             color,
         });
-        setVisible(true);
-        setTimeout(() => {
-            // this should be cancelled when popup() gets called again, as it will vanish too quickly
-            setVisible(false);
-        }, 2000);
+        removeTimer = setTimeout(removeStatus, 3000);
     }
 
     if (deaf) {
@@ -50,9 +54,9 @@ function ConnectionStatus() {
 
     return status ? (
         <div
+            onClick={removeStatus}
             style={{ backgroundColor: status.color }}
             className={classes.status}
-            hidden={!visible}
         >
             Connection status: {status.text}
         </div>

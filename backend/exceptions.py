@@ -2,7 +2,7 @@
 
 class PacketHandlingFailed(Exception):
     error = "unknown"
-    description = "Unknown error (no description)"
+    description = "Unknown error (no description, not good)"
 
 
 class AccountNotFound(PacketHandlingFailed):
@@ -33,6 +33,11 @@ class GameActionFailed(PacketHandlingFailed):
 class GameNotSet(PacketHandlingFailed):
     error = "game_not_set"
     description = "Room has no game set"
+
+
+class NoPrivateAccess(PacketHandlingFailed):
+    error = "no_private_access"
+    description = "Backend host has no access to private information (not good)"
 
 
 class PacketInvalid(PacketHandlingFailed):
@@ -79,7 +84,7 @@ class UserNotLoggedIn(PacketHandlingFailed):
     error = "user_not_logged_in"
 
     def __init__(self, description=None):
-        self.description = description or "Not logged in"
+        self.description = description or "User not logged in"
 
     def __str__(self):
         return str(self.description)
@@ -89,7 +94,7 @@ class UserUnauthorized(PacketHandlingFailed):
     error = "user_unauthorized"
 
     def __init__(self, description=None):
-        self.description = description or "Unauthorized"
+        self.description = description or "User unauthorized"
 
     def __str__(self):
         return str(self.description)
