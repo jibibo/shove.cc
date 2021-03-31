@@ -8,7 +8,7 @@ from games.coinflip import Coinflip
 
 
 ACCOUNTS = [Account(username=u, password="1", money=m)
-            for u, m in [("a", 100000), ("b", 200000), ("c", 300000), ("d", 400000), ("badr", 200), ("jul", 777777), ("jim", 420000)]]
+            for u, m in [("a", 100000), ("badr", 77777777778), ("jim", 420000)]]
 
 
 # def get_all_accounts():  # should be a generator if many files

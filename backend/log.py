@@ -23,6 +23,7 @@ MESSAGE_LENGTH_CUTOFF = 1000
 # sound notification
 SOUND_NOTIFICATION_LEVEL = LEVEL_WARN  # MUST BE HIGHER THAN LEVEL_TRACE, OR INFINITE LOGGING LOOP
 SOUND_FILE = f"{pathlib.Path(__file__).parent.absolute()}\\audio\\error.mp3"
+IGNORE_SOUND_LEVELS: list = [LEVEL_TEST]
 
 # file logging
 FILE_LOG_LEVEL = LEVEL_WARN
@@ -79,7 +80,7 @@ class Log:
                 if exception:
                     traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stdout)
 
-        if level[0] >= SOUND_NOTIFICATION_LEVEL[0]:
+        if level[0] >= SOUND_NOTIFICATION_LEVEL[0] and level not in IGNORE_SOUND_LEVELS:
             Log.trace(f"Playing sound {SOUND_FILE}")
             try:
                 playsound.playsound(sound=SOUND_FILE, block=False)

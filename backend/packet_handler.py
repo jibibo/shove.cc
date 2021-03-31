@@ -221,23 +221,36 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
     raise PacketInvalid(f"Unknown packet model: '{model}'")
 
 
+ALIASES = {
+    "error": [],
+    "help": [],
+    "money": ["cash"],
+    "trello": [],
+    "youtube": ["yt"]
+}
+
+
+def is_command(input_str, match_command):
+    return input_str == match_command or input_str in ALIASES[match_command]
+
+
 def handle_command(shove, user: User, message: str) -> Optional[str]:
     Log.trace(f"Handling command message: '{message}'")
     _command_full_real = message[1:].strip()  # ignore the leading "/"
     _command_full = _command_full_real.lower()
     _command_split_real = _command_full_real.split()
     _command_split = _command_full.split()
-    command = _command_split[0]
+    command = _command_split[0] if _command_split else None
     command_args = _command_split[1:] if len(_command_split) > 1 else []  # /command [arg0, arg1, ...]
     command_args_real = _command_split_real[1:] if len(_command_split) > 1 else []
 
-    if not command:
-        raise CommandInvalid("'/' doesn't do anything")
+    if not command or is_command(command, "help"):
+        return f"{[c for c in ALIASES]}"
 
-    if command == "error":  # raises an error to test error handling and logging
+    if is_command(command, "error"):  # raises an error to test error handling and logging
         raise Exception("/error was executed, all good")
 
-    if command == "money":
+    if is_command(command, "money"):
         if not user.is_logged_in():
             raise UserNotLoggedIn
 
@@ -245,7 +258,7 @@ def handle_command(shove, user: User, message: str) -> Optional[str]:
         shove.send_packet(user, "account_data", user.get_account_data_copy())
         return "Money added"
 
-    if command == "trello":
+    if is_command(command, "trello"):
         if not PRIVATE_ACCESS:  # if backend host doesn't have access to the Shove Trello account
             raise NoPrivateAccess
 
@@ -265,7 +278,35 @@ def handle_command(shove, user: User, message: str) -> Optional[str]:
         shove.add_trello_card(name, description)
         return "Card added"
 
-    if len(_command_split) < 2:  # prevent IndexErrors if not enough command arguments
-        raise CommandInvalid(f"Unknown command: '{command}'")
+    if is_command(command, "youtube"):
+        if not command_args:
+            raise CommandInvalid("No link given")
+
+        check_for_id = command_args_real[0]
+        if len(check_for_id) == 11:
+            youtube_id = check_for_id
+            Log.trace(f"Got YouTube ID directly: {youtube_id}")
+        else:
+            match = re.search(r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})", check_for_id)
+            if not match:
+                raise CommandInvalid("Couldn't find the video ID in given link")
+
+            youtube_id = match.group("id")
+            Log.trace(f"Got YouTube ID through regex: {youtube_id}")
+
+        content_url = f"https://www.googleapis.com/youtube/v3/videos?key=AIzaSyBJhGWLfUiiGydCuKOM06GaR5Tw3sUJW14&id=TnCINj0Miy0&part=snippet,contentDetails,statistics,status"
+        # todo get request takes really long time?
+        # content_url = "https://www.google.com"
+        Log.trace("Fetching video info from Google API")
+        response = requests.get(content_url, stream=True, timeout=1)
+        Log.trace("GET done")
+        Log.test(response.json())
+
+        shove.send_packet_all("youtube", {
+            "author": user.get_username(),
+            "id": youtube_id
+        })
+        return "matches"
 
     raise CommandInvalid(f"Unknown command: '{command}'")
+

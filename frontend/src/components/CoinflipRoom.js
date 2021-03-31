@@ -37,10 +37,6 @@ const useStyles = makeStyles((theme) => ({
         backgroundColor: "#333",
         color: "#fff",
     },
-    listHeader: {
-        color: "#fff",
-        margin: "0px",
-    },
     white: {
         color: "#fff",
     },
@@ -248,7 +244,7 @@ function Room() {
                                     dense
                                     subheader={
                                         <ListSubheader
-                                            className={classes.listHeader}
+                                            className={classes.white}
                                         >
                                             BETTERS
                                         </ListSubheader>
@@ -271,7 +267,7 @@ function Room() {
                                                         }
                                                         secondaryTypographyProps={{
                                                             className:
-                                                                classes.listText,
+                                                                classes.white,
                                                         }}
                                                     />
                                                 </ListItem>
@@ -294,7 +290,7 @@ function Room() {
                                         dense
                                         subheader={
                                             <ListSubheader
-                                                className={classes.listHeader}
+                                                className={classes.white}
                                             >
                                                 WINNERS
                                             </ListSubheader>
@@ -333,7 +329,7 @@ function Room() {
                                         dense
                                         subheader={
                                             <ListSubheader
-                                                className={classes.listHeader}
+                                                className={classes.white}
                                             >
                                                 LOSERS
                                             </ListSubheader>
