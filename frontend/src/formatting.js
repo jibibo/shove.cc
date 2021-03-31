@@ -42,4 +42,20 @@ function thousandsSeperatorFull(x) {
     return parts.join(".");
 }
 
-export { abbreviate, thousandsSeperatorFull };
+function secondsToString(s) {
+    const hours = Math.floor(s / 3600);
+    const minutes = Math.floor((s % 3600) / 60);
+    const seconds = Math.floor(s % 60);
+
+    console.log("sts", s, hours, minutes, seconds);
+
+    var returnValue = "";
+    if (hours > 0) {
+        returnValue += `${hours}:${minutes < 10 ? "0" : ""}`;
+    }
+    returnValue += `${minutes}:${seconds < 10 ? "0" : ""}`;
+    returnValue += `${seconds}`;
+    return returnValue;
+}
+
+export { abbreviate, thousandsSeperatorFull, secondsToString };

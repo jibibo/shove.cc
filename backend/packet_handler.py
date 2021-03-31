@@ -91,6 +91,12 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             "account_list": [account.get_data_copy() for account in shove.get_all_accounts()]
         }
 
+    if model == "get_audio":
+        return "play_audio", {
+            "author": "idk",
+            "url": shove.latest_audio
+        }
+
     if model == "get_game_data":
         room = shove.get_room_of_user(user)
 
@@ -264,7 +270,8 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         if not PRIVATE_ACCESS:  # if backend host doesn't have access to the Shove Trello account
             raise NoPrivateAccess
 
-        trello_args = " ".join(command_args_real).split("//")
+        splitter = "..."
+        trello_args = " ".join(command_args_real).split(splitter)
         if len(trello_args) == 1:
             name, description = trello_args[0], None
 
@@ -272,10 +279,10 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
             name, description = trello_args
 
         else:
-            raise CommandInvalid("Invalid arguments: /trello <title> ['//' description]")
+            raise CommandInvalid(f"Invalid arguments: /trello <title> ['{splitter}' description]")
 
         if not name:
-            raise CommandInvalid("No card name: /trello <title> ['//' description]")
+            raise CommandInvalid(f"No card name: /trello <title> ['{splitter}' description]")
 
         shove.add_trello_card(name, description)
         return "Card added"

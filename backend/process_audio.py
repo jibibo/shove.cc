@@ -57,6 +57,7 @@ class ProcessYoutubeThread(threading.Thread):
             target_file = f"{CWD_PATH}/frontend/public/audio/{youtube_id}.mp3"
             shutil.copyfile(audio_file, target_file)  # copy file to frontend for public use
             Log.trace("Copied audio file to frontend")
+            self.shove.latest_audio = f"audio/{youtube_id}.mp3"
 
             self.shove.send_packet_all_online("play_audio", {
                 "author": "implement author",

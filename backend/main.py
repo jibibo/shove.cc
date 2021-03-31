@@ -93,7 +93,7 @@ def main():
     PingUsersThread(shove)  # .start()  # comment out to disable pinging
 
     remove_non_mp3_files_from_cache()
-    clear_frontend_audio_cache()
+    # clear_frontend_audio_cache()
 
     Log.info(f"Running SocketIO on port {PORT}")
 

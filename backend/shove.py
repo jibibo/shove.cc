@@ -68,8 +68,10 @@ class Shove:
 
         self.awaiting_pong_users: List[User] = []
 
+        self.latest_audio = None
+
         Log.test("Faking play packet")
-        fake_link = "https://www.youtube.com/playlist?list=PLrt15-07TCqNn0Z0A0BaNVgNsDJy2mR6P"
+        fake_link = "https://www.youtube.com/watch?v=t-_VPRCtiUg"
         self.incoming_packets_queue.put((FakeUser(), "send_message", {
             "message": f"/play {fake_link}"
         }, 0))
