@@ -9,6 +9,7 @@ from shove import Shove
 from packet_sender import PacketSenderThread
 from packet_handler import PacketHandlerThread
 from ping_users import PingUsersThread
+from tools import remove_non_mp3_files_from_cache, clear_frontend_audio_cache
 
 
 HOST = "0.0.0.0"
@@ -39,9 +40,9 @@ def get_request_777():
 @socketio.on("connect")
 def on_connect():
     sid = request.sid
-    Log.trace(f"Handling connect of SID {sid}")
+    Log.trace(f"Handling connect of SID '{sid}'")
     shove.on_connect(sid)
-    Log.info(f"SID {sid} connected")
+    Log.info(f"SID '{sid}' connected")
 
 
 @socketio.on("disconnect")
@@ -90,6 +91,9 @@ def main():
     PacketSenderThread(shove, socketio).start()
     PacketHandlerThread(shove).start()
     PingUsersThread(shove)  # .start()  # comment out to disable pinging
+
+    remove_non_mp3_files_from_cache()
+    clear_frontend_audio_cache()
 
     Log.info(f"Running SocketIO on port {PORT}")
 

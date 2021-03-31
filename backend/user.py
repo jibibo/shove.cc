@@ -9,7 +9,7 @@ class User:
         self._game_data: Union[dict, None] = None
         self.pinged_timestamp = 0
         self.latency = 0
-        Log.trace(f"Created new User object for SID {sid}")
+        Log.trace(f"Created new User object for SID '{sid}'")
 
     def __repr__(self):
         return f"<User {self}, account: {self._account}>"
@@ -70,3 +70,9 @@ class User:
 
     def set_game_data(self, data: dict):
         self._game_data = data
+
+
+class FakeUser(User):
+    def __init__(self, sid=""):
+        super().__init__(sid)
+        Log.trace("Fake user created")

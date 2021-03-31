@@ -9,7 +9,7 @@ class PacketHandlerThread(threading.Thread):
     """This thread handles one received packet at a time"""
 
     def __init__(self, shove):
-        super().__init__(name=f"PacketHandler", daemon=True)
+        super().__init__(name=f"PHand", daemon=True)
         self.shove = shove
 
     def run(self):
@@ -17,11 +17,11 @@ class PacketHandlerThread(threading.Thread):
 
         while True:
             user, model, packet, packet_number = self.shove.incoming_packets_queue.get()
-            threading.current_thread().setName(f"PacketHandler/#{packet_number}")
+            threading.current_thread().setName(f"PHand/#{packet_number}")
             Log.trace(f"Handling packet #{packet_number}")
 
             try:
-                response = handle_incoming_packet(self.shove, user, model, packet)
+                response = handle_packet(self.shove, user, model, packet)
 
             except PacketHandlingFailed as ex:
                 Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")
@@ -33,10 +33,10 @@ class PacketHandlerThread(threading.Thread):
             # todo command handling should throw a CommandHandlingFailed exception
 
             except Exception as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_incoming_packet", ex)
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on packet_handler.handle_packet", ex)
                 response = "error", {
                     "error": "unhandled_exception",
-                    "description": "Unhandled backend exception on handling user packet (not good)"
+                    "description": "Unhandled backend exception on handling packet (not good)"
                 }
 
             if response:
@@ -48,7 +48,7 @@ class PacketHandlerThread(threading.Thread):
                 Log.trace(f"Handled packet #{packet_number}, no response")
 
 
-def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
+def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
     """Handles the packet and returns an optional response model + packet"""
 
     if not model:
@@ -226,9 +226,9 @@ ALIASES = {
     "error": [],
     "help": [],
     "money": ["cash"],
+    "play": ["audio"],
     "trello": [],
     "youtube": ["yt"],
-    "audio": ["play"],
 }
 
 
@@ -280,14 +280,38 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         shove.add_trello_card(name, description)
         return "Card added"
 
-    if is_command(command, "audio"):
+    if is_command(command, "play"):
         if not command_args:
-            raise CommandInvalid("No YouTube link given")
+            raise CommandInvalid("No link provided")
 
         check_for_id = command_args_real[0]
-        if len(check_for_id) == 11:
+
+        # first check if playlist is given, then queue all of those
+        parsed = urlparse.urlparse(check_for_id)
+        if "list" in urlparse.parse_qs(parsed.query):
+            playlist_id = urlparse.parse_qs(parsed.query)["list"][0]
+            max_results = 5  # max 50
+            url = f"https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults={min(max_results, 50)}&playlistId={playlist_id}&key={YOUTUBE_API_KEY}"
+            Log.trace(f"Requesting playlist items from YT API (requesting {max_results}, max 50)")
+            response = requests.get(url, timeout=5).json()
+
+            if not response:
+                raise PacketHandlingFailed("YT API request broke")
+
+            Log.trace(f"Got response from YT API, items in playlist: {len(response['items'])}")
+            youtube_id = []
+            for item in response["items"]:
+                youtube_id.append(item["snippet"]["resourceId"]["videoId"])
+
+            if not youtube_id:
+                raise CommandInvalid("No videos found in given playlist")
+
+        # check if user just dropped the 11-char YT id
+        elif len(check_for_id) == 11:
             youtube_id = check_for_id
             Log.trace(f"Got YouTube ID directly: {youtube_id}")
+
+        # regex magic to find the id in some url
         else:
             match = re.search(r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})", check_for_id)
             if not match:
@@ -296,7 +320,8 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
             youtube_id = match.group("id")
             Log.trace(f"Got YouTube ID through regex: {youtube_id}")
 
-        ProcessYoutubeThread(shove, youtube_id, timeout=15).start()
+        ProcessYoutubeThread(shove, youtube_id).start()
+
         return "Success"
 
     if is_command(command, "youtube"):

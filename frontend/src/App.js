@@ -13,7 +13,7 @@ import Header from "./components/Header";
 
 import "./App.css";
 import Room from "./components/CoinflipRoom";
-import YoutubePlayer from "./components/YoutubePlayer";
+import AudioPlayer from "./components/AudioPlayer";
 
 let deaf = true;
 
@@ -202,12 +202,6 @@ function App() {
                 addMessage(null, "Someone nameless disconnected", null);
             }
         });
-
-        // socket.on("youtube", (packet) => {
-        //     console.debug("> youtube", packet);
-        //     console.log(`id ${packet.id} by ${packet.author}`);
-        //     setYoutubeId(packet.id);
-        // });
     }
 
     return (
@@ -235,7 +229,7 @@ function App() {
                 <div className="connection-status-container">
                     <ConnectionStatus />
                 </div>
-                <YoutubePlayer />
+                <AudioPlayer />
             </div>
         </Container>
     );

@@ -1,6 +1,6 @@
 from convenience import *
 
-from user import User
+from user import User, FakeUser
 from account import Account
 from room import Room
 
@@ -26,19 +26,13 @@ ACCOUNTS = [Account(username=u, password="1", money=m)
 #                 all_account_data.append(data)
 
 
-class FakeUser(User):
-    def __init__(self, sid=""):
-        super().__init__(sid)
-        Log.trace("Fake user created")
-
-
 class Shove:
     def __init__(self, socketio):
         Log.trace("Initializing Shove")
         self.socketio = socketio
 
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
-        self.outgoing_packets_queue = Queue()  # ([User], model, packet, is_response)
+        self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, is_response)
 
         self._default_game = Coinflip
         self._next_bot_number = 0
@@ -75,8 +69,9 @@ class Shove:
         self.awaiting_pong_users: List[User] = []
 
         Log.test("Faking play packet")
+        fake_link = "https://www.youtube.com/playlist?list=PLrt15-07TCqNn0Z0A0BaNVgNsDJy2mR6P"
         self.incoming_packets_queue.put((FakeUser(), "send_message", {
-            "message": "/play https://www.youtube.com/watch?v=2tQwTS1Mvuk&list=PLrt15-07TCqMEIaWPjuy9ZnqcW-QboGGJ&index=1"
+            "message": f"/play {fake_link}"
         }, 0))
         Log.trace("Shove initialized")
 
@@ -246,43 +241,7 @@ class Shove:
             self._rooms.append(Room(self))
 
     def send_packet(self, users: Union[User, List[User]], model: str, packet: dict, skip: Union[User, List[User]] = None, is_response=False):
-        try:
-            if type(users) == User:
-                users = [users]
-
-            elif type(users) == list:
-                if users and type(users[0]) != User:
-                    raise ValueError(f"'users' does not contain 'User' object(s), but: {type(users[0])}")
-
-            elif type(users) == FakeUser:
-                Log.trace("Fake user provided, ignoring call")
-                return
-
-            else:
-                raise ValueError(f"Invalid 'users' type: {type(users)}")
-
-            if skip:
-                if type(skip) == User:
-                    skip = [skip]
-
-                elif type(skip) == list:
-                    if skip and type(skip[0]) != User:
-                        raise ValueError(f"'skip' does not contain 'User' object(s), but: {type(users[0])}")
-
-                else:
-                    raise ValueError(f"Invalid 'skip' type: {type(users)}")
-
-                for skip_user in skip:
-                    users.remove(skip_user)
-
-            if users:
-                self.outgoing_packets_queue.put((users, model, packet, is_response))
-
-            else:
-                Log.trace(f"No recipients for outgoing {'response' if is_response else 'packet'} '{model}', not queueing\n packet: {packet}")
-
-        except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on shove.send_packet", ex)
+        self.outgoing_packets_queue.put((users, model, packet, skip, is_response))
 
     def send_packet_all_online(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
         self.send_packet(self.get_all_users(), model, packet, skip)

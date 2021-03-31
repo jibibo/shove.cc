@@ -15,7 +15,7 @@ class BaseGame(ABC):
         self.players: List[User] = []
         self.state = GameState.IDLE
         threading.Thread(target=self._event_handler_thread,
-                         name=f"{self.room.name}/EventHandler",
+                         name=f"EHand/{self.room.name}",
                          daemon=True).start()
         Log.trace(f"Game '{type(self).__name__}' initialized for room {room}")
 
