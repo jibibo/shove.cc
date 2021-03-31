@@ -2,6 +2,7 @@ from convenience import *
 
 from shove import Shove
 from user import User
+from process_audio import ProcessYoutubeThread
 
 
 class PacketHandlerThread(threading.Thread):
@@ -212,7 +213,7 @@ def handle_incoming_packet(shove: Shove, user: User, model: str, packet: dict) -
 
         username = user.get_username()
         Log.trace(f"Message from {username}: '{message}'")
-        shove.send_packet_all("message", {
+        shove.send_packet_all_online("message", {
             "author": username,
             "text": message
         })
@@ -226,7 +227,8 @@ ALIASES = {
     "help": [],
     "money": ["cash"],
     "trello": [],
-    "youtube": ["yt"]
+    "youtube": ["yt"],
+    "audio": ["play"],
 }
 
 
@@ -234,7 +236,7 @@ def is_command(input_str, match_command):
     return input_str == match_command or input_str in ALIASES[match_command]
 
 
-def handle_command(shove, user: User, message: str) -> Optional[str]:
+def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
     Log.trace(f"Handling command message: '{message}'")
     _command_full_real = message[1:].strip()  # ignore the leading "/"
     _command_full = _command_full_real.lower()
@@ -278,9 +280,9 @@ def handle_command(shove, user: User, message: str) -> Optional[str]:
         shove.add_trello_card(name, description)
         return "Card added"
 
-    if is_command(command, "youtube"):
+    if is_command(command, "audio"):
         if not command_args:
-            raise CommandInvalid("No link given")
+            raise CommandInvalid("No YouTube link given")
 
         check_for_id = command_args_real[0]
         if len(check_for_id) == 11:
@@ -294,19 +296,40 @@ def handle_command(shove, user: User, message: str) -> Optional[str]:
             youtube_id = match.group("id")
             Log.trace(f"Got YouTube ID through regex: {youtube_id}")
 
-        content_url = f"https://www.googleapis.com/youtube/v3/videos?key=AIzaSyBJhGWLfUiiGydCuKOM06GaR5Tw3sUJW14&id=TnCINj0Miy0&part=snippet,contentDetails,statistics,status"
-        # todo get request takes really long time?
-        # content_url = "https://www.google.com"
-        Log.trace("Fetching video info from Google API")
-        response = requests.get(content_url, stream=True, timeout=1)
-        Log.trace("GET done")
-        Log.test(response.json())
+        ProcessYoutubeThread(shove, youtube_id, timeout=15).start()
+        return "Success"
 
-        shove.send_packet_all("youtube", {
-            "author": user.get_username(),
-            "id": youtube_id
-        })
-        return "matches"
+    if is_command(command, "youtube"):
+        raise PacketNotImplemented  # disable command
+
+        # if not command_args:
+        #     raise CommandInvalid("No link given")
+        #
+        # check_for_id = command_args_real[0]
+        # if len(check_for_id) == 11:
+        #     youtube_id = check_for_id
+        #     Log.trace(f"Got YouTube ID directly: {youtube_id}")
+        # else:
+        #     match = re.search(r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})", check_for_id)
+        #     if not match:
+        #         raise CommandInvalid("Couldn't find the video ID in given link")
+        #
+        #     youtube_id = match.group("id")
+        #     Log.trace(f"Got YouTube ID through regex: {youtube_id}")
+        #
+        # content_url = f"https://www.googleapis.com/youtube/v3/videos?key=AIzaSyBJhGWLfUiiGydCuKOM06GaR5Tw3sUJW14&id=TnCINj0Miy0&part=snippet,contentDetails,statistics,status"
+        # # todo get request takes really long time?
+        # # content_url = "https://www.google.com"
+        # Log.trace("Fetching video info from Google API")
+        # response = requests.get(content_url, stream=True, timeout=1)
+        # Log.trace("GET done")
+        # Log.test(response.json())
+        #
+        # shove.send_packet_all_online("youtube", {
+        #     "author": user.get_username(),
+        #     "id": youtube_id
+        # })
+        # return "matches"
 
     raise CommandInvalid(f"Unknown command: '{command}'")
 

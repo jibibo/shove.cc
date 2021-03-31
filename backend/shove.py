@@ -26,12 +26,18 @@ ACCOUNTS = [Account(username=u, password="1", money=m)
 #                 all_account_data.append(data)
 
 
+class FakeUser(User):
+    def __init__(self, sid=""):
+        super().__init__(sid)
+        Log.trace("Fake user created")
+
+
 class Shove:
     def __init__(self, socketio):
         Log.trace("Initializing Shove")
         self.socketio = socketio
 
-        self.incoming_packets_queue = Queue()  # (User, model, packet)
+        self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
         self.outgoing_packets_queue = Queue()  # ([User], model, packet, is_response)
 
         self._default_game = Coinflip
@@ -57,8 +63,21 @@ class Shove:
         else:
             Log.trace("No private access, not initializing Trello client")
 
+        # youtube_dl_options = {
+        #     "download_archive": f"{CWD_PATH}/backend/audio_cache/archive.txt",
+        #     "verbose": True,
+        #     "listformats": True,
+        #     "prefer_ffmpeg": True,
+        # }
+        # self.youtube_dl = youtube_dl.YoutubeDL(youtube_dl_options)
+        # shove.youtube_dl.download([f"https://youtube.com/watch?v={youtube_id}"])
+
         self.awaiting_pong_users: List[User] = []
 
+        Log.test("Faking play packet")
+        self.incoming_packets_queue.put((FakeUser(), "send_message", {
+            "message": "/play https://www.youtube.com/watch?v=2tQwTS1Mvuk&list=PLrt15-07TCqMEIaWPjuy9ZnqcW-QboGGJ&index=1"
+        }, 0))
         Log.trace("Shove initialized")
 
     def add_trello_card(self, name, description=None):
@@ -187,7 +206,7 @@ class Shove:
             "user_count": self.get_user_count()
         })
 
-        self.send_packet_all("user_connected", {
+        self.send_packet_all_online("user_connected", {
             "you": False,
             "users": [user.get_account_data_copy()
                       for user in self.get_all_users() if user.is_logged_in()],
@@ -205,7 +224,7 @@ class Shove:
 
         self._users.remove(user)
 
-        self.send_packet_all("user_disconnected", {
+        self.send_packet_all_online("user_disconnected", {
             "username": user.get_username(),
             "users": [user.get_account_data_copy()
                       for user in self.get_all_users() if user.is_logged_in()],
@@ -218,7 +237,7 @@ class Shove:
         for user in self.get_all_users():
             user.pinged_timestamp = now
         self.awaiting_pong_users = self.get_all_users()
-        self.send_packet_all("ping", {})
+        self.send_packet_all_online("ping", {})
 
     def reset_rooms(self, n_rooms=5):
         Log.info("Resetting rooms")
@@ -234,6 +253,10 @@ class Shove:
             elif type(users) == list:
                 if users and type(users[0]) != User:
                     raise ValueError(f"'users' does not contain 'User' object(s), but: {type(users[0])}")
+
+            elif type(users) == FakeUser:
+                Log.trace("Fake user provided, ignoring call")
+                return
 
             else:
                 raise ValueError(f"Invalid 'users' type: {type(users)}")
@@ -261,5 +284,5 @@ class Shove:
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on shove.send_packet", ex)
 
-    def send_packet_all(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
+    def send_packet_all_online(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
         self.send_packet(self.get_all_users(), model, packet, skip)

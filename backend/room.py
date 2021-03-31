@@ -74,7 +74,7 @@ class Room:
 
         self._users.append(user)
 
-        self.shove.send_packet_all("room_list", {  # update room list for all connected users
+        self.shove.send_packet_all_online("room_list", {  # update room list for all connected users
             "room_list": [room.get_data() for room in self.shove.get_rooms()]
         })
 
@@ -94,7 +94,7 @@ class Room:
 
         self._users.remove(user)
 
-        self.shove.send_packet_all("room_list", {  # update room list for all connected users
+        self.shove.send_packet_all_online("room_list", {  # update room list for all connected users
             "room_list": [room.get_data() for room in self.shove.get_rooms()]
         })
 

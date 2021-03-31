@@ -83,7 +83,7 @@ class Log:
                     traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stdout)
 
         if level[0] >= SOUND_NOTIFICATION_LEVEL[0] and level not in IGNORE_SOUND_LEVELS:
-            Log.trace(f"Playing sound {SOUND_FILE}")
+            # Log.trace(f"Playing sound {SOUND_FILE}")
             try:
                 playsound.playsound(sound=SOUND_FILE, block=False)
             except playsound.PlaysoundException as ex:

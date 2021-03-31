@@ -97,6 +97,7 @@ def main():
         Log.warn("*** DEBUG MODE ENABLED ***")
 
     socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)
+    # time.sleep(60)
 
 
 if __name__ == "__main__":

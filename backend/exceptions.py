@@ -133,4 +133,3 @@ class GameEventInvalid(Exception):
 
 class GameEventNotImplemented(Exception):
     pass
-

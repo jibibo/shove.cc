@@ -5,3 +5,5 @@ __pycache__/
 node_modules/
 private.py
 avatars/
+youtube_cache/
+frontend/public/audio
