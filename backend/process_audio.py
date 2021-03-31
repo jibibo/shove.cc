@@ -13,7 +13,7 @@ class ProcessYoutubeThread(threading.Thread):
         self.timeout = timeout
 
     def run(self):
-        Log.trace("Starting yt id processing")
+        Log.trace("Starting YT process")
         process = multiprocessing.Process(target=process_youtube, args=(self.youtube_id,))
 
         try:
@@ -21,7 +21,7 @@ class ProcessYoutubeThread(threading.Thread):
             process.join(self.timeout)
 
         except ProcessBroke as ex:
-            Log.error(f"Youtube process broke", ex)
+            Log.error(f"YT process broke", ex)
             return
 
         except Exception as ex:
@@ -30,7 +30,7 @@ class ProcessYoutubeThread(threading.Thread):
 
         if process.is_alive():
             process.terminate()
-            Log.warn(f"Terminated YT ID process (timeout exceeded: {self.timeout})")
+            Log.warn(f"Terminated YT process (timeout exceeded: {self.timeout})")
             return
 
         audio_file = f"{CWD_PATH}/backend/youtube_cache/{self.youtube_id}.mp3"
