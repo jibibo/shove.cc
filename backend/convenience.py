@@ -8,7 +8,6 @@ import random
 import math
 import pathlib
 import re
-import urllib3
 import requests
 from queue import Queue
 from abc import ABC, abstractmethod
@@ -19,9 +18,12 @@ from trello import TrelloClient
 import playsound
 import googleapiclient
 
-from log import Log
+# needs to be defined before importing the rest of the modules
+CWD_PATH = os.path.abspath(os.getcwd()).replace("\\", "/")
+
 from exceptions import *
 import formatting
+from log import Log  # circular import reference, might go wrong who knows
 
 try:
     from private import *

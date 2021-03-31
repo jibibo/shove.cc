@@ -40,6 +40,10 @@ const useStyles = makeStyles((theme) => ({
     white: {
         color: "#fff",
     },
+    coin: {
+        maxWidth: 300,
+        margin: "auto",
+    },
 }));
 
 function Room() {
@@ -153,7 +157,7 @@ function Room() {
                     <Paper className={classes.paper} elevation={8}>
                         <>
                             {gameData.coin_state !== null ? (
-                                <Grid container>
+                                <Grid container className={classes.coin}>
                                     <img
                                         className={
                                             "coin " +
@@ -298,28 +302,37 @@ function Room() {
                                     >
                                         {winners.map((username, i) => {
                                             return (
-                                                <ListItem key={i}>
-                                                    <ListItemAvatar>
-                                                        <UserAvatar
-                                                            username={username}
-                                                        />
-                                                    </ListItemAvatar>
-                                                    <ListItemText
-                                                        primary={username}
-                                                        secondary={
-                                                            "+ $" +
-                                                            abbreviate(
-                                                                gameData.gains[
+                                                <>
+                                                    <ListItem key={i}>
+                                                        <ListItemAvatar>
+                                                            <UserAvatar
+                                                                username={
                                                                     username
-                                                                ].bet
-                                                            )
-                                                        }
-                                                        secondaryTypographyProps={{
-                                                            className:
-                                                                classes.white,
-                                                        }}
-                                                    />
-                                                </ListItem>
+                                                                }
+                                                            />
+                                                        </ListItemAvatar>
+                                                        <ListItemText
+                                                            primary={username}
+                                                            secondary={
+                                                                "+ $" +
+                                                                abbreviate(
+                                                                    gameData
+                                                                        .gains[
+                                                                        username
+                                                                    ].bet
+                                                                )
+                                                            }
+                                                            secondaryTypographyProps={{
+                                                                className:
+                                                                    classes.white,
+                                                            }}
+                                                        />
+                                                    </ListItem>
+                                                    {username ===
+                                                    accountData.username ? (
+                                                        <Divider />
+                                                    ) : null}
+                                                </>
                                             );
                                         })}
                                     </List>

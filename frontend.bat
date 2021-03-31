@@ -1,3 +1,2 @@
 @echo off
-cd frontend
-npm start
+npm start --prefix frontend

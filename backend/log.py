@@ -22,14 +22,16 @@ MESSAGE_LENGTH_CUTOFF = 1000
 
 # sound notification
 SOUND_NOTIFICATION_LEVEL = LEVEL_WARN  # MUST BE HIGHER THAN LEVEL_TRACE, OR INFINITE LOGGING LOOP
-SOUND_FILE = f"{pathlib.Path(__file__).parent.absolute()}\\audio\\error.mp3"
+SOUND_FILE = f"{CWD_PATH}/backend/audio/error.mp3"
 IGNORE_SOUND_LEVELS: list = [LEVEL_TEST]
 
 # file logging
 FILE_LOG_LEVEL = LEVEL_WARN
 LOG_TO_FILE = True
-LOGS_DIRECTORY = "backend/logs"
-LOG_FILE = f"{LOGS_DIRECTORY}/_latest.log"
+LOGS_DIRECTORY = f"{CWD_PATH}/backend/logs"
+import pathlib
+pathlib.Path().absolute()
+LOG_FILE = f"{LOGS_DIRECTORY}/.latest.log"
 
 
 class Log:

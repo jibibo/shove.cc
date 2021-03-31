@@ -12,7 +12,7 @@ class Coinflip(BaseGame):
         self.gains: Dict[str, dict] = {}
         self.coin_state = None
 
-        self.flip_timer_duration = 7
+        self.flip_timer_duration = 3
         self.time_left = None
         self.heads_odds = 50  # ratio (vs tails) of landing on heads
         self.tails_odds = 50

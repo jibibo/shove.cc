@@ -1,5 +1,8 @@
 import Avatar from "@material-ui/core/Avatar";
+import Tooltip from "@material-ui/core/Tooltip";
 import { makeStyles } from "@material-ui/core/styles";
+
+import { thousandsSeperatorFull } from "../formatting";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -7,10 +10,16 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-function UserAvatar({ username }) {
+function UserAvatar({ username, money }) {
     const classes = useStyles();
 
-    return <Avatar className={classes.root} src={`avatars/${username}.png`} />;
+    return money ? (
+        <Tooltip title={`$${thousandsSeperatorFull(money)}`} arrow>
+            <Avatar className={classes.root} src={`avatars/${username}.png`} />
+        </Tooltip>
+    ) : (
+        <Avatar className={classes.root} src={`avatars/${username}.png`} />
+    );
 }
 
 export default UserAvatar;
