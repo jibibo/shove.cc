@@ -1,3 +1,5 @@
+from eventlet.green import subprocess  # https://stackoverflow.com/a/34649180/13216113
+
 from convenience import *
 
 
@@ -21,16 +23,29 @@ class ProcessYoutubeThread(threading.Thread):
             raise ValueError(f"Invalid youtube_id type: {type(youtube_id).__name__}")
 
     def run(self):
-        Log.trace("Starting YT process")
-        # process = multiprocessing.Process(target=process_youtube, args=(self.youtube_id,))
+        process_youtube_wrapper(self.shove, self.youtube_ids)
 
-        for youtube_id in self.youtube_ids:
-            threading.current_thread().setName(f"ThreadYT/{youtube_id}")
 
+def simulate_processing(seconds):
+    Log.test(f"simulating for {seconds} s")
+    eventlet.sleep(seconds)
+    Log.test(f"Done simulating for {seconds}")
+
+
+def process_youtube_wrapper(shove, youtube_ids):
+    Log.trace("YT process wrapper called")
+
+    for youtube_id in youtube_ids:
+        threading.current_thread().setName(f"ThreadYT/{youtube_id}")
+
+        audio_file = f"{CWD_PATH}/backend/youtube_cache/{youtube_id}.mp3"
+        target_file = f"{CWD_PATH}/frontend/public/audio/{youtube_id}.mp3"
+        if os.path.exists(target_file):
+            Log.trace(f"Frontend already has audio file for {youtube_id}")
+
+        else:
             try:
-                # process.start()
-                # process.join(self.timeout)
-                process_youtube(youtube_id)  # use threading untill multiprocessing doesn't block anymore
+                process_youtube(youtube_id)
 
             except ProcessBroke as ex:
                 Log.error(f"YT process broke: {ex}")
@@ -40,29 +55,18 @@ class ProcessYoutubeThread(threading.Thread):
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on process_audio.process_youtube", ex)
                 continue
 
-            # if process.is_alive():
-            #     process.terminate()
-            #     Log.warn(f"Terminated YT process (timeout exceeded: {self.timeout} s)")
-            #
-            #     # cleanup remaining non-mp3 file if process was killed
-            #     for filename in os.listdir(f"{CWD_PATH}/backend/youtube_cache"):
-            #         if filename.startswith(self.youtube_id) and not filename.endswith(".mp3"):
-            #             os.remove(f"{CWD_PATH}/backend/youtube_cache/{filename}")
-            #             Log.trace("Removed leftover non-mp3 audio file")
-            #             break
-            #
-            #     return
-
-            audio_file = f"{CWD_PATH}/backend/youtube_cache/{youtube_id}.mp3"
-            target_file = f"{CWD_PATH}/frontend/public/audio/{youtube_id}.mp3"
+            # a = 1/0  # if this is commented it causes the client to refresh and miss the packet
+            # TODO REACT REFRESHES IF FILE IS ADDED TO FRONTEND BECAUSE FILE WATCHER CHECKS THE FOLDER
             shutil.copyfile(audio_file, target_file)  # copy file to frontend for public use
             Log.trace("Copied audio file to frontend")
-            self.shove.latest_audio = f"audio/{youtube_id}.mp3"
+            # a = 1/0
 
-            self.shove.send_packet_all_online("play_audio", {
-                "author": "implement author",
-                "url": f"audio/{youtube_id}.mp3"
-            })
+        shove.latest_audio = f"audio/{youtube_id}.mp3"
+
+        shove.send_packet_all_online("play_audio", {
+            "author": "implement author",
+            "url": f"audio/{youtube_id}.mp3"
+        })
 
 
 def process_youtube(args):
@@ -77,7 +81,7 @@ def process_youtube(args):
         "youtube-dl",
         f"-o {cache}/%(id)s.%(ext)s",
         f"https://youtube.com/watch?v={youtube_id}",
-        "--force-ipv4",
+        "--force-ipv4",  # ipv4 to fix stuck problem - https://www.reddit.com/r/youtubedl/comments/i7gqhu/youtubedl_stuck_at_downloading_webpage/
         "--format mp3/worstaudio/worst",
         f"--download-archive {cache}/archive.txt",
         "--no-warnings"
@@ -85,9 +89,8 @@ def process_youtube(args):
 
     Log.trace(f"Executing YTDL: {youtube_dl_command}")
     youtube_dl_now = time.time()
-    # todo sometimes hangs at "downloading webpage" -> SHOULD BE FIXED WITH IPV4
-    # https://www.reddit.com/r/youtubedl/comments/i7gqhu/youtubedl_stuck_at_downloading_webpage/
-    youtube_dl_error = os.system(youtube_dl_command)
+    # todo https://docs.python.org/3/library/subprocess.html#security-considerations
+    youtube_dl_error = subprocess.call(youtube_dl_command, shell=True)
     Log.trace(f"YTDL command done in {round(time.time() - youtube_dl_now, 3)} s")
 
     if youtube_dl_error:
@@ -98,7 +101,7 @@ def process_youtube(args):
         if file.startswith(youtube_id):
             filename = file
             break
-
+    # a = 1/0
     if not filename:
         raise ProcessBroke("Audio file missing from cache dir")
 
@@ -116,7 +119,7 @@ def process_youtube(args):
 
     Log.trace(f"Not .mp3 file ({filename}), converting")
     convert_now = time.time()
-    convert_error = os.system(convert_command)
+    convert_error = subprocess.call(convert_command, shell=True)
     Log.trace(f"Convert done in {round(time.time() - convert_now, 3)} s, TOTAL: {round(time.time() - youtube_dl_now, 3)} s")
 
     if convert_error:

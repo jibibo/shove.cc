@@ -1,5 +1,5 @@
 from convenience import *
-from base_game import BaseGame
+from abstract_game import AbstractGame
 
 from .player import Player
 from .deuces_custom import Card, Deck, Evaluator
@@ -20,7 +20,7 @@ class StreetEnded(Exception):
     pass
 
 
-class Holdem(BaseGame):
+class Holdem(AbstractGame):
     def __init__(self, room):
         super().__init__(room)
 

@@ -27,10 +27,9 @@ ACCOUNTS = [Account(username=u, password="1", money=m)
 
 
 class Shove:
-    def __init__(self, socketio):
+    def __init__(self, sio):
         Log.trace("Initializing Shove")
-        self.socketio = socketio
-
+        self.sio = sio
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
         self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, is_response)
 
@@ -71,10 +70,10 @@ class Shove:
         self.latest_audio = None
 
         Log.test("Faking play packet")
-        fake_link = "https://www.youtube.com/watch?v=t-_VPRCtiUg"
+        fake_link = "t-_VPRCtiUg"
         self.incoming_packets_queue.put((FakeUser(), "send_message", {
             "message": f"/play {fake_link}"
-        }, 0))
+        }, 100000))
         Log.trace("Shove initialized")
 
     def add_trello_card(self, name, description=None):
@@ -191,10 +190,10 @@ class Shove:
     def get_user_count(self) -> int:
         return len(self._users)
 
-    def on_connect(self, sid: str):
+    def on_connect(self, sid: str) -> User:
         user = self.create_new_user_from_sid(sid)
         if not user:
-            return
+            raise ValueError("No User object provided")
 
         self.send_packet(user, "user_connected", {
             "you": True,
@@ -209,6 +208,8 @@ class Shove:
                       for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         }, skip=user)
+
+        return user
 
     def on_disconnect(self, sid: str):
         user = self.get_user_from_sid(sid=sid)

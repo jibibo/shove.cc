@@ -58,4 +58,8 @@ function secondsToString(s) {
     return returnValue;
 }
 
-export { abbreviate, thousandsSeperatorFull, secondsToString };
+function percentage(ratio) {
+    return `${Math.floor(ratio * 100)}%`;
+}
+
+export { abbreviate, thousandsSeperatorFull, secondsToString, percentage };

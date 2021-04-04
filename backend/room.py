@@ -1,5 +1,5 @@
 from convenience import *
-from base_game import BaseGame
+from abstract_game import AbstractGame
 from user import User
 
 
@@ -9,7 +9,7 @@ class Room:
     def __init__(self, shove):
         self.shove = shove
         self.name = f"R{shove.get_room_count() + 1}"
-        self.game: BaseGame = shove.get_default_game()(self)
+        self.game: AbstractGame = shove.get_default_game()(self)
         self._users: List[User] = []
         self.max_user_count: int = 0
 

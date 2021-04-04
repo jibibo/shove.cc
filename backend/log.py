@@ -18,7 +18,7 @@ LEVEL_TEST = 6, "TEST", Fore.MAGENTA
 
 # console logging
 CONSOLE_LOG_LEVEL = LEVEL_TRACE
-MESSAGE_LENGTH_CUTOFF = 1000
+MESSAGE_LENGTH_CUTOFF = 400
 
 # sound notification
 SOUND_NOTIFICATION_LEVEL = LEVEL_WARN  # MUST BE HIGHER THAN LEVEL_TRACE, OR INFINITE LOGGING LOOP
@@ -39,46 +39,50 @@ class Log:
     FILE_WRITING_QUEUE = Queue()  # now_str, level, thread_name, message, exception
 
     @staticmethod
-    def trace(message, exception=None):
-        Log.log(message, level=LEVEL_TRACE, exception=exception)
+    def trace(message, exception=None, cutoff=True):
+        Log._log(message, LEVEL_TRACE, exception, cutoff)
 
     @staticmethod
-    def debug(message, exception=None):
-        Log.log(message, level=LEVEL_DEBUG, exception=exception)
+    def debug(message, exception=None, cutoff=True):
+        Log._log(message, LEVEL_DEBUG, exception, cutoff)
 
     @staticmethod
-    def info(message, exception=None):
-        Log.log(message, level=LEVEL_INFO, exception=exception)
+    def info(message, exception=None, cutoff=True):
+        Log._log(message, LEVEL_INFO, exception, cutoff)
 
     @staticmethod
-    def warn(message, exception=None):
-        Log.log(message, level=LEVEL_WARN, exception=exception)
+    def warn(message, exception=None, cutoff=True):
+        Log._log(message, LEVEL_WARN, exception, cutoff)
 
     @staticmethod
-    def error(message, exception=None):
-        Log.log(message, level=LEVEL_ERROR, exception=exception)
+    def error(message, exception=None, cutoff=True):
+        Log._log(message, LEVEL_ERROR, exception, cutoff)
 
     @staticmethod
-    def fatal(message, exception=None):
-        Log.log(message, level=LEVEL_FATAL, exception=exception)
+    def fatal(message, exception=None, cutoff=True):
+        Log._log(message, LEVEL_FATAL, exception, cutoff)
 
     @staticmethod
-    def test(message, exception=None):
-        Log.log(message, level=LEVEL_TEST, exception=exception)
+    def test(message, exception=None, cutoff=True):
+        Log._log(message, LEVEL_TEST, exception, cutoff)
 
     @staticmethod
-    def log(message, level, exception=None):
-        message = str(message)
-        excess_message_size = len(message) - MESSAGE_LENGTH_CUTOFF
-        if excess_message_size > 0:
-            message = message[:MESSAGE_LENGTH_CUTOFF] + f"... (+ {excess_message_size})"
-
+    def _log(raw_message, level, exception=None, cutoff=True):
+        raw_message = str(raw_message)
         thread_name = threading.current_thread().getName()
-        now_str = datetime.now().strftime("%H:%M:%S")
+        now_console = datetime.now().strftime("%H:%M:%S")
+        now_file = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        excess_message_size = len(raw_message) - MESSAGE_LENGTH_CUTOFF
+
+        if cutoff and excess_message_size > 0:
+            message = raw_message[:MESSAGE_LENGTH_CUTOFF] + f"... (+ {excess_message_size})"
+        else:
+            message = raw_message
 
         if level[0] >= CONSOLE_LOG_LEVEL[0]:  # check log level for console logging
             with Log.PRINT_LOCK:
-                print(f"{level[2]}[{now_str}][{level[1]}][{thread_name}]{Style.RESET_ALL} {message}")
+                print(f"{level[2]}[{now_console}][{level[1]}][{thread_name}]{Style.RESET_ALL} {message}")
                 if exception:
                     traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stdout)
 
@@ -89,19 +93,19 @@ class Log:
             except playsound.PlaysoundException as ex:
                 Log.trace(f"Sound exception caught: {ex}")
 
-        if LOG_TO_FILE and level[0] >= FILE_LOG_LEVEL[0]:
-            Log.FILE_WRITING_QUEUE.put((now_str, level, thread_name, message, exception))
+        if LOG_TO_FILE and level[0] >= FILE_LOG_LEVEL[0]:  # write raw message to file if enabled
+            Log.FILE_WRITING_QUEUE.put((now_file, level, thread_name, raw_message, exception))
 
     @staticmethod
     def start_file_writer_thread():
         if LOG_TO_FILE:
-            threading.Thread(target=Log._file_writer_thread, name="LogFileWriter", daemon=True).start()
+            threading.Thread(target=Log.write_file_loop, name="LogFileWriter", daemon=True).start()
 
         else:
             Log.trace("Logging to file is DISABLED")
 
     @staticmethod
-    def _file_writer_thread():
+    def write_file_loop():
         try:
             open(LOG_FILE, "w").close()
             print(f"Emptied {LOG_FILE}")

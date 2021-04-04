@@ -19,7 +19,7 @@ class User:
             return f"'{self._account['username']}/{self.sid}'"
 
         else:
-            return f"'{self.sid}'"
+            return f"'SID {self.sid}'"
 
     def clear_game_data(self):
         self._game_data = None

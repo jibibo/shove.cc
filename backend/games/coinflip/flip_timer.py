@@ -5,18 +5,24 @@ class FlipTimerThread(threading.Thread):
     def __init__(self, game, duration):
         super().__init__(name=f"{game.room.name}/FlipTimer", daemon=True)
         self.game = game
-        self.game.time_left = duration
+        self.duration = duration
 
     def run(self):
-        Log.trace(f"Timer started, seconds: {self.game.time_left}")
+        flip_timer(self.game, self.duration)
 
-        while self.game.time_left:
-            time.sleep(1)
-            self.game.time_left -= 1
-            if self.game.time_left:
-                self.game.events.put("timer_ticked")
-            else:
-                self.game.time_left = None
 
-        Log.trace("Timer finished")
-        self.game.events.put("timer_finished")
+# todo could be an abstract timer (many games use timers, more organized)
+def flip_timer(game, duration):
+    game.time_left = duration
+    Log.trace(f"Timer started, duration: {duration} s")
+
+    while game.time_left:
+        eventlet.sleep(1)  # not time.sleep(1)
+        game.time_left -= 1
+        if game.time_left:
+            game.events.put("timer_ticked")
+        else:
+            game.time_left = None
+
+    Log.trace("Timer finished")
+    game.events.put("timer_finished")

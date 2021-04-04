@@ -1,11 +1,11 @@
 from convenience import *
-from base_game import BaseGame, GameState
+from abstract_game import AbstractGame, GameState
 from user import User
 
 from .flip_timer import FlipTimerThread
 
 
-class Coinflip(BaseGame):
+class Coinflip(AbstractGame):
     def __init__(self, room):
         super().__init__(room)
         self.flip_timer = None
@@ -117,8 +117,8 @@ class Coinflip(BaseGame):
         self.state = GameState.RUNNING
         self.gains.clear()
         self.coin_state = "spinning"
-        self.flip_timer = FlipTimerThread(self, self.flip_timer_duration)
-        self.flip_timer.start()
+        # self.flip_timer = FlipTimerThread(self, self.flip_timer_duration)
+        # self.flip_timer.start()
 
         Log.info("Game started")
         self.send_data_packet(event="started")

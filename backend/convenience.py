@@ -12,6 +12,7 @@ import requests
 import multiprocessing
 import shutil
 import urllib.parse as urlparse
+import eventlet
 from queue import Queue
 from abc import ABC, abstractmethod
 from datetime import datetime

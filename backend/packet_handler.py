@@ -2,7 +2,7 @@ from convenience import *
 
 from shove import Shove
 from user import User
-from process_audio import ProcessYoutubeThread
+from process_audio import ProcessYoutubeThread, process_youtube_wrapper, simulate_processing
 
 
 class PacketHandlerThread(threading.Thread):
@@ -14,38 +14,41 @@ class PacketHandlerThread(threading.Thread):
 
     def run(self):
         Log.trace("Ready")
+        handle_packets_loop(self.shove)
 
-        while True:
-            user, model, packet, packet_number = self.shove.incoming_packets_queue.get()
-            threading.current_thread().setName(f"PHand/#{packet_number}")
-            Log.trace(f"Handling packet #{packet_number}")
 
-            try:
-                response = handle_packet(self.shove, user, model, packet)
+def handle_packets_loop(shove):
+    while True:
+        user, model, packet, packet_number = shove.incoming_packets_queue.get()
+        threading.current_thread().setName(f"PHand/#{packet_number}")
+        Log.trace(f"Handling packet #{packet_number}")
 
-            except PacketHandlingFailed as ex:
-                Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")
-                response = "error", {
-                    "error": ex.error,
-                    "description": ex.description
-                }
+        try:
+            response = handle_packet(shove, user, model, packet)
 
-            # todo command handling should throw a CommandHandlingFailed exception
+        except PacketHandlingFailed as ex:
+            Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")
+            response = "error", {
+                "error": ex.error,
+                "description": ex.description
+            }
 
-            except Exception as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} on packet_handler.handle_packet", ex)
-                response = "error", {
-                    "error": "unhandled_exception",
-                    "description": "Unhandled backend exception on handling packet (not good)"
-                }
+        # todo command handling should throw a CommandHandlingFailed exception
 
-            if response:
-                response_model, response_packet = response
-                Log.trace(f"Handled packet #{packet_number}, response model: '{response_model}'")
-                self.shove.send_packet(user, response_model, response_packet, is_response=True)
+        except Exception as ex:
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on packet_handler.handle_packet", ex)
+            response = "error", {
+                "error": "unhandled_exception",
+                "description": "Unhandled backend exception on handling packet (not good)"
+            }
 
-            else:
-                Log.trace(f"Handled packet #{packet_number}, no response")
+        if response:
+            response_model, response_packet = response
+            Log.trace(f"Handled packet #{packet_number}, response model: '{response_model}'")
+            shove.send_packet(user, response_model, response_packet, is_response=True)
+
+        else:
+            Log.trace(f"Handled packet #{packet_number}, no response")
 
 
 def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
@@ -228,7 +231,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     raise PacketInvalid(f"Unknown packet model: '{model}'")
 
 
-ALIASES = {
+COMMAND_ALIASES = {
     "error": [],
     "help": [],
     "money": ["cash"],
@@ -239,7 +242,7 @@ ALIASES = {
 
 
 def is_command(input_str, match_command):
-    return input_str == match_command or input_str in ALIASES[match_command]
+    return input_str == match_command or input_str in COMMAND_ALIASES[match_command]
 
 
 def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
@@ -253,7 +256,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
     command_args_real = _command_split_real[1:] if len(_command_split) > 1 else []
 
     if not command or is_command(command, "help"):
-        return f"{[c for c in ALIASES]}"
+        return f"{[c for c in COMMAND_ALIASES]}"
 
     if is_command(command, "error"):  # raises an error to test error handling and logging
         raise Exception("/error was executed, all good")
@@ -306,17 +309,17 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
                 raise PacketHandlingFailed("YT API request broke")
 
             Log.trace(f"Got response from YT API, items in playlist: {len(response['items'])}")
-            youtube_id = []
+            youtube_ids = []
             for item in response["items"]:
-                youtube_id.append(item["snippet"]["resourceId"]["videoId"])
+                youtube_ids.append(item["snippet"]["resourceId"]["videoId"])
 
-            if not youtube_id:
+            if not youtube_ids:
                 raise CommandInvalid("No videos found in given playlist")
 
         # check if user just dropped the 11-char YT id
         elif len(check_for_id) == 11:
-            youtube_id = check_for_id
-            Log.trace(f"Got YouTube ID directly: {youtube_id}")
+            youtube_ids = [check_for_id]
+            Log.trace(f"Got YouTube ID directly: {youtube_ids}")
 
         # regex magic to find the id in some url
         else:
@@ -324,10 +327,12 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
             if not match:
                 raise CommandInvalid("Couldn't find the video ID in given link")
 
-            youtube_id = match.group("id")
-            Log.trace(f"Got YouTube ID through regex: {youtube_id}")
+            youtube_ids = [match.group("id")]
+            Log.trace(f"Got YouTube ID through regex: {youtube_ids}")
 
-        ProcessYoutubeThread(shove, youtube_id).start()
+        # ProcessYoutubeThread(shove, youtube_id).start()
+        # shove.sio.start_background_task(simulate_processing, 5)
+        shove.sio.start_background_task(process_youtube_wrapper, shove, youtube_ids)
 
         return "Success"
 

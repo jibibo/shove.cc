@@ -4,7 +4,7 @@ import Button from "@material-ui/core/Button";
 import Slider from "@material-ui/core/Slider";
 
 import { socket, sendPacket } from "../connection";
-import { secondsToString } from "../formatting";
+import { secondsToString, percentage } from "../formatting";
 import { Typography } from "@material-ui/core";
 
 let deaf = true;
@@ -59,7 +59,8 @@ function AudioPlayer() {
         // }
     };
 
-    function onChangeVolumeSlider(e, value) { // client side volume control
+    function onChangeVolumeSlider(e, value) {
+        // client side volume control
         setVolume(value);
 
         // if (audioRef.current) {
@@ -67,12 +68,14 @@ function AudioPlayer() {
         // }
     }
 
-    function onClickToggleLoop() { // should send packet
+    function onClickToggleLoop() {
+        // should send packet
         audioRef.current.loop = !loop;
         setLoop(!loop);
     }
 
-    function onClickTogglePlay() { // should send packet
+    function onClickTogglePlay() {
+        // should send packet
         if (playing) {
             audioRef.current.pause();
         } else {
@@ -140,10 +143,11 @@ function AudioPlayer() {
                 className="bet-slider"
                 min={0}
                 max={1}
-                step={0.1}
+                step={0.05}
                 value={volume}
                 onChange={onChangeVolumeSlider}
                 valueLabelDisplay="auto"
+                valueLabelFormat={(value) => percentage(value)}
             />
             <Button
                 variant="outlined"
@@ -174,6 +178,7 @@ function AudioPlayer() {
                 Get live
             </Button>
 
+            {/*todo Should just be an Audio() object, no html required*/}
             <audio
                 controls
                 loop={loop}
@@ -186,7 +191,7 @@ function AudioPlayer() {
                 onTimeUpdate={onTimeUpdate}
                 onWaiting={onWaiting}
             >
-                {/*you need to use this element for some reason*/}
+                {/*breaks without this <source />*/}
                 <source src={source} />
             </audio>
         </>

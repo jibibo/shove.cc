@@ -4,25 +4,28 @@ from user import User, FakeUser
 
 
 class PacketSenderThread(threading.Thread):
-    def __init__(self, shove, socketio):
+    def __init__(self, shove, sio):
         super().__init__(name="PSend", daemon=True)
         self.shove = shove
-        self.socketio = socketio
+        self.sio = sio
 
     def run(self):
         Log.trace("Ready")
-
-        while True:
-            users, model, packet, skip, is_response = self.shove.outgoing_packets_queue.get()
-
-            try:
-                send_packet(self.socketio, users, model, packet, skip, is_response)
-
-            except Exception as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} on packet_sender.send_packet", ex)
+        send_packets_loop(self.shove, self.sio)
 
 
-def send_packet(socketio, users, model: str, packet: dict, skip, is_response: bool):
+def send_packets_loop(shove, sio):
+    while True:
+        users, model, packet, skip, is_response = shove.outgoing_packets_queue.get()
+
+        try:
+            send_packet(sio, users, model, packet, skip, is_response)
+
+        except Exception as ex:
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on packet_sender.send_packet", ex)
+
+
+def send_packet(sio, users, model: str, packet: dict, skip, is_response: bool):
     try:
         if type(users) == User:
             users = [users]
@@ -53,14 +56,14 @@ def send_packet(socketio, users, model: str, packet: dict, skip, is_response: bo
                 users.remove(skip_user)
 
         if not users:
-            Log.trace(f"No recipients for outgoing {'response' if is_response else 'packet'} '{model}', not queueing\n packet: {packet}")
+            Log.trace(f"No recipients for outgoing {'response' if is_response else 'packet'} '{model}', not sending\n packet: {packet}")
             return
 
         Log.trace(f"Sending {'response' if is_response else 'packet'}: '{model}'")
 
         sids = [user.sid for user in users]
         for sid in sids:
-            socketio.emit(model, packet, room=sid)
+            sio.emit(model, packet, to=sid)
 
         Log.debug(f"Sent {'response' if is_response else 'packet'}: '{model}'\n to: {[str(user)[1:-1] for user in users]}\n packet: {packet}")
 

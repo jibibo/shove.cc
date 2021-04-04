@@ -1,53 +1,44 @@
 import eventlet
+# eventlet.sleep()  # https://stackoverflow.com/questions/43801884/how-to-run-python-socketio-in-thread
 eventlet.monkey_patch()  # required, threading with socketio is ******
-
-from flask import Flask, request
-from flask_socketio import SocketIO
+from eventlet import wsgi
 
 from convenience import *
 from shove import Shove
-from packet_sender import PacketSenderThread
-from packet_handler import PacketHandlerThread
-from ping_users import PingUsersThread
-from tools import remove_non_mp3_files_from_cache, clear_frontend_audio_cache
+from packet_sender import PacketSenderThread, send_packets_loop
+from packet_handler import PacketHandlerThread, handle_packets_loop
+# from ping_users import PingUsersThread
+from tools import cleanup_backend_youtube_cache, clear_frontend_audio_cache
 
+import socketio
 
 HOST = "0.0.0.0"
 PORT = 777
-DEBUG = False
 
 # how much red text in console todo use logging module for proper logging
-LOG_EMITS = False
 LOG_SOCKETIO = False
 LOG_ENGINEIO = False
+LOG_WSGI = False
 
+# async_mode="threading" is less performant - https://python-socketio.readthedocs.io/en/latest/server.html#standard-threads
+sio = socketio.Server(cors_allowed_origins="*", logger=LOG_SOCKETIO, engineio_logger=LOG_ENGINEIO)
+app = socketio.WSGIApp(sio)
 
 threading.current_thread().setName("Main")
-app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*", logger=LOG_EMITS, engineio_logger=LOG_ENGINEIO)
 shove: Union[Shove, None] = None  # Union for editor type hints
-
-
-# Flask requests
-
-@app.route("/")
-def get_request_777():
-    return "Stop trying to hack the website please. Thank you."
 
 
 # SocketIO events
 
-@socketio.on("connect")
-def on_connect():
-    sid = request.sid
-    Log.trace(f"Handling connect of SID '{sid}'")
-    shove.on_connect(sid)
-    Log.info(f"SID '{sid}' connected")
+@sio.on("connect")
+def on_connect(sid, environ):
+    Log.trace(f"Handling connect of {sid}, environ: {environ}", cutoff=True)
+    user = shove.on_connect(sid)
+    Log.info(f"{user} connected from {environ['REMOTE_ADDR']}")
 
 
-@socketio.on("disconnect")
-def on_disconnect():
-    sid = request.sid
+@sio.on("disconnect")
+def on_disconnect(sid):
     user = shove.get_user_from_sid(sid=sid)
     if not user:
         Log.warn(f"socketio.on('disconnect'): User object not found/already disconnected, ignoring call")
@@ -58,23 +49,16 @@ def on_disconnect():
     Log.info(f"{user} disconnected")
 
 
-# todo BrokenPipeErrors?? check out https://stackoverflow.com/questions/47875007/flask-socket-io-frequent-time-outs
-@socketio.on_error_default
-def on_error(_ex):
-    Log.fatal(f"UNHANDLED {type(_ex).__name__} caught by socketio.on_error_default", _ex)
-
-
 # todo on connect, receive session cookie from user, check if session token valid, log in as that _account
-@socketio.on("message")
-def on_message(model: str, packet: dict):
-    sid = request.sid
+@sio.on("message")
+def on_message(sid, model: str, packet: dict):
     user = shove.get_user_from_sid(sid=sid)
     if not user:
         Log.warn(f"socketio.on('message') (model '{model}'): User object not found/already disconnected, sending no_pong packet to SID {sid}")
-        socketio.emit("error", {
+        sio.emit("error", {
             "error": "no_user_object",
             "description": "You don't exist anymore (not good), refresh!"
-        }, room=sid)
+        }, to=sid)
         return
 
     packet_number = shove.get_next_packet_number()
@@ -85,22 +69,27 @@ def on_message(model: str, packet: dict):
 def main():
     print("\n\n\t\"Waazzaaaaaap\" - Michael Stevens\n\n")
 
-    Log.start_file_writer_thread()
+    # Log.start_file_writer_thread()
+    sio.start_background_task(Log.write_file_loop)
     global shove
-    shove = Shove(socketio)
-    PacketSenderThread(shove, socketio).start()
-    PacketHandlerThread(shove).start()
-    PingUsersThread(shove)  # .start()  # comment out to disable pinging
+    shove = Shove(sio)
+    # PacketSenderThread(shove, sio).start()
+    sio.start_background_task(send_packets_loop, shove, sio)
+    # PacketHandlerThread(shove).start()
+    sio.start_background_task(handle_packets_loop, shove)
+    # PingUsersThread(shove).start()  # comment out to disable pinging
 
-    remove_non_mp3_files_from_cache()
+    cleanup_backend_youtube_cache()
     # clear_frontend_audio_cache()
+
+    Log.test(f"threading patched: {eventlet.patcher.is_monkey_patched('threading')}")
+    Log.test(f"threading patched: {eventlet.patcher.is_monkey_patched('thread')}")
+    Log.test(f"threading patched: {eventlet.patcher.is_monkey_patched('socket')}")
 
     Log.info(f"Running SocketIO on port {PORT}")
 
-    if DEBUG:
-        Log.warn("*** DEBUG MODE ENABLED ***")
-
-    socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)
+    wsgi.server(eventlet.listen((HOST, PORT)), app, log_output=LOG_WSGI)
+    # socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)
     # time.sleep(60)
 
 

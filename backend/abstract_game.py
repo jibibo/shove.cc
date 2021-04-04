@@ -8,38 +8,41 @@ class GameState:
     ENDED = "ended"
 
 
-class BaseGame(ABC):
+def game_event_loop(game):
+    threading.current_thread().setName(f"GEHand/{game.room.name}")
+    Log.trace("Ready")
+
+    while True:
+        event = game.events.get()
+        Log.debug(f"Handling event: '{event}'")
+
+        try:
+            game.handle_event(event)
+
+        except GameEventInvalid as ex:
+            Log.error(f"Event invalid: {ex}")
+
+        except GameEventNotImplemented:
+            Log.error("Event not implemented")
+
+        except Exception as ex:
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on abstract_game.handle_event", ex)
+
+        else:
+            Log.trace(f"Handled event: '{event}'")
+
+
+class AbstractGame(ABC):
     def __init__(self, room):
         self.room = room
         self.events = Queue()
         self.players: List[User] = []
         self.state = GameState.IDLE
-        threading.Thread(target=self._event_handler_thread,
-                         name=f"EHand/{self.room.name}",
-                         daemon=True).start()
+        # threading.Thread(target=self._event_loop,
+        #                  name=f"GEHand/{self.room.name}",
+        #                  daemon=True).start()
+        self.room.shove.sio.start_background_task(game_event_loop, self)
         Log.trace(f"Game '{type(self).__name__}' initialized for room {room}")
-
-    def _event_handler_thread(self):
-        Log.trace("Ready")
-
-        while True:
-            event = self.events.get()
-            Log.debug(f"Handling event: '{event}'")
-
-            try:
-                self.handle_event(event)
-
-            except GameEventInvalid as ex:
-                Log.error(f"Event invalid: {ex}")
-
-            except GameEventNotImplemented:
-                Log.error("Event not implemented")
-
-            except Exception as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} on base_game.handle_event", ex)
-
-            else:
-                Log.trace(f"Handled event: '{event}'")
 
     @abstractmethod
     def get_data(self, event: str = None) -> dict:
