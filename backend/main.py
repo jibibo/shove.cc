@@ -8,13 +8,19 @@ from packet_sender import send_packets_loop
 from packet_handler import handle_packets_loop
 from user_pinging import ping_users_loop
 
+set_greenthread_name("Main")
+# eventlet usage consequences:
+# time.sleep() should become eventlet.sleep()
+# instead of creating a threading.Thread, call eventlet.spawn(func, *args) etc
+# these greenthreads should be named, like above
+
 sio = socketio.Server(
-    cors_allowed_origins="*",
     logger=LOG_SOCKETIO,
+    async_mode="eventlet",
+    cors_allowed_origins="*",
     engineio_logger=LOG_ENGINEIO
 )
-app = socketio.WSGIApp(sio)
-# threading.current_thread().setName("Main")
+wsgi_app = socketio.WSGIApp(sio)
 shove: Union[Shove, None] = None  # Union -> for editor (pycharm) type hint detection
 
 
@@ -22,6 +28,7 @@ shove: Union[Shove, None] = None  # Union -> for editor (pycharm) type hint dete
 
 @sio.on("connect")
 def on_connect(sid, environ):
+    set_greenthread_name("sio/on_connect")
     Log.trace(f"Handling connect of {sid}, environ: {environ}", cutoff=True)
     user = shove.on_connect(sid)
     Log.info(f"{user} connected from {environ['REMOTE_ADDR']}")
@@ -29,6 +36,7 @@ def on_connect(sid, environ):
 
 @sio.on("disconnect")
 def on_disconnect(sid):
+    set_greenthread_name("sio/on_disconnect")
     user = shove.get_user_from_sid(sid=sid)
     if not user:
         Log.warn(f"socketio.on('disconnect'): User object not found/already disconnected, ignoring call")
@@ -42,6 +50,7 @@ def on_disconnect(sid):
 # todo on connect, receive session cookie from user, check if session token valid, log in as that _account
 @sio.on("message")
 def on_message(sid, model: str, packet: dict):
+    set_greenthread_name("sio/on_message")
     user = shove.get_user_from_sid(sid=sid)
     if not user:
         Log.warn(f"socketio.on('message') (model '{model}'): User object not found/already disconnected, sending no_pong packet to SID {sid}")
@@ -60,19 +69,19 @@ def on_message(sid, model: str, packet: dict):
 
 def main():
     print("\n\n\t\"Waazzaaaaaap\" - Michael Stevens\n\n")
-
-    sio.start_background_task(Log.write_file_loop)
+    # set_greenthread_name("LogFileWriter", eventlet.spawn(Log.write_file_loop))  # special case, randomly causes a NameError
+    eventlet.spawn(Log.write_file_loop)
 
     global shove
     shove = Shove(sio)
-    # threading.greenlet.greenlet.getcurrent().setName("test1")
 
-    t = sio.start_background_task(send_packets_loop, shove, sio)
-    Log.test(f"test1: {t}")
-    sio.start_background_task(handle_packets_loop, shove)
+    # sio.start_background_task(send_packets_loop, shove, sio)
+    # eventlet.spawn(send_packets_loop, shove, sio)
+    eventlet.spawn(send_packets_loop, shove, sio)
+    eventlet.spawn(handle_packets_loop, shove)
 
     if PING_USERS_ENABLED:
-        sio.start_background_task(ping_users_loop, shove)
+        eventlet.spawn(ping_users_loop, shove)
     if STARTUP_CLEANUP_BACKEND_CACHE:
         cleanup_backend_youtube_cache()
     if STARTUP_EMPTY_FRONTEND_CACHE:
@@ -80,7 +89,7 @@ def main():
 
     Log.info(f"Running SocketIO on port {PORT}")
 
-    eventlet_wsgi.server(eventlet.listen((HOST, PORT)), app, log_output=LOG_WSGI)
+    eventlet.wsgi.server(eventlet.listen((HOST, PORT)), wsgi_app, log_output=LOG_WSGI)
 
 
 if __name__ == "__main__":
@@ -90,5 +99,6 @@ if __name__ == "__main__":
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on main()", ex)
-            Log.trace("Restarting in 10 s")
-            time.sleep(10)
+
+        Log.trace(f"Restarting in {DELAY_BEFORE_RESTART} s")
+        time.sleep(DELAY_BEFORE_RESTART)

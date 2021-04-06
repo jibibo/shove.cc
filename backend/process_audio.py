@@ -4,11 +4,11 @@ from convenience import *
 
 
 def process_youtube_ids_audio_task(shove, youtube_ids, user):
-    # threading.current_thread().setName("ProcessAudio")
+    set_greenthread_name("ProcessAudio")
     Log.trace("Started YT audio task")
 
     for youtube_id in youtube_ids:
-        # threading.current_thread().setName(f"ProcessAudio/{youtube_id}")
+        set_greenthread_name(f"ProcessAudio/{youtube_id}")
         Log.trace(f"Processing YT ID {youtube_id}")
 
         audio_file = f"{CWD_PATH}/backend/youtube_cache/{youtube_id}.mp3"
@@ -48,6 +48,7 @@ def process_youtube_ids_audio_task(shove, youtube_ids, user):
 
         shove.latest_audio_author = user.get_username()
         shove.latest_audio_url = f"audio/{youtube_id}.mp3"
+        shove.audio_urls_cached.append(f"audio/{youtube_id}.mp3")
         shove.send_packet_to_everyone("play_audio", {
             "author": user.get_username(),
             "url": shove.latest_audio_url
@@ -59,26 +60,33 @@ def download_youtube_audio(youtube_id):
     cache = f"{CWD_PATH}/backend/youtube_cache"
 
     # todo benchmark -f \"bestaudio[filesize<3M]/bestaudio/best[filesize<3M]/best\" vs worstaudio/worst
-    youtube_dl_command = " ".join([
+    youtube_dl_command1 = " ".join([  # log available formats
+        "youtube-dl",
+        f"https://youtube.com/watch?v={youtube_id}",
+        "--force-ipv4",
+        "-F"
+    ])
+    youtube_dl_command2 = " ".join([  # actually download it
         "youtube-dl",
         f"-o {cache}/%(id)s.%(ext)s",
         f"https://youtube.com/watch?v={youtube_id}",
         "--force-ipv4",  # ipv4 to fix hanging bug - https://www.reddit.com/r/youtubedl/comments/i7gqhu/youtubedl_stuck_at_downloading_webpage/
-        "--format mp3/worstaudio/worst",  # if downloading mp3 is an option, try that (saves time converting to mp3)
+        "--format mp3/bestaudio",  # if downloading mp3 is an option, try that (saves time converting to mp3)
         f"--download-archive {cache}/archive.txt",
         # "--no-warnings",
         # "--user-agent \"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\"",  # might prevent some errors, not certain
         "--verbose"
     ])
 
-    Log.trace(f"Calling YTDL subprocess: {youtube_dl_command}")
+    Log.trace(f"Calling YTDL subprocess")
     start_time = time.time()
     # todo possibily dangerous, see https://docs.python.org/3/library/subprocess.html#security-considerations
-    youtube_dl_error = subprocess.call(youtube_dl_command, shell=True)
+    youtube_dl_error1 = subprocess.call(youtube_dl_command1, shell=True)
+    youtube_dl_error2 = subprocess.call(youtube_dl_command2, shell=True)
     Log.trace(f"YTDL done in {round(time.time() - start_time, 3)} s")
 
-    if youtube_dl_error:
-        raise DownloadAudioFailed(f"Subprocess returned {youtube_dl_error}")
+    if youtube_dl_error1 or youtube_dl_error2:
+        raise DownloadAudioFailed(f"Subprocess returned {youtube_dl_error1 or youtube_dl_command2}")
 
 
 def convert_youtube_audio(youtube_id):
@@ -106,7 +114,7 @@ def convert_youtube_audio(youtube_id):
         "-loglevel warning"
     ])
 
-    Log.trace(f"Calling ffmpeg convert subprocess: {convert_command}")
+    Log.trace(f"Calling ffmpeg convert subprocess")
     start_time = time.time()
     convert_error = subprocess.call(convert_command, shell=True)
     Log.trace(f"Convert done in {round(time.time() - start_time, 3)} s")

@@ -66,7 +66,14 @@ class Log:
     @staticmethod
     def _log(raw_message, level, exception=None, cutoff=True):
         raw_message = str(raw_message)
-        thread_name = threading.current_thread().getName()
+
+        try:
+            # dirty way of setting/getting Greenthread names, as threading.current_thread().getName() doesn't works for Greenthreads
+            thread_name = eventlet.getcurrent().__dict__["greenthread_name"]
+        except KeyError:
+            # Probably a Greenthread spawned by SocketIO, doesn't have a name
+            thread_name = threading.current_thread().getName()
+
         now_console = datetime.now().strftime("%H:%M:%S")
         now_file = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -97,7 +104,7 @@ class Log:
     def write_file_loop():
         """Blocking loop to write messages and exceptions to file (from the queue)"""
 
-        # threading.current_thread().setName("FileWriter")
+        set_greenthread_name("LogFileWriter")
 
         try:
             open(LATEST_LOG_FILENAME_ABS, "w").close()
@@ -109,7 +116,7 @@ class Log:
             open(LATEST_LOG_FILENAME_ABS, "w").close()
             print(f"Created {LATEST_LOG_FILENAME}")
 
-        Log.trace("Ready")
+        Log.trace("Write log file loop ready")
 
         while True:
             now_str, level, thread_name, message, exception = Log.FILE_WRITING_QUEUE.get()

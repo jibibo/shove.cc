@@ -9,8 +9,8 @@ class GameState:
 
 
 def game_event_loop(game):
-    # threading.current_thread().setName(f"GELoop/{game.room.name}")
-    Log.trace("Ready")
+    set_greenthread_name(f"GELoop/{game.room}")
+    Log.trace(f"Game event loop ready of room {game.room}")
 
     while True:
         event = game.events.get()
@@ -38,10 +38,7 @@ class AbstractGame(ABC):
         self.events = Queue()
         self.players: List[User] = []
         self.state = GameState.IDLE
-        # threading.Thread(target=self._event_loop,
-        #                  name=f"GEHand/{self.room.name}",
-        #                  daemon=True).start()
-        self.room.shove.sio.start_background_task(game_event_loop, self)
+        eventlet.spawn(game_event_loop, self)
         Log.trace(f"Game '{type(self).__name__}' initialized for room {room}")
 
     @abstractmethod

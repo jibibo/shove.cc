@@ -2,18 +2,17 @@ from convenience import *
 from abstract_game import AbstractGame, GameState
 from user import User
 
-from .flip_timer import FlipTimerThread
+from .flip_timer import flip_timer
 
 
 class Coinflip(AbstractGame):
     def __init__(self, room):
         super().__init__(room)
-        self.flip_timer = None
         self.gains: Dict[str, dict] = {}
         self.coin_state = None
 
         self.flip_timer_duration = 3
-        self.time_left = None
+        self.time_left = 0
         self.heads_odds = 50  # ratio (vs tails) of landing on heads
         self.tails_odds = 50
         self.force_result = None
@@ -117,8 +116,7 @@ class Coinflip(AbstractGame):
         self.state = GameState.RUNNING
         self.gains.clear()
         self.coin_state = "spinning"
-        # self.flip_timer = FlipTimerThread(self, self.flip_timer_duration)
-        # self.flip_timer.start()
+        eventlet.spawn(flip_timer, self)
 
         Log.info("Game started")
         self.send_data_packet(event="started")

@@ -53,6 +53,7 @@ class Shove:
 
         self.latest_audio_url = None
         self.latest_audio_author = None
+        self.audio_urls_cached = []
 
         Log.test("Faking play packet")
         fake_link = "XwxLwG2_Sxk"

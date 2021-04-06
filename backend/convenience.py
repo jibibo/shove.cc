@@ -6,7 +6,7 @@ import time
 import json
 import os
 import sys
-# import threading  # use green variant instead
+import threading  # use green variant!?
 import secrets
 import random
 import math
@@ -25,9 +25,9 @@ from typing import Dict, List, Union, Optional, Tuple, Set
 # 3rd-party modules
 
 import eventlet
+import eventlet.wsgi
 from eventlet.green import subprocess  # https://stackoverflow.com/a/34649180/13216113
-from eventlet.green import threading
-from eventlet import wsgi as eventlet_wsgi
+# from eventlet.green import threading
 from trello import TrelloClient
 import playsound
 import socketio
@@ -37,8 +37,16 @@ from colorama import Fore, Style
 # import youtube_dl
 
 
-# needs to be defined before importing local modules
-CWD_PATH = os.path.abspath(os.getcwd()).replace("\\", "/")
+# these need to be defined before importing local modules
+
+CWD_PATH = os.path.abspath(os.getcwd()).replace("\\", "/")  # used by many local modules
+
+
+def set_greenthread_name(name: str):  # log.Log uses this function, causes NameError if defined later
+    """Set the name of the greenthread that called this (for logging)"""
+
+    greenthread = eventlet.getcurrent()
+    greenthread.__dict__["greenthread_name"] = name
 
 
 # local modules
@@ -91,6 +99,7 @@ def simulate_intensive_function(seconds):
 
 def default_error_packet(error=None, description=None) -> dict:
     """Create a default error packet with no useful information whatsoever"""
+
     return {
         "error": error or DEFAULT_ERROR,
         "description": description or DEFAULT_DESCRIPTION

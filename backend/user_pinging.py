@@ -2,12 +2,14 @@ from convenience import *
 
 
 def ping_users_loop(shove):
-    threading.current_thread().setName("PingUsers")
-    Log.trace("Ready")
+    """Blocking loop to ping all connected users periodically"""
+
+    set_greenthread_name("UserPinger")
+    Log.trace("Ping users loop ready")
     time_since_last_ping = 0
 
     if not PING_USERS_ENABLED:  # extra check to not ping if not enabled
-        Log.warn(f"user_pinging.ping_users_loop: PING_USERS_ENABLED={PING_USERS_ENABLED}, cancelling")
+        Log.warn(f"PING_USERS_ENABLED={PING_USERS_ENABLED}, cancelling")
         return
 
     while True:

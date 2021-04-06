@@ -8,12 +8,12 @@ from process_audio import process_youtube_ids_audio_task
 def handle_packets_loop(shove):
     """Blocking loop for handling packets (that were added to the queue)"""
 
-    # threading.current_thread().setName("PHand")
-    Log.trace("Ready")
+    set_greenthread_name("PHandler")
+    Log.trace("Handle packets loop ready")
 
     while True:
         user, model, packet, packet_number = shove.incoming_packets_queue.get()
-        # threading.current_thread().setName(f"PHand/#{packet_number}")
+        set_greenthread_name(f"PHandler/#{packet_number}")
         Log.trace(f"Handling packet #{packet_number}")
 
         try:
@@ -92,7 +92,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     if model == "get_audio":
         return "play_audio", {
             "author": shove.latest_audio_author,
-            "url": shove.latest_audio_url
+            "url": random.choice(shove.audio_urls_cached)
         }
 
     if model == "get_game_data":

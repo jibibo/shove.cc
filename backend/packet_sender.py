@@ -6,8 +6,8 @@ from user import User, FakeUser
 def send_packets_loop(shove, sio: socketio.Server):
     """Blocking loop for sending packets (that were added to the queue)"""
 
-    # threading.current_thread().setName("PSend")
-    Log.trace("Ready")
+    set_greenthread_name("PSender")
+    Log.trace("Send packets loop ready")
 
     while True:
         users, model, packet, skip, is_response = shove.outgoing_packets_queue.get()
