@@ -43,11 +43,12 @@ function thousandsSeperatorFull(x) {
 }
 
 function secondsToString(s) {
+    // https://stackoverflow.com/a/11486026/13216113
     const hours = Math.floor(s / 3600);
     const minutes = Math.floor((s % 3600) / 60);
     const seconds = Math.floor(s % 60);
 
-    console.log("sts", s, hours, minutes, seconds);
+    // console.log("sts", s, hours, minutes, seconds);
 
     var returnValue = "";
     if (hours > 0) {

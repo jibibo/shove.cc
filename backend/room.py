@@ -4,8 +4,6 @@ from user import User
 
 
 class Room:
-    MIN_PLAYERS = 2
-
     def __init__(self, shove):
         self.shove = shove
         self.name = f"R{shove.get_room_count() + 1}"
@@ -40,8 +38,10 @@ class Room:
     def is_full(self):
         return self.max_user_count and self.get_user_count() >= self.max_user_count
 
-    def send_packet_all(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
-        self.shove.send_packet(self.get_users(), model, packet, skip)
+    def send_packet_to_occupants(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
+        """Send packet to everyone in this room"""
+
+        self.shove.send_packet_to(self.get_users(), model, packet, skip)
 
     def try_to_start_game(self):
         Log.trace(f"Trying to start game in room {self}")
@@ -74,13 +74,15 @@ class Room:
 
         self._users.append(user)
 
-        self.shove.send_packet_all_online("room_list", {  # update room list for all connected users
+        self.shove.send_packet_to_everyone("room_list", {  # update room list for all connected users
             "room_list": [room.get_data() for room in self.shove.get_rooms()]
         })
 
         Log.info(f"{user} joined room {self}")
 
     def user_leave(self, user: User):
+        """Method for the room to handle when a user leaves the room"""
+
         Log.trace(f"Removing user {user} from room {self}")
 
         if self.game:
@@ -94,7 +96,7 @@ class Room:
 
         self._users.remove(user)
 
-        self.shove.send_packet_all_online("room_list", {  # update room list for all connected users
+        self.shove.send_packet_to_everyone("room_list", {  # update room list for all connected users
             "room_list": [room.get_data() for room in self.shove.get_rooms()]
         })
 

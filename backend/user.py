@@ -1,4 +1,5 @@
 from convenience import *
+
 from account import Account
 
 
@@ -8,6 +9,7 @@ class User:
         self._account: Union[Account, None] = None  # Union for editor type hints
         self._game_data: Union[dict, None] = None
         self.pinged_timestamp = 0
+        self.last_pong_received = 0
         self.latency = 0
         Log.trace(f"Created new User object for SID '{sid}'")
 

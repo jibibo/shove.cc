@@ -97,7 +97,7 @@ class Coinflip(AbstractGame):
                 self.force_result = choice  # basically always win
                 Log.trace(f"Set force result to: {choice}")
 
-            self.room.shove.send_packet(user, "account_data", user.get_account_data_copy())
+            self.room.shove.send_packet_to(user, "account_data", user.get_account_data_copy())
 
             return "game_action_success", {
                 "action": "bet",
@@ -153,7 +153,7 @@ class Coinflip(AbstractGame):
             bet = player.get_game_data_copy()["bet"]
             if player_won:
                 player.get_account()["money"] += 2 * bet
-                self.room.shove.send_packet(player, "account_data", player.get_account_data_copy())
+                self.room.shove.send_packet_to(player, "account_data", player.get_account_data_copy())
 
             # todo should store user data in cache or something, else info is outdated
             # todo bug: if username changes of player, big problemo

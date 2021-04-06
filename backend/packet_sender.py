@@ -3,18 +3,12 @@ from convenience import *
 from user import User, FakeUser
 
 
-class PacketSenderThread(threading.Thread):
-    def __init__(self, shove, sio):
-        super().__init__(name="PSend", daemon=True)
-        self.shove = shove
-        self.sio = sio
+def send_packets_loop(shove, sio: socketio.Server):
+    """Blocking loop for sending packets (that were added to the queue)"""
 
-    def run(self):
-        Log.trace("Ready")
-        send_packets_loop(self.shove, self.sio)
+    # threading.current_thread().setName("PSend")
+    Log.trace("Ready")
 
-
-def send_packets_loop(shove, sio):
     while True:
         users, model, packet, skip, is_response = shove.outgoing_packets_queue.get()
 
@@ -63,9 +57,13 @@ def send_packet(sio, users, model: str, packet: dict, skip, is_response: bool):
 
         sids = [user.sid for user in users]
         for sid in sids:
-            sio.emit(model, packet, to=sid)
+            sio.emit(model, packet, to=sid, callback=sid_received_callback)
 
         Log.debug(f"Sent {'response' if is_response else 'packet'}: '{model}'\n to: {[str(user)[1:-1] for user in users]}\n packet: {packet}")
 
     except Exception as ex:
         Log.fatal(f"UNHANDLED {type(ex).__name__} on packet_sender.send_packet", ex)
+
+
+def sid_received_callback(*args, **kwargs):
+    Log.test(f"CALLBACK args={args}, kwargs={kwargs}")

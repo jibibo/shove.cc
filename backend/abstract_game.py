@@ -9,7 +9,7 @@ class GameState:
 
 
 def game_event_loop(game):
-    threading.current_thread().setName(f"GEHand/{game.room.name}")
+    # threading.current_thread().setName(f"GELoop/{game.room.name}")
     Log.trace("Ready")
 
     while True:
@@ -62,7 +62,7 @@ class AbstractGame(ABC):
     def send_data_packet(self, event: str = None):
         Log.trace(f"Queueing game data packet for all users, event: '{event}'")
         packet = self.get_data(event)
-        self.room.send_packet_all("game_data", packet)
+        self.room.send_packet_to_occupants("game_data", packet)
 
     @abstractmethod
     def try_to_start(self):

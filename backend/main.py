@@ -1,31 +1,21 @@
 import eventlet
-# eventlet.sleep()  # https://stackoverflow.com/questions/43801884/how-to-run-python-socketio-in-thread
-eventlet.monkey_patch()  # required, threading with socketio is ******
-from eventlet import wsgi
+eventlet.monkey_patch()  # required to patch modules for socketio
 
 from convenience import *
+
 from shove import Shove
-from packet_sender import PacketSenderThread, send_packets_loop
-from packet_handler import PacketHandlerThread, handle_packets_loop
-# from ping_users import PingUsersThread
-from tools import cleanup_backend_youtube_cache, clear_frontend_audio_cache
+from packet_sender import send_packets_loop
+from packet_handler import handle_packets_loop
+from user_pinging import ping_users_loop
 
-import socketio
-
-HOST = "0.0.0.0"
-PORT = 777
-
-# how much red text in console todo use logging module for proper logging
-LOG_SOCKETIO = False
-LOG_ENGINEIO = False
-LOG_WSGI = False
-
-# async_mode="threading" is less performant - https://python-socketio.readthedocs.io/en/latest/server.html#standard-threads
-sio = socketio.Server(cors_allowed_origins="*", logger=LOG_SOCKETIO, engineio_logger=LOG_ENGINEIO)
+sio = socketio.Server(
+    cors_allowed_origins="*",
+    logger=LOG_SOCKETIO,
+    engineio_logger=LOG_ENGINEIO
+)
 app = socketio.WSGIApp(sio)
-
-threading.current_thread().setName("Main")
-shove: Union[Shove, None] = None  # Union for editor type hints
+# threading.current_thread().setName("Main")
+shove: Union[Shove, None] = None  # Union -> for editor (pycharm) type hint detection
 
 
 # SocketIO events
@@ -66,31 +56,31 @@ def on_message(sid, model: str, packet: dict):
     shove.incoming_packets_queue.put((user, model, packet, packet_number))
 
 
+# main function
+
 def main():
     print("\n\n\t\"Waazzaaaaaap\" - Michael Stevens\n\n")
 
-    # Log.start_file_writer_thread()
     sio.start_background_task(Log.write_file_loop)
+
     global shove
     shove = Shove(sio)
-    # PacketSenderThread(shove, sio).start()
-    sio.start_background_task(send_packets_loop, shove, sio)
-    # PacketHandlerThread(shove).start()
+    # threading.greenlet.greenlet.getcurrent().setName("test1")
+
+    t = sio.start_background_task(send_packets_loop, shove, sio)
+    Log.test(f"test1: {t}")
     sio.start_background_task(handle_packets_loop, shove)
-    # PingUsersThread(shove).start()  # comment out to disable pinging
 
-    cleanup_backend_youtube_cache()
-    # clear_frontend_audio_cache()
-
-    Log.test(f"threading patched: {eventlet.patcher.is_monkey_patched('threading')}")
-    Log.test(f"threading patched: {eventlet.patcher.is_monkey_patched('thread')}")
-    Log.test(f"threading patched: {eventlet.patcher.is_monkey_patched('socket')}")
+    if PING_USERS_ENABLED:
+        sio.start_background_task(ping_users_loop, shove)
+    if STARTUP_CLEANUP_BACKEND_CACHE:
+        cleanup_backend_youtube_cache()
+    if STARTUP_EMPTY_FRONTEND_CACHE:
+        empty_frontend_cache()
 
     Log.info(f"Running SocketIO on port {PORT}")
 
-    wsgi.server(eventlet.listen((HOST, PORT)), app, log_output=LOG_WSGI)
-    # socketio.run(app, host=HOST, port=PORT, debug=DEBUG, log_output=LOG_SOCKETIO, use_reloader=False)
-    # time.sleep(60)
+    eventlet_wsgi.server(eventlet.listen((HOST, PORT)), app, log_output=LOG_WSGI)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ function sendPacket(model, packet) {
     }
 
     socket.send(model, packet);
-    console.debug("Sent packet", model, packet);
+    console.debug("Sent", model, packet);
 }
 
 export { initSocket, sendPacket, socket };

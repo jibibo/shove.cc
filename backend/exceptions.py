@@ -1,27 +1,17 @@
-_DEFAULT_ERROR = "unknown"
-_DEFAULT_DESCRIPTION = "Unknown error (no description, not good)"
+DEFAULT_ERROR = "unknown"
+DEFAULT_DESCRIPTION = "Unknown error (no description, not good)"
 
 
 # packet handling errors
 
 class PacketHandlingFailed(Exception):
-    error = _DEFAULT_ERROR
-    description = _DEFAULT_DESCRIPTION
+    error = DEFAULT_ERROR
+    description = DEFAULT_DESCRIPTION
 
 
 class AccountNotFound(PacketHandlingFailed):
     error = "account_not_found"
     description = "Account not found"
-
-
-class CommandInvalid(PacketHandlingFailed):
-    error = "command_invalid"
-
-    def __init__(self, description=None):
-        self.description = description or "Invalid command"
-
-    def __str__(self):
-        return str(self.description)
 
 
 class GameActionFailed(PacketHandlingFailed):
@@ -107,8 +97,8 @@ class UserUnauthorized(PacketHandlingFailed):
 # game start errors
 
 class GameStartFailed(Exception):
-    error = _DEFAULT_ERROR
-    description = _DEFAULT_DESCRIPTION
+    error = DEFAULT_ERROR
+    description = DEFAULT_DESCRIPTION
 
 
 class GameRunning(GameStartFailed):
@@ -123,6 +113,16 @@ class RoomEmpty(GameStartFailed):
 
 # other exceptions
 
+class CommandInvalid(Exception):
+    error = "command_invalid"
+
+    def __init__(self, description=None):
+        self.description = description or "Invalid command"
+
+    def __str__(self):
+        return str(self.description)
+
+
 class GameEventInvalid(Exception):
     def __init__(self, description):
         self.description = description or "Game event failed"
@@ -133,3 +133,19 @@ class GameEventInvalid(Exception):
 
 class GameEventNotImplemented(Exception):
     pass
+
+
+class ConvertAudioFailed(Exception):
+    def __init__(self, description):
+        self.description = str(description)
+
+    def __str__(self):
+        return self.description
+
+
+class DownloadAudioFailed(Exception):
+    def __init__(self, description):
+        self.description = str(description)
+
+    def __str__(self):
+        return self.description

@@ -11,25 +11,10 @@ ACCOUNTS = [Account(username=u, password="1", money=m)
             for u, m in [("a", 100000), ("badr", 77777777778), ("jim", 420000)]]
 
 
-# def get_all_accounts():  # should be a generator if many files
-#     return ACCOUNTS
-#
-#     for filename in os.listdir(f"{os.getcwd()}/backend/accounts"):
-#         if os.path.isfile(f"{os.getcwd()}/backend/accounts/{filename}"):
-#             with open(f"{os.getcwd()}/backend/accounts/{filename}", "r") as f:
-#                 try:
-#                     data = json.load(f)
-#                 except BaseException as ex:
-#                     Log.fatal(f"UNHANDLED {type(ex).__name__}", exception=ex)
-#                     continue
-#
-#                 all_account_data.append(data)
-
-
 class Shove:
     def __init__(self, sio):
         Log.trace("Initializing Shove")
-        self.sio = sio
+        self.sio: socketio.Server = sio
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
         self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, is_response)
 
@@ -56,6 +41,7 @@ class Shove:
         else:
             Log.trace("No private access, not initializing Trello client")
 
+        # non-subprocess version of YT DL
         # youtube_dl_options = {
         #     "download_archive": f"{CWD_PATH}/backend/audio_cache/archive.txt",
         #     "verbose": True,
@@ -63,17 +49,16 @@ class Shove:
         #     "prefer_ffmpeg": True,
         # }
         # self.youtube_dl = youtube_dl.YoutubeDL(youtube_dl_options)
-        # shove.youtube_dl.download([f"https://youtube.com/watch?v={youtube_id}"])
+        # self.youtube_dl.download([f"https://youtube.com/watch?v={youtube_id}"])
 
-        self.awaiting_pong_users: List[User] = []
-
-        self.latest_audio = None
+        self.latest_audio_url = None
+        self.latest_audio_author = None
 
         Log.test("Faking play packet")
-        fake_link = "t-_VPRCtiUg"
+        fake_link = "XwxLwG2_Sxk"
         self.incoming_packets_queue.put((FakeUser(), "send_message", {
             "message": f"/play {fake_link}"
-        }, 100000))
+        }, -1))
         Log.trace("Shove initialized")
 
     def add_trello_card(self, name, description=None):
@@ -96,11 +81,6 @@ class Shove:
         user = User(sid)
         self._users.append(user)
         return user
-
-    def disconnect_awaiting_pong_users(self):
-        for user in self.awaiting_pong_users:
-            Log.warn(f"Disconnecting user {user} (didn't pong)")
-            self.on_disconnect(user.sid)
 
     def get_account(self, fail_silently=False, **k_v) -> Account:  # todo support for multiple kwargs
         Log.trace(f"Trying to get account with k_v: {k_v}")
@@ -195,14 +175,14 @@ class Shove:
         if not user:
             raise ValueError("No User object provided")
 
-        self.send_packet(user, "user_connected", {
+        self.send_packet_to(user, "user_connected", {
             "you": True,
             "users": [user.get_account_data_copy()
                       for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         })
 
-        self.send_packet_all_online("user_connected", {
+        self.send_packet_to_everyone("user_connected", {
             "you": False,
             "users": [user.get_account_data_copy()
                       for user in self.get_all_users() if user.is_logged_in()],
@@ -211,7 +191,7 @@ class Shove:
 
         return user
 
-    def on_disconnect(self, sid: str):
+    def on_disconnect(self, sid: str):  # todo disconnect reasons
         user = self.get_user_from_sid(sid=sid)
         if not user:
             raise ValueError(f"shove.on_disconnect: user with SID {sid} does not exist")
@@ -222,20 +202,12 @@ class Shove:
 
         self._users.remove(user)
 
-        self.send_packet_all_online("user_disconnected", {
+        self.send_packet_to_everyone("user_disconnected", {
             "username": user.get_username(),
             "users": [user.get_account_data_copy()
                       for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         })
-
-    def ping_all_users(self):
-        Log.trace("Pinging all users")
-        now = int(time.time() * 1000)
-        for user in self.get_all_users():
-            user.pinged_timestamp = now
-        self.awaiting_pong_users = self.get_all_users()
-        self.send_packet_all_online("ping", {})
 
     def reset_rooms(self, n_rooms=5):
         Log.info("Resetting rooms")
@@ -243,8 +215,8 @@ class Shove:
         for _ in range(n_rooms):
             self._rooms.append(Room(self))
 
-    def send_packet(self, users: Union[User, List[User]], model: str, packet: dict, skip: Union[User, List[User]] = None, is_response=False):
+    def send_packet_to(self, users: Union[User, List[User]], model: str, packet: dict, skip: Union[User, List[User]] = None, is_response=False):
         self.outgoing_packets_queue.put((users, model, packet, skip, is_response))
 
-    def send_packet_all_online(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
-        self.send_packet(self.get_all_users(), model, packet, skip)
+    def send_packet_to_everyone(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
+        self.send_packet_to(self.get_all_users(), model, packet, skip)

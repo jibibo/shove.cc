@@ -2,29 +2,29 @@ from convenience import *
 
 from shove import Shove
 from user import User
-from process_audio import ProcessYoutubeThread, process_youtube_wrapper, simulate_processing
-
-
-class PacketHandlerThread(threading.Thread):
-    """This thread handles one received packet at a time"""
-
-    def __init__(self, shove):
-        super().__init__(name=f"PHand", daemon=True)
-        self.shove = shove
-
-    def run(self):
-        Log.trace("Ready")
-        handle_packets_loop(self.shove)
+from process_audio import process_youtube_ids_audio_task
 
 
 def handle_packets_loop(shove):
+    """Blocking loop for handling packets (that were added to the queue)"""
+
+    # threading.current_thread().setName("PHand")
+    Log.trace("Ready")
+
     while True:
         user, model, packet, packet_number = shove.incoming_packets_queue.get()
-        threading.current_thread().setName(f"PHand/#{packet_number}")
+        # threading.current_thread().setName(f"PHand/#{packet_number}")
         Log.trace(f"Handling packet #{packet_number}")
 
         try:
             response = handle_packet(shove, user, model, packet)
+
+        except CommandInvalid as ex:
+            Log.trace(f"Command invalid: {ex.description}")
+            response = "error", {
+                "error": ex.error,
+                "description": ex.description
+            }
 
         except PacketHandlingFailed as ex:
             Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")
@@ -33,19 +33,14 @@ def handle_packets_loop(shove):
                 "description": ex.description
             }
 
-        # todo command handling should throw a CommandHandlingFailed exception
-
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on packet_handler.handle_packet", ex)
-            response = "error", {
-                "error": "unhandled_exception",
-                "description": "Unhandled backend exception on handling packet (not good)"
-            }
+            response = "error", default_error_packet(description="Handling packet broke (not good")
 
         if response:
             response_model, response_packet = response
             Log.trace(f"Handled packet #{packet_number}, response model: '{response_model}'")
-            shove.send_packet(user, response_model, response_packet, is_response=True)
+            shove.send_packet_to(user, response_model, response_packet, is_response=True)
 
         else:
             Log.trace(f"Handled packet #{packet_number}, no response")
@@ -96,8 +91,8 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if model == "get_audio":
         return "play_audio", {
-            "author": "idk",
-            "url": shove.latest_audio
+            "author": shove.latest_audio_author,
+            "url": shove.latest_audio_url
         }
 
     if model == "get_game_data":
@@ -184,15 +179,10 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         return "log_out", {}
 
     if model == "pong":
-        now = int(time.time() * 1000)
+        now = time.time()
         user.latency = now - user.pinged_timestamp
-        Log.trace(f"Pong received from {user} ({user.pinged_timestamp}), latency: {user.latency} ms")
-
-        if user in shove.awaiting_pong_users:  # just to be sure
-            shove.awaiting_pong_users.remove(user)
-
-        else:
-            Log.warn(f"User {user} not in shove.awaiting_pong_users?")
+        user.last_pong_received = now
+        Log.trace(f"Pong received from {user} ({user.pinged_timestamp}), latency: {round(user.latency * 1000)} ms")
 
         return "latency", {
             "latency": user.latency
@@ -222,7 +212,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
         username = user.get_username()
         Log.trace(f"Message from {username}: '{message}'")
-        shove.send_packet_all_online("message", {
+        shove.send_packet_to_everyone("message", {
             "author": username,
             "text": message
         })
@@ -231,32 +221,51 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     raise PacketInvalid(f"Unknown packet model: '{model}'")
 
 
-COMMAND_ALIASES = {
-    "error": [],
-    "help": [],
-    "money": ["cash"],
-    "play": ["audio"],
-    "trello": [],
-    "youtube": ["yt"],
+COMMANDS = {  # todo make OOP classes for commands in command_handler.py or something
+    "error": {
+        "aliases": [],
+        "usage": "/error"
+    },
+    "help": {
+        "aliases": ["?"],
+        "usage": "/help"
+    },
+    "money": {
+        "aliases": ["cash"],
+        "usage": "/money"
+    },
+    "play": {
+        "aliases": ["audio", "playaudio"],
+        "usage": "/play <url/playlist/ID>"
+    },
+    "trello": {
+        "aliases": [],
+        "splitter": "...",
+        "usage": "/trello <card name> '...' [card description]"
+    },
+    "video": {
+        "aliases": ["yt", "youtube", "playvideo"],
+        "usage": "/video"
+    },
 }
 
 
 def is_command(input_str, match_command):
-    return input_str == match_command or input_str in COMMAND_ALIASES[match_command]
+    return input_str == match_command or input_str in COMMANDS[match_command]
 
 
-def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
+def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:  # todo make OOP
     Log.trace(f"Handling command message: '{message}'")
-    _command_full_real = message[1:].strip()  # ignore the leading "/"
-    _command_full = _command_full_real.lower()
-    _command_split_real = _command_full_real.split()
-    _command_split = _command_full.split()
-    command = _command_split[0] if _command_split else None
-    command_args = _command_split[1:] if len(_command_split) > 1 else []  # /command [arg0, arg1, ...]
-    command_args_real = _command_split_real[1:] if len(_command_split) > 1 else []
+    _message_full_real = message[1:].strip()  # [1:] -> ignore the leading "/"
+    _message_full = _message_full_real.lower()
+    _message_split_real = _message_full_real.split()
+    _message_split = _message_full.split()
+    command = _message_split[0] if _message_split else None
+    command_args = _message_split[1:] if len(_message_split) > 1 else []  # /command [arg0, arg1, ...]
+    command_args_real = _message_split_real[1:] if len(_message_split) > 1 else []
 
     if not command or is_command(command, "help"):
-        return f"{[c for c in COMMAND_ALIASES]}"
+        return f"{[c for c in COMMANDS.keys()]}"
 
     if is_command(command, "error"):  # raises an error to test error handling and logging
         raise Exception("/error was executed, all good")
@@ -266,15 +275,14 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
             raise UserNotLoggedIn
 
         user.get_account()["money"] += 9e15
-        shove.send_packet(user, "account_data", user.get_account_data_copy())
+        shove.send_packet_to(user, "account_data", user.get_account_data_copy())
         return "Money added"
 
     if is_command(command, "trello"):
         if not PRIVATE_ACCESS:  # if backend host doesn't have access to the Shove Trello account
             raise NoPrivateAccess
 
-        splitter = "..."
-        trello_args = " ".join(command_args_real).split(splitter)
+        trello_args = " ".join(command_args_real).split(COMMANDS["trello"]["splitter"])
         if len(trello_args) == 1:
             name, description = trello_args[0], None
 
@@ -282,31 +290,36 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
             name, description = trello_args
 
         else:
-            raise CommandInvalid(f"Invalid arguments: /trello <title> ['{splitter}' description]")
+            raise CommandInvalid(f"Invalid arguments, usage: {COMMANDS['trello']['usage']}")
 
         if not name:
-            raise CommandInvalid(f"No card name: /trello <title> ['{splitter}' description]")
+            raise CommandInvalid(f"No card name, usage: {COMMANDS['trello']['usage']}")
 
         shove.add_trello_card(name, description)
         return "Card added"
 
     if is_command(command, "play"):
         if not command_args:
-            raise CommandInvalid("No link provided")
+            raise CommandInvalid(f"No link provided, usage: {COMMANDS['play']['usage']}")
 
-        check_for_id = command_args_real[0]
+        check_for_id_string = command_args_real[0]
 
         # first check if playlist is given, then queue all of those
-        parsed = urlparse.urlparse(check_for_id)
+        parsed = urlparse.urlparse(check_for_id_string)
         if "list" in urlparse.parse_qs(parsed.query):
             playlist_id = urlparse.parse_qs(parsed.query)["list"][0]
-            max_results = 5  # max 50
-            url = f"https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults={min(max_results, 50)}&playlistId={playlist_id}&key={YOUTUBE_API_KEY}"
-            Log.trace(f"Requesting playlist items from YT API (requesting {max_results}, max 50)")
-            response = requests.get(url, timeout=5).json()
+            url = f"https://youtube.googleapis.com/youtube/v3/playlistItems"
+            params = {  # url parameters, e.g. "?key=XXXXX&part=YYYYY"
+                "key": YOUTUBE_API_KEY,
+                "part": "snippet",
+                # "maxResults": 5,  # api returns 50 at most per request
+                "playlistId": playlist_id
+            }
+            Log.trace(f"Requesting playlist items from YT API")
+            response = requests.get(url, params=params, timeout=5).json()
 
             if not response:
-                raise PacketHandlingFailed("YT API request broke")
+                raise CommandInvalid("No response from YT API (not good)")
 
             Log.trace(f"Got response from YT API, items in playlist: {len(response['items'])}")
             youtube_ids = []
@@ -314,29 +327,31 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
                 youtube_ids.append(item["snippet"]["resourceId"]["videoId"])
 
             if not youtube_ids:
-                raise CommandInvalid("No videos found in given playlist")
+                raise CommandInvalid(f"No videos in given playlist, usage: {COMMANDS['play']['usage']}")
 
         # check if user just dropped the 11-char YT id
-        elif len(check_for_id) == 11:
-            youtube_ids = [check_for_id]
-            Log.trace(f"Got YouTube ID directly: {youtube_ids}")
+        elif len(check_for_id_string) == 11:
+            youtube_ids = [check_for_id_string]
 
         # regex magic to find the id in some url
         else:
-            match = re.search(r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})", check_for_id)
+            match = re.search(
+                r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})",
+                check_for_id_string
+            )
+
             if not match:
-                raise CommandInvalid("Couldn't find the video ID in given link")
+                raise CommandInvalid(f"Couldn't find a video ID in the given link, usage: {COMMANDS['play']['usage']}")
 
             youtube_ids = [match.group("id")]
-            Log.trace(f"Got YouTube ID through regex: {youtube_ids}")
+            Log.trace("Found ID using regex")
 
-        # ProcessYoutubeThread(shove, youtube_id).start()
-        # shove.sio.start_background_task(simulate_processing, 5)
-        shove.sio.start_background_task(process_youtube_wrapper, shove, youtube_ids)
+        Log.trace(f"Got YouTube ID(s): {youtube_ids}")
+        shove.sio.start_background_task(process_youtube_ids_audio_task, shove, youtube_ids, user)
 
         return "Success"
 
-    if is_command(command, "youtube"):
+    if is_command(command, "video"):
         raise PacketNotImplemented  # disable command
 
         # if not command_args:
@@ -355,7 +370,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         #     Log.trace(f"Got YouTube ID through regex: {youtube_id}")
         #
         # content_url = f"https://www.googleapis.com/youtube/v3/videos?key=AIzaSyBJhGWLfUiiGydCuKOM06GaR5Tw3sUJW14&id=TnCINj0Miy0&part=snippet,contentDetails,statistics,status"
-        # # todo get request takes really long time?
+        # # get request takes really long time? -> use ipv4
         # # content_url = "https://www.google.com"
         # Log.trace("Fetching video info from Google API")
         # response = requests.get(content_url, stream=True, timeout=1)

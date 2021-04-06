@@ -44,13 +44,13 @@ function AudioPlayer() {
 
         socket.on("play_audio", (packet) => {
             console.debug("> play_audio", packet);
-            setNewAudio(packet.url);
+            loadNewAudio(packet.url);
         });
 
         // socket.on audio_data, loop enable/disable, play/pause, new url (with author)
     }
 
-    const setNewAudio = (url) => {
+    const loadNewAudio = (url) => {
         setSource(url);
         // if (audioRef.current) {
         // how does this work
@@ -107,7 +107,7 @@ function AudioPlayer() {
     function onPlay(e) {
         console.log("play", e);
         setPlaying(true);
-        // make sure vole is correct
+        // make sure html element's volume is correct
         audioRef.current.volume = volume;
     }
 
@@ -149,27 +149,6 @@ function AudioPlayer() {
                 valueLabelDisplay="auto"
                 valueLabelFormat={(value) => percentage(value)}
             />
-            <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => setNewAudio("audio/bOMc41Csql4.mp3")}
-            >
-                Sim packet 1
-            </Button>
-            <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => setNewAudio("audio/MCZVpO3qE10.mp3")}
-            >
-                Sim packet 2
-            </Button>
-            <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => setNewAudio("audio/i1D8cZMCi9A.mp3")}
-            >
-                Sim packet 3
-            </Button>
             <Button
                 variant="outlined"
                 color="secondary"

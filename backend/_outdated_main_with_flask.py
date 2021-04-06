@@ -8,7 +8,7 @@ from convenience import *
 from shove import Shove
 from packet_sender import PacketSenderThread
 from packet_handler import PacketHandlerThread
-from ping_users import PingUsersThread
+from user_pinging import PingUsersThread
 from tools import cleanup_backend_ÿoutube_cache
 
 
