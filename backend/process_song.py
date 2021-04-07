@@ -22,9 +22,9 @@ def process_song_task(shove, youtube_id, user):
 
         try:
             duration, name = extract_and_check_song_info(youtube_id)  # extract video information and check duration
-        except ExtractSongInformationFailed as ex:
-            Log.error(f"Song info extraction failed: {ex}", ex)
-            shove.send_packet_to(user, "error", error_packet("Song info extraction failed"))
+        except ExtractSongInformationFailed as ex:  # these errors should not contain sensitive information!
+            Log.trace(f"Song info extraction failed: {ex}")
+            shove.send_packet_to(user, "error", error_packet(str(ex)))
             return
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on extract_and_check_song_info", ex)
@@ -89,17 +89,17 @@ def extract_and_check_song_info(youtube_id) -> tuple:
     Log.trace(f"YT API response: {response}")
 
     if not response:
-        raise ExtractSongInformationFailed("No response from YT API (not good)")
+        raise ExtractSongInformationFailed("No response from YT API")
 
     if not response["items"]:
-        raise ExtractSongInformationFailed("No songs found, invalid ID?")
+        raise ExtractSongInformationFailed("No songs found - invalid ID?")
 
     song = response["items"][0]
     name = song["snippet"]["title"]
     duration = isodate.parse_duration(song["contentDetails"]["duration"]).total_seconds()  # https://stackoverflow.com/a/16743442/13216113
 
-    if duration > 300:  # todo test
-        raise ExtractSongInformationFailed("Song duration is more than 5 minutes")
+    if duration > SONG_MAX_DURATION:
+        raise ExtractSongInformationFailed(f"Song duration exceeds maximum ({SONG_MAX_DURATION} s)")
 
     return duration, name
 
@@ -153,7 +153,7 @@ def convert_youtube_audio(youtube_id) -> float:
             break
 
     if not filename:
-        raise ConvertSongFailed("Song file missing from backend cache dir")
+        raise ConvertSongFailed("Song file missing from backend cache")
 
     if filename.endswith(".mp3"):  # no need to convert to mp3, done todo doesn't return a converting time
         Log.trace("Downloaded file in backend cache is already .mp3, not converting")
