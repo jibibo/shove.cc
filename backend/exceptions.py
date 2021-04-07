@@ -7,8 +7,8 @@ class PacketHandlingFailed(Exception):
     description = DEFAULT_DESCRIPTION
 
 
-class AccountNotFound(PacketHandlingFailed):
-    description = "Account not found"
+class DatabaseEntryNotFound(PacketHandlingFailed):
+    description = "Database entry not found"
 
 
 class GameActionFailed(PacketHandlingFailed):
@@ -33,10 +33,6 @@ class PacketInvalid(PacketHandlingFailed):
 
     def __str__(self):
         return str(self.description)
-
-
-class PacketNotImplemented(PacketHandlingFailed):
-    description = "Packet not implemented (yet)"
 
 
 class PasswordInvalid(PacketHandlingFailed):
@@ -89,6 +85,32 @@ class RoomEmpty(GameStartFailed):
     description = "Room is empty"
 
 
+# song processing
+
+class ConvertSongFailed(Exception):
+    def __init__(self, description):
+        self.description = str(description)
+
+    def __str__(self):
+        return self.description
+
+
+class DownloadSongFailed(Exception):
+    def __init__(self, description):
+        self.description = str(description)
+
+    def __str__(self):
+        return self.description
+
+
+class ExtractSongInformationFailed(Exception):
+    def __init__(self, description):
+        self.description = str(description)
+
+    def __str__(self):
+        return self.description
+
+
 # other exceptions
 
 class CommandInvalid(Exception):
@@ -111,17 +133,3 @@ class GameEventNotImplemented(Exception):
     pass
 
 
-class ConvertAudioFailed(Exception):
-    def __init__(self, description):
-        self.description = str(description)
-
-    def __str__(self):
-        return self.description
-
-
-class DownloadAudioFailed(Exception):
-    def __init__(self, description):
-        self.description = str(description)
-
-    def __str__(self):
-        return self.description

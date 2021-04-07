@@ -28,7 +28,7 @@ def send_packet(sio, users, model: str, packet: dict, skip, is_response: bool):
             raise ValueError(f"'users' does not contain 'User' object(s), but: {type(users[0])}")
 
     elif type(users) == FakeUser:
-        Log.trace("Fake user provided, not sending packet")
+        Log.trace(f"Fake user provided, not sending packet, model: '{model}'")
         return
 
     else:

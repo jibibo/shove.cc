@@ -1,21 +1,20 @@
 from convenience import *
 
+from database import Accounts, Song, Songs
 from user import User, FakeUser
-from account import Account
-from song import Song
 from room import Room
 
 from games.coinflip import Coinflip
 
 
-_ACCOUNTS = [Account(username=u, password="1", money=m)
-             for u, m in [("a", 100000), ("badr", 77777777778), ("jim", 420000)]]
+# _ACCOUNTS = [Account(username=u, password="1", money=m)
+#              for u, m in [("a", 100000), ("badr", 77777777778), ("jim", 420000)]]
 
-_SONGS = []
-with open(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/archive.txt") as f:
-    for _line in f.readlines():
-        _mp3 = MP3(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{_line.split()[1]}.mp3")
-        _SONGS.append(Song(_line.split()[0], _line.split()[1], None, _mp3.info.length, None, None))
+# _SONGS = []
+# with open(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/archive.txt") as f:
+#     for _line in f.readlines():
+#         _mp3 = MP3(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{_line.split()[1]}.mp3")
+#         _SONGS.append(Song(_line.split()[0], _line.split()[1], None, _mp3.info.length, None, None))
 
 
 class Shove:
@@ -30,6 +29,9 @@ class Shove:
         self._next_packet_number = 0
         self._users: List[User] = []
         self._rooms: List[Room] = []
+
+        self.accounts = Accounts()
+        self.songs = Songs()
 
         self.reset_rooms(2)
         # self.rooms[0].add_bot(3)
@@ -68,10 +70,6 @@ class Shove:
         }, 0))
         Log.trace("Shove initialized")
 
-    @staticmethod
-    def add_song(song_data: Song):
-        _SONGS.append(song_data)
-
     def add_trello_card(self, name, description=None):
         name = name.strip()
         if description is not None:
@@ -80,9 +78,6 @@ class Shove:
         Log.trace(f"Adding card to Trello card list, name = '{name}', description = '{description}'")
         self._trello_card_list.add_card(name=name, desc=description, position="top")
         Log.trace(f"Added card")
-
-    def create_random_account(self):
-        return
 
     def create_new_user_from_sid(self, sid: str):
         sids = [user.sid for user in self._users]
@@ -93,36 +88,11 @@ class Shove:
         self._users.append(user)
         return user
 
-    def get_account(self, fail_silently=False, **k_v) -> Account:  # todo support for multiple kwargs
-        Log.trace(f"Trying to get account with k_v: {k_v}")
-
-        if len(k_v) != 1:
-            raise ValueError(f"Invalid k_v length: {len(k_v)}")
-
-        k, v = list(k_v.items())[0]
-        for account in self.get_all_accounts():
-            if account[k] == v:
-                Log.trace(f"Account match with k_v: {account}")
-                return account
-
-        if fail_silently:
-            Log.trace(f"No account matched with k_v: {k_v}")
-        else:
-            raise AccountNotFound
-
     def get_room_names(self) -> List[str]:
         return [room.name for room in self.get_rooms()]
 
     def get_rooms(self) -> List[Room]:
         return self._rooms.copy()
-
-    @staticmethod
-    def get_all_accounts() -> List[Account]:
-        return _ACCOUNTS.copy()
-
-    @staticmethod
-    def get_all_songs() -> List[Song]:
-        return _SONGS.copy()
 
     def get_all_users(self) -> List[User]:
         return self._users.copy()
@@ -161,32 +131,7 @@ class Shove:
 
         Log.trace("User is not in a room")
 
-    @staticmethod
-    def get_song_by_id(song_id: str) -> Song:
-        for song in _SONGS:
-            if song.song_id == song_id:
-                return song
-
-        Log.warn(f"Song with ID {song_id} not found")
-
-    def get_song_count(self) -> int:
-        return len(self.get_all_songs())
-
-    def get_user(self, **k_v) -> User:
-        Log.trace(f"Getting user with k_v: {k_v}")
-
-        if len(k_v) != 1:
-            raise ValueError(f"Invalid k_v length: {len(k_v)}")
-
-        k, v = list(k_v.items())[0]
-        for user in self.get_all_users():
-            if user.is_logged_in() and user.get_account_data_copy()[k] == v:
-                Log.trace(f"User matched: {user}")
-                return user
-
-        Log.trace(f"No user matched with k_v: {k_v}")
-
-    def get_user_from_sid(self, sid) -> User:
+    def get_user_by_sid(self, sid) -> User:
         for user in self.get_all_users():
             if user.sid == sid:
                 return user
@@ -217,11 +162,7 @@ class Shove:
 
         return user
 
-    def on_disconnect(self, sid: str):  # todo disconnect reasons
-        user = self.get_user_from_sid(sid=sid)
-        if not user:
-            raise ValueError(f"shove.on_disconnect: user with SID {sid} does not exist")
-
+    def on_disconnect(self, user: User):  # todo disconnect reasons
         room = self.get_room_of_user(user)
         if room:
             room.user_leave(user)

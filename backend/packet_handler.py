@@ -22,20 +22,24 @@ def handle_packets_loop(shove):
         except CommandInvalid as ex:
             Log.trace(f"Command invalid: {ex.description}")
             response = "error", {
-                "error": ex.error,
                 "description": ex.description
             }
 
         except PacketHandlingFailed as ex:
             Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")
             response = "error", {
-                "error": ex.error,
                 "description": ex.description
+            }
+
+        except NotImplementedError as ex:
+            Log.error("Not implemented", ex)
+            response = "error", {
+                "description": "Not implemented"
             }
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_packet", ex)
-            response = "error", default_error_packet(description="Handling packet broke (not good")
+            response = "error", error_packet(description="Handling packet broke (not good")
 
         if response:
             response_model, response_packet = response
@@ -78,7 +82,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     if model == "get_account_data":
         if "username" in packet:
             username = packet["username"].strip().lower()
-            account_data = shove.get_account(username=username).get_data_copy()
+            account_data = shove.accounts.find_single(username=username).get_data_copy()
 
         elif user.is_logged_in():
             account_data = user.get_account_data_copy()
@@ -90,19 +94,20 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if model == "get_account_list":
         return "account_list", {
-            "account_list": [account.get_data_copy() for account in shove.get_all_accounts()]
+            "account_list": [account.get_data_copy() for account in shove.accounts.get_entries()]
         }
 
     if model == "get_song":
-        Log.trace(f"Song count: {shove.get_song_count()}")
-        random_song = random.choice(shove.get_all_songs())
-        Log.trace(f"Random song: {random_song}")
-        random_song.increment_plays()
+        Log.trace(f"Song count: {shove.songs.get_song_count()}")
+        song = random.choice(shove.songs.get_entries())
+        Log.trace(f"Random song: {song}")
+        song.copy_to_frontend_if_absent()
+        song.increment_plays()
         return "play_song", {
             "author": shove.latest_song_author,
-            "name": random_song.name,
-            "plays": random_song.plays,
-            "url": random_song.url
+            "name": song["name"],
+            "plays": song["plays"],
+            "url": song.get_url()
         }
 
     if model == "get_game_data":
@@ -117,7 +122,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         return "game_data", room.game.get_data()
 
     if model == "get_room_data":
-        raise PacketNotImplemented
+        raise NotImplementedError
 
     if model == "get_room_list":  # send a list of dicts with each room's data
         return "room_list", {
@@ -163,13 +168,13 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     if model == "log_in":
         username = packet["username"].strip().lower()
         password = packet["password"]
-        account = shove.get_account(username=username)
+        account = shove.accounts.find_single(username=username)
 
         if account["password"] != password:
             # raise PasswordInvalid  # comment out to disable password checking
             pass
 
-        user.log_in(account)
+        user.log_in_as(account)
 
         return "log_in", {
             "account_data": user.get_account_data_copy()
@@ -199,7 +204,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         }
 
     if model == "register":
-        raise PacketNotImplemented
+        raise NotImplementedError
 
     if model == "send_message":
         message: str = packet["message"].strip()
@@ -246,7 +251,7 @@ COMMANDS = {  # todo make OOP classes for commands in command_handler.py or some
     },
     "play": {
         "aliases": ["audio", "music", "song"],
-        "usage": "/play <url/playlist/ID>"
+        "usage": "/play <url/ID>"
     },
     "trello": {
         "aliases": [],
@@ -310,39 +315,9 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:  # 
 
         check_for_id_string = command_args_real[0]
 
-        # first check if playlist is given, then queue all of those
-        parsed = urlparse.urlparse(check_for_id_string)
-        if "list" in urlparse.parse_qs(parsed.query):
-            playlist_id = urlparse.parse_qs(parsed.query)["list"][0]
-            url = f"https://youtube.googleapis.com/youtube/v3/playlistItems"
-            params = {  # url parameters, e.g. "?key=XXXXX&part=YYYYY"
-                "key": YOUTUBE_API_KEY,
-                "part": "snippet",
-                # "maxResults": 5,  # api returns 50 at most per request
-                "playlistId": playlist_id
-            }
-            Log.trace(f"Requesting playlist items from YT API")
-            response = requests.get(url, params=params, timeout=5).json()
-
-            if not response:
-                raise CommandInvalid("No response from YT API (not good)")
-
-            if not len(response['items']) >= 1:
-                raise CommandInvalid("Playlist didn't contain any items")
-
-            Log.trace(f"Got response from YT API, items in playlist: {len(response['items'])}, first item: {response['items'][0]}")
-            youtube_ids = []
-            names = []
-            for item in response["items"]:
-                youtube_ids.append(item["snippet"]["resourceId"]["videoId"])
-                names.append(item["snippet"]["title"])
-
-        # check if user just dropped the 11-char YT id
-        elif len(check_for_id_string) == 11:
-            youtube_ids = [check_for_id_string]
-
-            # todo get video title (song name)
-            names = [None]
+        # check if user dropped an 11-char YT id
+        if len(check_for_id_string) == 11:
+            youtube_id = check_for_id_string
 
         # regex magic to find the id in some url
         else:
@@ -357,13 +332,8 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:  # 
             youtube_id = match.group("id")
             Log.trace(f"Found ID using regex")
 
-            # todo get video title
-
-            youtube_ids = [youtube_id]
-            names = [None]
-
-        Log.trace(f"Got YouTube ID(s): {youtube_ids}, names: {names}")
-        eventlet.spawn(process_song_task, shove, youtube_ids, names, user)
+        Log.trace(f"Got YouTube ID: {youtube_id}")
+        eventlet.spawn(process_song_task, shove, youtube_id, user)
 
         return "Success"
 

@@ -18,7 +18,7 @@ def ping_users_loop(shove):
         for user in all_users:  # check who needs to get disconnected for ping timeout
             if user.last_pong_received + PONG_DELAY_BEFORE_TIMEOUT <= now:
                 Log.warn(f"Disconnecting user {user} (didn't pong)")
-                shove.on_disconnect(user.sid)
+                shove.on_disconnect(user)
 
         if time_since_last_ping == PING_USERS_INTERVAL:
             Log.trace("Pinging all users")

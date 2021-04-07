@@ -31,6 +31,7 @@ from eventlet.green import subprocess  # https://stackoverflow.com/a/34649180/13
 from trello import TrelloClient
 import playsound
 import socketio
+import isodate
 from mutagen.mp3 import MP3
 import colorama
 from colorama import Fore, Style
@@ -98,7 +99,7 @@ def simulate_intensive_function(seconds):
     Log.test(f"Done simulating ({seconds} s)")
 
 
-def default_error_packet(error=None, description=None) -> dict:
+def error_packet(description=None) -> dict:
     """Create a default error packet with no useful information whatsoever"""
 
     return {

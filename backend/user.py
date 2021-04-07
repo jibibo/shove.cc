@@ -1,6 +1,6 @@
 from convenience import *
 
-from account import Account
+from database import Account
 
 
 class User:
@@ -29,14 +29,14 @@ class User:
     def get_account(self):
         return self._account
 
-    def get_account_data_copy(self, filter_sensitive=True) -> dict:
+    def get_account_data_copy(self, filter_keys=True) -> dict:
         if self._account:
-            return self._account.get_data_copy(filter_sensitive=filter_sensitive)
+            return self._account.get_data_copy(filter_keys)
 
-    def get_game_data_copy(self, filter_sensitive=True) -> dict:
+    def get_game_data_copy(self, filter_keys=True) -> dict:
         if self._game_data:
             game_data = self._game_data.copy()
-            if filter_sensitive:
+            if filter_keys:
                 for key in []:
                     game_data[key] = "<filtered>"
 
@@ -60,7 +60,7 @@ class User:
 
         return False
 
-    def log_in(self, account: Account):
+    def log_in_as(self, account: Account):
         self._account = account
         Log.info(f"{self} logged in")
         return

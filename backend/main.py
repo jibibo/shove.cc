@@ -37,13 +37,13 @@ def on_connect(sid, environ):
 @sio.on("disconnect")
 def on_disconnect(sid):
     set_greenthread_name("sio/on_disconnect")
-    user = shove.get_user_from_sid(sid=sid)
+    user = shove.get_user_by_sid(sid)
     if not user:
         Log.warn(f"socketio.on('disconnect'): User object not found/already disconnected, ignoring call")
         return
 
     Log.trace(f"Handling disconnect of {user}")
-    shove.on_disconnect(sid)
+    shove.on_disconnect(user)
     Log.info(f"{user} disconnected")
 
 
@@ -51,7 +51,7 @@ def on_disconnect(sid):
 @sio.on("message")
 def on_message(sid, model: str, packet: dict):
     set_greenthread_name("sio/on_message")
-    user = shove.get_user_from_sid(sid=sid)
+    user = shove.get_user_by_sid(sid)
     if not user:
         Log.warn(f"socketio.on('message') (model '{model}'): User object not found/already disconnected, sending no_pong packet to SID {sid}")
         sio.emit("error", {
