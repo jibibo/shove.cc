@@ -1,11 +1,12 @@
 .idea/
 __pycache__/
 
-logs/
-test/
+/backend/audio_cache/
+/backend/databases/
+/backend/logs/
+/backend/test/
 private.py
-backend/audio_cache/
 
-node_modules/
-avatars/
-frontend/public/audio
+/frontend/node_modules/
+/frontend/public/audio/
+/frontend/public/avatars/

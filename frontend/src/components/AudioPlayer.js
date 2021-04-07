@@ -61,6 +61,16 @@ function AudioPlayer() {
             setHasLiked(packet.you.liked);
         });
 
+        socket.on("log_in", () => {
+            sendPacket("song_rating", {});
+        });
+
+        socket.on("log_out", () => {
+            console.debug("> log_out");
+            setHasDisliked(false);
+            setHasLiked(false);
+        });
+
         // socket.on audio_data, loop enable/disable, play/pause, new url (with author)
     }
 
@@ -104,11 +114,11 @@ function AudioPlayer() {
     // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio#events
 
     function onAbort() {
-        console.log("abort");
+        // console.log("abort");
     }
 
     function onCanPlay() {
-        console.log("canplay");
+        // console.log("canplay");
     }
 
     function onCanPlayThrough() {
@@ -122,11 +132,11 @@ function AudioPlayer() {
     }
 
     function onEmptied() {
-        console.log("emptied");
+        // console.log("emptied");
     }
 
     function onEnded() {
-        console.log("ended");
+        // console.log("ended");
     }
 
     function onError() {
@@ -142,31 +152,31 @@ function AudioPlayer() {
     }
 
     function onLoadStart() {
-        console.log("loadstart");
+        // console.log("loadstart");
     }
 
     function onPause() {
-        console.log("pause");
+        // console.log("pause");
         setPlaying(false);
     }
 
     function onPlay() {
-        console.log("play");
+        // console.log("play");
         setPlaying(true);
         // make sure html element's volume is correct
         audioRef.current.volume = volume;
     }
 
     function onProgress() {
-        console.log("progress");
+        // console.log("progress");
     }
 
     function onStalled() {
-        console.log("stalled");
+        // console.log("stalled");
     }
 
     function onSuspend() {
-        console.log("suspend");
+        // console.log("suspend");
     }
 
     function onTimeUpdate(e) {
@@ -175,7 +185,7 @@ function AudioPlayer() {
     }
 
     function onWaiting() {
-        console.log("waiting");
+        // console.log("waiting");
     }
 
     return (

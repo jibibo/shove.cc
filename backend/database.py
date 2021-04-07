@@ -60,6 +60,9 @@ class AbstractDatabase(ABC):
     def get_entries_from_json(self, entries_as_json) -> set:
         pass
 
+    def get_sorted(self, key, reverse=False) -> list:
+        return sorted(self._entries, key=key, reverse=reverse)
+
     def read_from_file(self) -> set:
         """Read and load the DB's entries from file. Called once upon DB creation."""
 
@@ -104,9 +107,6 @@ class AbstractDatabaseEntry(ABC):
         except KeyError as ex:
             Log.error(f"Invalid key for DB entry type {self._type_name}: {key}", ex)
 
-    def __repr__(self):
-        return f"<Database entry of type {self._type_name}: {self}>"
-
     def __setitem__(self, key, value):
         try:
             old = self._data[key]
@@ -116,9 +116,6 @@ class AbstractDatabaseEntry(ABC):
 
         except KeyError as ex:
             Log.error(f"Invalid key for DB entry type {self._type_name}: {key}", ex)
-
-    def __str__(self):
-        return str(self._data)
 
     def get_data_copy(self, filter_keys: bool = True) -> dict:
         data = self._data.copy()
@@ -138,7 +135,7 @@ class AbstractDatabaseEntry(ABC):
             if self[k] != v:
                 return False
 
-        Log.trace(f"{repr(self)} matched with kwargs")
+        Log.trace(f"{self} matched with kwargs")
         return True
 
     def trigger_db_write(self):
@@ -168,6 +165,7 @@ class Accounts(AbstractDatabase):
         for entry_as_json in entries_as_json:
             entries.add(Account(self, **entry_as_json))
 
+        Log.test(entries)
         return entries
 
     def create_random_account(self):  # todo implement
@@ -268,12 +266,7 @@ class Song(AbstractDatabaseEntry):
         shove.latest_song = self
         shove.latest_song_author = author
 
-        for user in shove.get_all_users():
-            shove.send_packet_to(user, "song_rating", {
-                "dislikes": self.get_dislike_count(),
-                "likes": self.get_like_count(),
-                "you": self.get_rating_of(user.get_username())
-            })
+        self.send_rating_packet(shove)
 
         shove.send_packet_to_everyone("play_song", {
             "author": shove.latest_song_author.get_username(),
@@ -281,6 +274,20 @@ class Song(AbstractDatabaseEntry):
             "name": self["name"],
             "plays": self["plays"],
         })
+
+    def send_rating_packet(self, shove):
+        """Send a packet containing the current song's ratings.
+        Called when the rating has been updated or a new song started playing."""
+
+        dislike_count = self.get_dislike_count()
+        like_count = self.get_like_count()
+
+        for user in shove.get_all_users():
+            shove.send_packet_to(user, "song_rating", {
+                "dislikes": dislike_count,
+                "likes": like_count,
+                "you": self.get_rating_of(user.get_username())
+            })
 
     def toggle_dislike(self, username) -> bool:
         if username in self["dislikes"]:  # if user disliked, remove the dislike

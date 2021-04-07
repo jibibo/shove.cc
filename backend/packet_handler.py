@@ -94,7 +94,8 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if model == "get_account_list":
         return "account_list", {
-            "account_list": [account.get_data_copy() for account in shove.accounts.get_entries()]
+            "account_list": [account.get_data_copy()
+                             for account in shove.accounts.get_sorted(key=lambda a: a["username"])]
         }
 
     if model == "get_song":
@@ -213,12 +214,9 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             raise PacketInvalid("Invalid rate song action")
 
         song.trigger_db_write()
+        song.send_rating_packet(shove)
 
-        return "song_rating", {
-            "dislikes": song.get_dislike_count(),
-            "likes": song.get_like_count(),
-            "you": song.get_rating_of(username)
-        }
+        return
 
     if model == "register":
         raise NotImplementedError
@@ -249,6 +247,17 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             "text": message
         })
         return
+
+    if model == "song_rating":
+        if not shove.latest_song:
+            Log.trace("No song playing, not sending rating")
+            return
+
+        return "song_rating", {
+            "dislikes": shove.latest_song.get_dislike_count(),
+            "likes": shove.latest_song.get_like_count(),
+            "you": shove.latest_song.get_rating_of(user.get_username())
+        }
 
     raise PacketInvalid(f"Unknown packet model: '{model}'")
 
