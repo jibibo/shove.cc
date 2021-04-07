@@ -6,12 +6,12 @@ from convenience import *
 class AbstractDatabase(ABC):
     def __init__(self, filename):
         self._filename = filename
-        self._file_abs = f"{CWD_PATH}/backend/databases/{filename}"
+        self._file_abs = f"{CWD_PATH}/{DATABASES_DIRECTORY}/{filename}"
         self._entries = set()
 
         self.read_from_file()
 
-        Log.trace(f"Created DB for filename {filename}")
+        Log.trace(f"Created DB for filename: {filename}")
 
     def add_entry(self, entry):
         self._entries.add(entry)
@@ -88,9 +88,9 @@ class AbstractDatabaseEntry(ABC):
         self._type_name = type(self).__name__
         self._data = default_data
 
-        for k in kwargs:
-            if k not in default_data:
-                raise ValueError(f"Invalid key for DB entry type {self._type_name}: {k}")
+        for key in kwargs:
+            if key not in default_data:
+                raise ValueError(f"Invalid key '{key}' for: {self}")
 
         self._data.update(kwargs)
 
@@ -98,14 +98,14 @@ class AbstractDatabaseEntry(ABC):
         database.add_entry(self)
         self.trigger_db_write()  # write db to file if new database entry gets created
 
-        Log.trace(f"Created DB entry of type {self._type_name}: {self}")
+        Log.trace(f"Created DB entry: {self}")
 
     def __getitem__(self, key):
         try:
             return self._data[key]
 
         except KeyError as ex:
-            Log.error(f"Invalid key for DB entry type {self._type_name}: {key}", ex)
+            Log.error(f"Invalid key '{key}' for: {self}", ex)
 
     def __setitem__(self, key, value):
         try:
@@ -115,7 +115,7 @@ class AbstractDatabaseEntry(ABC):
             return old
 
         except KeyError as ex:
-            Log.error(f"Invalid key for DB entry type {self._type_name}: {key}", ex)
+            Log.error(f"Invalid key '{key}' for: {self}", ex)
 
     def get_data_copy(self, filter_keys: bool = True) -> dict:
         data = self._data.copy()
@@ -165,7 +165,6 @@ class Accounts(AbstractDatabase):
         for entry_as_json in entries_as_json:
             entries.add(Account(self, **entry_as_json))
 
-        Log.test(entries)
         return entries
 
     def create_random_account(self):  # todo implement

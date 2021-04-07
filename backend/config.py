@@ -28,9 +28,10 @@ CONSOLE_LOGGING_LEVEL = "TRACE"
 CONSOLE_LOGGING_LENGTH_CUTOFF = 800
 
 
-# Audio caches
+# Directories
 BACKEND_AUDIO_CACHE = "backend/audio_cache"
 FRONTEND_AUDIO_CACHE = "frontend/public/audio"
+DATABASES_DIRECTORY = "backend/databases"
 
 
 # Sound notifications

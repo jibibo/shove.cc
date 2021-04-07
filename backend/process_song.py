@@ -15,10 +15,10 @@ def process_song_task(shove, youtube_id, user):
     # done
 
     try:
-        song = shove.songs.find_single(song_id=youtube_id)
+        song = shove.songs.find_single(song_id=youtube_id)  # if the song exists in the database, we're done here
 
-    except DatabaseEntryNotFound:
-        Log.trace("DB entry missing, downloading and converting")
+    except DatabaseEntryNotFound:  # song not in database (yet)
+        Log.trace("DB entry missing - downloading and converting")
 
         try:
             duration, name = extract_and_check_song_info(youtube_id)  # extract video information and check duration
@@ -55,7 +55,7 @@ def process_song_task(shove, youtube_id, user):
 
         backend_audio_file = f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{youtube_id}.mp3"
         if not os.path.exists(backend_audio_file):
-            Log.error("Backend audio file is missing?")
+            Log.fatal("Backend audio file is missing?")  # shouldn't ever happen
             return
 
         song = Song(
@@ -69,7 +69,7 @@ def process_song_task(shove, youtube_id, user):
         )
 
     else:
-        Log.test("DB entry found")
+        Log.trace("DB entry found")
 
     song.play(shove, user)
 
