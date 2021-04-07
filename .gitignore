@@ -1,9 +1,11 @@
 .idea/
+__pycache__/
+
 logs/
 test/
-__pycache__/
-node_modules/
 private.py
+backend/audio_cache/
+
+node_modules/
 avatars/
-youtube_cache/
 frontend/public/audio

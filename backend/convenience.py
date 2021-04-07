@@ -31,6 +31,7 @@ from eventlet.green import subprocess  # https://stackoverflow.com/a/34649180/13
 from trello import TrelloClient
 import playsound
 import socketio
+from mutagen.mp3 import MP3
 import colorama
 from colorama import Fore, Style
 # import googleapiclient
@@ -70,9 +71,9 @@ def cleanup_backend_youtube_cache():
     """Remove non-mp3 files from backend youtube cache folder"""
 
     count = 0
-    for filename in os.listdir(f"{CWD_PATH}/backend/youtube_cache"):
+    for filename in os.listdir(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}"):
         if not (filename.endswith(".mp3") or filename.endswith(".txt")):
-            os.remove(f"{CWD_PATH}/backend/youtube_cache/{filename}")
+            os.remove(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{filename}")
             count += 1
 
     Log.trace(f"Removed {count} file(s) that weren't .mp3 or .txt from backend/youtube_cache")
@@ -82,8 +83,8 @@ def empty_frontend_cache():
     """Empty contents of the frontend audio cache folder"""
 
     count = 0
-    for filename in os.listdir(f"{CWD_PATH}/frontend/public/audio"):
-        os.remove(f"{CWD_PATH}/frontend/public/audio/{filename}")
+    for filename in os.listdir(f"{CWD_PATH}/{FRONTEND_AUDIO_CACHE}"):
+        os.remove(f"{CWD_PATH}/{FRONTEND_AUDIO_CACHE}/{filename}")
         count += 1
 
     Log.trace(f"Removed {count} file(s) in frontend/audio")

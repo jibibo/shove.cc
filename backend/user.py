@@ -45,7 +45,7 @@ class User:
     def get_username(self) -> str:
         """Returns None if user is not logged in"""
 
-        if self._account:
+        if self.is_logged_in():
             return self._account["username"]
 
     def has_game_data(self) -> bool:  # todo use this to prevent TypeError because it's None

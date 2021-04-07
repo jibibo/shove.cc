@@ -98,7 +98,7 @@ if __name__ == "__main__":
             main()
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on main()", ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on main", ex)
 
         Log.trace(f"Restarting in {DELAY_BEFORE_RESTART} s")
         time.sleep(DELAY_BEFORE_RESTART)

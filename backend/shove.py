@@ -2,13 +2,20 @@ from convenience import *
 
 from user import User, FakeUser
 from account import Account
+from song import Song
 from room import Room
 
 from games.coinflip import Coinflip
 
 
-ACCOUNTS = [Account(username=u, password="1", money=m)
-            for u, m in [("a", 100000), ("badr", 77777777778), ("jim", 420000)]]
+_ACCOUNTS = [Account(username=u, password="1", money=m)
+             for u, m in [("a", 100000), ("badr", 77777777778), ("jim", 420000)]]
+
+_SONGS = []
+with open(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/archive.txt") as f:
+    for _line in f.readlines():
+        _mp3 = MP3(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{_line.split()[1]}.mp3")
+        _SONGS.append(Song(_line.split()[0], _line.split()[1], None, _mp3.info.length, None, None))
 
 
 class Shove:
@@ -51,16 +58,19 @@ class Shove:
         # self.youtube_dl = youtube_dl.YoutubeDL(youtube_dl_options)
         # self.youtube_dl.download([f"https://youtube.com/watch?v={youtube_id}"])
 
-        self.latest_audio_url = None
-        self.latest_audio_author = None
-        self.audio_urls_cached = []
+        self.latest_song: Union[Song, None] = None
+        self.latest_song_author: Union[User, None] = None
 
         Log.test("Faking play packet")
         fake_link = "XwxLwG2_Sxk"
         self.incoming_packets_queue.put((FakeUser(), "send_message", {
             "message": f"/play {fake_link}"
-        }, -1))
+        }, 0))
         Log.trace("Shove initialized")
+
+    @staticmethod
+    def add_song(song_data: Song):
+        _SONGS.append(song_data)
 
     def add_trello_card(self, name, description=None):
         name = name.strip()
@@ -108,7 +118,11 @@ class Shove:
 
     @staticmethod
     def get_all_accounts() -> List[Account]:
-        return ACCOUNTS.copy()
+        return _ACCOUNTS.copy()
+
+    @staticmethod
+    def get_all_songs() -> List[Song]:
+        return _SONGS.copy()
 
     def get_all_users(self) -> List[User]:
         return self._users.copy()
@@ -146,6 +160,17 @@ class Shove:
                 return room
 
         Log.trace("User is not in a room")
+
+    @staticmethod
+    def get_song_by_id(song_id: str) -> Song:
+        for song in _SONGS:
+            if song.song_id == song_id:
+                return song
+
+        Log.warn(f"Song with ID {song_id} not found")
+
+    def get_song_count(self) -> int:
+        return len(self.get_all_songs())
 
     def get_user(self, **k_v) -> User:
         Log.trace(f"Getting user with k_v: {k_v}")

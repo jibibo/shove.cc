@@ -9,7 +9,7 @@ class GameState:
 
 
 def game_event_loop(game):
-    set_greenthread_name(f"GELoop/{game.room}")
+    set_greenthread_name(f"GameLoop/{game.room.name}")
     Log.trace(f"Game event loop ready of room {game.room}")
 
     while True:
@@ -26,7 +26,7 @@ def game_event_loop(game):
             Log.error("Event not implemented")
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on abstract_game.handle_event", ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_event", ex)
 
         else:
             Log.trace(f"Handled event: '{event}'")

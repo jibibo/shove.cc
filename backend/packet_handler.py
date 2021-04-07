@@ -2,18 +2,18 @@ from convenience import *
 
 from shove import Shove
 from user import User
-from process_audio import process_youtube_ids_audio_task
+from process_song import process_song_task
 
 
 def handle_packets_loop(shove):
     """Blocking loop for handling packets (that were added to the queue)"""
 
-    set_greenthread_name("PHandler")
+    set_greenthread_name("PacketHandler")
     Log.trace("Handle packets loop ready")
 
     while True:
         user, model, packet, packet_number = shove.incoming_packets_queue.get()
-        set_greenthread_name(f"PHandler/#{packet_number}")
+        set_greenthread_name(f"PacketHandler/#{packet_number}")
         Log.trace(f"Handling packet #{packet_number}")
 
         try:
@@ -34,7 +34,7 @@ def handle_packets_loop(shove):
             }
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on packet_handler.handle_packet", ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_packet", ex)
             response = "error", default_error_packet(description="Handling packet broke (not good")
 
         if response:
@@ -89,10 +89,16 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             "account_list": [account.get_data_copy() for account in shove.get_all_accounts()]
         }
 
-    if model == "get_audio":
-        return "play_audio", {
-            "author": shove.latest_audio_author,
-            "url": random.choice(shove.audio_urls_cached)
+    if model == "get_song":
+        Log.trace(f"Song count: {shove.get_song_count()}")
+        random_song = random.choice(shove.get_all_songs())
+        Log.trace(f"Random song: {random_song}")
+        random_song.increment_plays()
+        return "play_song", {
+            "author": shove.latest_song_author,
+            "name": random_song.name,
+            "plays": random_song.plays,
+            "url": random_song.url
         }
 
     if model == "get_game_data":
@@ -235,18 +241,14 @@ COMMANDS = {  # todo make OOP classes for commands in command_handler.py or some
         "usage": "/money"
     },
     "play": {
-        "aliases": ["audio", "playaudio"],
+        "aliases": ["audio", "music", "song"],
         "usage": "/play <url/playlist/ID>"
     },
     "trello": {
         "aliases": [],
         "splitter": "...",
         "usage": "/trello <card name> '...' [card description]"
-    },
-    "video": {
-        "aliases": ["yt", "youtube", "playvideo"],
-        "usage": "/video"
-    },
+    }
 }
 
 
@@ -321,17 +323,22 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:  # 
             if not response:
                 raise CommandInvalid("No response from YT API (not good)")
 
-            Log.trace(f"Got response from YT API, items in playlist: {len(response['items'])}")
+            if not len(response['items']) >= 1:
+                raise CommandInvalid("Playlist didn't contain any items")
+
+            Log.trace(f"Got response from YT API, items in playlist: {len(response['items'])}, first item: {response['items'][0]}")
             youtube_ids = []
+            names = []
             for item in response["items"]:
                 youtube_ids.append(item["snippet"]["resourceId"]["videoId"])
-
-            if not youtube_ids:
-                raise CommandInvalid(f"No videos in given playlist, usage: {COMMANDS['play']['usage']}")
+                names.append(item["snippet"]["title"])
 
         # check if user just dropped the 11-char YT id
         elif len(check_for_id_string) == 11:
             youtube_ids = [check_for_id_string]
+
+            # todo get video title (song name)
+            names = [None]
 
         # regex magic to find the id in some url
         else:
@@ -343,45 +350,18 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:  # 
             if not match:
                 raise CommandInvalid(f"Couldn't find a video ID in the given link, usage: {COMMANDS['play']['usage']}")
 
-            youtube_ids = [match.group("id")]
-            Log.trace("Found ID using regex")
+            youtube_id = match.group("id")
+            Log.trace(f"Found ID using regex")
 
-        Log.trace(f"Got YouTube ID(s): {youtube_ids}")
-        shove.sio.start_background_task(process_youtube_ids_audio_task, shove, youtube_ids, user)
+            # todo get video title
+
+            youtube_ids = [youtube_id]
+            names = [None]
+
+        Log.trace(f"Got YouTube ID(s): {youtube_ids}, names: {names}")
+        eventlet.spawn(process_song_task, shove, youtube_ids, names, user)
 
         return "Success"
-
-    if is_command(command, "video"):
-        raise PacketNotImplemented  # disable command
-
-        # if not command_args:
-        #     raise CommandInvalid("No link given")
-        #
-        # check_for_id = command_args_real[0]
-        # if len(check_for_id) == 11:
-        #     youtube_id = check_for_id
-        #     Log.trace(f"Got YouTube ID directly: {youtube_id}")
-        # else:
-        #     match = re.search(r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})", check_for_id)
-        #     if not match:
-        #         raise CommandInvalid("Couldn't find the video ID in given link")
-        #
-        #     youtube_id = match.group("id")
-        #     Log.trace(f"Got YouTube ID through regex: {youtube_id}")
-        #
-        # content_url = f"https://www.googleapis.com/youtube/v3/videos?key=AIzaSyBJhGWLfUiiGydCuKOM06GaR5Tw3sUJW14&id=TnCINj0Miy0&part=snippet,contentDetails,statistics,status"
-        # # get request takes really long time? -> use ipv4
-        # # content_url = "https://www.google.com"
-        # Log.trace("Fetching video info from Google API")
-        # response = requests.get(content_url, stream=True, timeout=1)
-        # Log.trace("GET done")
-        # Log.test(response.json())
-        #
-        # shove.send_packet_all_online("youtube", {
-        #     "author": user.get_username(),
-        #     "id": youtube_id
-        # })
-        # return "matches"
 
     raise CommandInvalid(f"Unknown command: '{command}'")
 

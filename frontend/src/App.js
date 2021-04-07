@@ -175,6 +175,16 @@ function App() {
             setRoomList(packet.room_list);
         });
 
+        socket.on("song_like", (packet) => {
+            console.debug("> song_like", packet);
+            addMessage(null, null, "You liked " + packet.song_name)
+        })
+
+        socket.on("song_dislike", (packet) => {
+            console.debug("> song_dislike", packet);
+            addMessage(null, null, "You disliked " + packet.song_name)
+        })
+
         socket.on("user_connected", (packet) => {
             console.debug("> user_connected", packet);
             setOnlineUsers({

@@ -42,8 +42,8 @@ function AudioPlayer() {
     if (deaf) {
         deaf = false;
 
-        socket.on("play_audio", (packet) => {
-            console.debug("> play_audio", packet);
+        socket.on("play_song", (packet) => {
+            console.debug("> play_song", packet);
             loadNewAudio(packet.url);
         });
 
@@ -51,11 +51,14 @@ function AudioPlayer() {
     }
 
     const loadNewAudio = (url) => {
+        console.log("Load new audio:", url);
+        audioRef.current.pause();
+        console.log("Paused:", audioRef.current.paused);
         setSource(url);
         // if (audioRef.current) {
         // how does this work
         audioRef.current.load(); // tell element to load new source
-        audioRef.current.play();
+        // audioRef.current.play();
         // }
     };
 
@@ -84,31 +87,68 @@ function AudioPlayer() {
         setPlaying(!playing);
     }
 
+    function onClickToggleDislike() {
+        sendPacket("toggle_song_dislike", {});
+    }
+
+    function onClickToggleLike() {
+        sendPacket("toggle_song_like", {});
+    }
+
     // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio#events
 
+    function onAbort() {
+        console.log("abort");
+    }
+
+    function onCanPlay() {
+        console.log("canplay");
+    }
+
+    function onCanPlayThrough() {
+        console.log("canplaythrough");
+        audioRef.current.play();
+    }
+
     function onDurationChange(e) {
-        console.log("durationchange", e);
+        console.log("durationchange");
         setDuration(Math.floor(e.target.duration));
     }
 
-    function onEmptied(e) {
-        console.log("emptied", e);
+    function onEmptied() {
+        console.log("emptied");
     }
 
-    function onEnded(e) {
-        console.log("ended", e);
+    function onEnded() {
+        console.log("ended");
     }
 
-    function onPause(e) {
-        console.log("pause", e);
+    function onLoadStart() {
+        console.log("loadstart");
+    }
+
+    function onPause() {
+        console.log("pause");
         setPlaying(false);
     }
 
-    function onPlay(e) {
-        console.log("play", e);
+    function onPlay() {
+        console.log("play");
         setPlaying(true);
         // make sure html element's volume is correct
         audioRef.current.volume = volume;
+    }
+
+    function onProgress() {
+        console.log("progress");
+    }
+
+    function onStalled() {
+        console.log("stalled");
+    }
+
+    function onSuspend() {
+        console.log("suspend");
     }
 
     function onTimeUpdate(e) {
@@ -116,8 +156,8 @@ function AudioPlayer() {
         setProgress(Math.floor(e.target.currentTime));
     }
 
-    function onWaiting(e) {
-        console.log("waiting", e);
+    function onWaiting() {
+        console.log("waiting");
     }
 
     return (
@@ -152,9 +192,23 @@ function AudioPlayer() {
             <Button
                 variant="outlined"
                 color="secondary"
-                onClick={() => sendPacket("get_audio", {})}
+                onClick={() => sendPacket("get_song", {})}
             >
                 Get live
+            </Button>
+            <Button
+                variant="outlined"
+                color="secondary"
+                onClick={onClickToggleLike}
+            >
+                Like
+            </Button>
+            <Button
+                variant="outlined"
+                color="secondary"
+                onClick={onClickToggleDislike}
+            >
+                Dislike
             </Button>
 
             {/*todo Should just be an Audio() object, no html required*/}
@@ -162,16 +216,23 @@ function AudioPlayer() {
                 controls
                 loop={loop}
                 ref={audioRef}
+                onAbort={onAbort}
+                onCanPlay={onCanPlay}
+                onCanPlayThrough={onCanPlayThrough}
                 onDurationChange={onDurationChange}
                 onEmptied={onEmptied}
                 onEnded={onEnded}
+                onLoadStart={onLoadStart}
                 onPause={onPause}
                 onPlay={onPlay}
+                onProgress={onProgress}
+                onStalled={onStalled}
+                onSuspend={onSuspend}
                 onTimeUpdate={onTimeUpdate}
                 onWaiting={onWaiting}
             >
                 {/*breaks without this <source />*/}
-                <source src={source} />
+                <source src={source} type="audio/mpeg" />
             </audio>
         </>
     );

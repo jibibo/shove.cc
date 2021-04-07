@@ -53,7 +53,7 @@ class Room:
             Log.trace(f"Game start failed: {ex.description}")
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on room.game.try_to_start", ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on try_to_start", ex)
 
         else:
             Log.info(f"Game started in room {self}")
@@ -90,7 +90,7 @@ class Room:
                 self.game.user_leaves_room(user)
 
             except Exception as ex:
-                Log.fatal(f"UNHANDLED {type(ex).__name__} on room.game.user_left_room", ex)
+                Log.fatal(f"UNHANDLED {type(ex).__name__} on user_left_room", ex)
 
             user.clear_game_data()  # clear any game data the user could have because of the game they left
 
