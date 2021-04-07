@@ -102,6 +102,5 @@ def default_error_packet(error=None, description=None) -> dict:
     """Create a default error packet with no useful information whatsoever"""
 
     return {
-        "error": error or DEFAULT_ERROR,
         "description": description or DEFAULT_DESCRIPTION
     }

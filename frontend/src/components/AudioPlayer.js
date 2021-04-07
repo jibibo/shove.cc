@@ -123,6 +123,18 @@ function AudioPlayer() {
         console.log("ended");
     }
 
+    function onError() {
+        // https://stackoverflow.com/a/29682362/13216113
+        console.log("error");
+        if (source === undefined) {
+            console.log("Not sending error packet - source is undefined");
+        } else {
+            sendPacket("error", {
+                description: `Failed to load source: '${source}'`,
+            });
+        }
+    }
+
     function onLoadStart() {
         console.log("loadstart");
     }
@@ -222,6 +234,7 @@ function AudioPlayer() {
                 onDurationChange={onDurationChange}
                 onEmptied={onEmptied}
                 onEnded={onEnded}
+                onError={onError}
                 onLoadStart={onLoadStart}
                 onPause={onPause}
                 onPlay={onPlay}

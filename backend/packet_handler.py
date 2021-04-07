@@ -55,6 +55,10 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     if type(packet) != dict:
         raise PacketInvalid(f"Invalid packet type: {type(packet).__name__}")
 
+    if model == "error":
+        Log.error(f"User received an error: {packet['description']}")
+        return
+
     # special game packet, should be handled by game's packet handler
     if model == "game_action":  # currently the only model for game packets
         if not user.is_logged_in():
