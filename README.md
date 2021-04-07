@@ -10,7 +10,3 @@ gamba
 ## Credits
 
 -   Hand evaluation based on deuces by Will Drevo: https://github.com/worldveil/deuces
-
--   https://www.onlinewebfonts.com/
--   https://pngtree.com/
--   https://www.flaticon.com/
