@@ -52,7 +52,6 @@ class Shove:
 
         # todo implement non-subprocess version of YT DL
         # youtube_dl_options = {
-        #     "download_archive": f"{CWD_PATH}/backend/audio_cache/archive.txt",
         #     "verbose": True,
         #     "listformats": True,
         #     "prefer_ffmpeg": True,

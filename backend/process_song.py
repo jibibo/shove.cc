@@ -161,7 +161,7 @@ def convert_youtube_audio(youtube_id) -> float:
 
     Log.trace(f"Converting file to mp3: youtube_id={youtube_id}")
 
-    # todo loudless normalization? "\"ffmpeg -i {} -c:a mp3 -filter:a loudnorm=i=-18:lra=17 -qscale:a 2 " + f"{audio_cache}/{ffmpeg_filename}" + " && del {}\""
+    # todo loudless normalization? "\"ffmpeg -i {} -c:a mp3 -filter:a loudnorm=i=-18:lra=17 -qscale:a 2 " + f"{cache}/{ffmpeg_filename}" + " && del {}\""
     convert_command = " ".join([
         "ffmpeg",
         f"-i {backend_cache}/{filename}",
