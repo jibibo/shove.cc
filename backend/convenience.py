@@ -32,7 +32,6 @@ from trello import TrelloClient
 import playsound
 import socketio
 import isodate
-from mutagen.mp3 import MP3
 import colorama
 from colorama import Fore, Style
 # import googleapiclient

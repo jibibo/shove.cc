@@ -50,7 +50,7 @@ class Shove:
         else:
             Log.trace("No private access, not initializing Trello client")
 
-        # non-subprocess version of YT DL
+        # todo implement non-subprocess version of YT DL
         # youtube_dl_options = {
         #     "download_archive": f"{CWD_PATH}/backend/audio_cache/archive.txt",
         #     "verbose": True,
@@ -63,11 +63,12 @@ class Shove:
         self.latest_song: Union[Song, None] = None
         self.latest_song_author: Union[User, None] = None
 
-        Log.test("Faking play packet")
-        fake_link = "XwxLwG2_Sxk"
-        self.incoming_packets_queue.put((FakeUser(), "send_message", {
-            "message": f"/play {fake_link}"
-        }, 0))
+        # Log.test("Faking play packet")
+        # fake_link = "XwxLwG2_Sxk"
+        # self.incoming_packets_queue.put((FakeUser(), "send_message", {
+        #     "message": f"/play {fake_link}"
+        # }, 0))
+
         Log.trace("Shove initialized")
 
     def add_trello_card(self, name, description=None):

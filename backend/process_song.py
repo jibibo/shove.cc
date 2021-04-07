@@ -14,24 +14,21 @@ def process_song_task(shove, youtube_id, user):
     #   if no, copy the file to frontend
     # done
 
-    backend_audio_file = f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{youtube_id}.mp3"
-    frontend_audio_file = f"{CWD_PATH}/{FRONTEND_AUDIO_CACHE}/{youtube_id}.mp3"
-
     try:
         song = shove.songs.find_single(song_id=youtube_id)
 
     except DatabaseEntryNotFound:
-        Log.test("Database entry missing, downloading and converting")
+        Log.trace("DB entry missing, downloading and converting")
 
         try:
             duration, name = extract_and_check_song_info(youtube_id)  # extract video information and check duration
         except ExtractSongInformationFailed as ex:
-            Log.error(f"Song information extraction failed: {ex}", ex)
-            shove.send_packet_to(user, "error", error_packet("Song information extraction failed"))
+            Log.error(f"Song info extraction failed: {ex}", ex)
+            shove.send_packet_to(user, "error", error_packet("Song info extraction failed"))
             return
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on extract_and_check_song_info", ex)
-            shove.send_packet_to(user, "error", error_packet("Song information extraction failed"))
+            shove.send_packet_to(user, "error", error_packet("Song info extraction failed"))
             return
 
         try:
@@ -48,19 +45,19 @@ def process_song_task(shove, youtube_id, user):
         try:
             convert_time = convert_youtube_audio(youtube_id)  # convert to mp3
         except ConvertSongFailed as ex:
-            Log.error(f"Song converting failed, update youtube-dl?: {ex}", ex)
-            shove.send_packet_to(user, "error", error_packet("Song converting failed"))
+            Log.error(f"Song conversion failed, update youtube-dl?: {ex}", ex)
+            shove.send_packet_to(user, "error", error_packet("Song conversion failed"))
             return
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on convert_youtube_audio", ex)
-            shove.send_packet_to(user, "error", error_packet("Song converting failed"))
+            shove.send_packet_to(user, "error", error_packet("Song conversion failed"))
             return
 
+        backend_audio_file = f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{youtube_id}.mp3"
         if not os.path.exists(backend_audio_file):
-            Log.error("Backend audio file is missing")
+            Log.error("Backend audio file is missing?")
             return
 
-        duration = MP3(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{youtube_id}.mp3").info.length
         song = Song(
             shove.songs,
             convert_time=convert_time,
@@ -72,22 +69,14 @@ def process_song_task(shove, youtube_id, user):
         )
 
     else:
-        Log.test("Database entry found")
+        Log.test("DB entry found")
 
-    Log.trace("Setting song and sending packet")
-    song.copy_to_frontend_if_absent()
-    shove.latest_song = song
-    shove.latest_song_author = user.get_username()
-    song.increment_plays(shove.get_user_count())
-    shove.send_packet_to_everyone("play_song", {
-        "author": user.get_username(),
-        "name": song["name"],
-        "plays": song["plays"],
-        "url": shove.latest_song.get_url()
-    })
+    song.play(shove, user)
 
 
 def extract_and_check_song_info(youtube_id) -> tuple:
+    """Extract video information, check, and return a tuple"""
+
     url = f"https://youtube.googleapis.com/youtube/v3/videos"
     params = {  # url request parameters
         "key": YOUTUBE_API_KEY,
@@ -96,20 +85,20 @@ def extract_and_check_song_info(youtube_id) -> tuple:
     }
     Log.trace(f"Sending YT API request")
 
-    response = requests.get(url, params=params, timeout=1).json()  # https://stackoverflow.com/a/21966169/13216113 timeout kw fixes 20 s request bug?
-    Log.trace(f"Response: {response}")
+    response = requests.get(url, params=params, timeout=1).json()  # https://stackoverflow.com/a/21966169/13216113 timeout keyword fixes slow request
+    Log.trace(f"YT API response: {response}")
 
     if not response:
         raise ExtractSongInformationFailed("No response from YT API (not good)")
 
     if not response["items"]:
-        raise ExtractSongInformationFailed("No songs found")
+        raise ExtractSongInformationFailed("No songs found, invalid ID?")
 
     song = response["items"][0]
     name = song["snippet"]["title"]
     duration = isodate.parse_duration(song["contentDetails"]["duration"]).total_seconds()  # https://stackoverflow.com/a/16743442/13216113
 
-    if duration > 300:
+    if duration > 300:  # todo test
         raise ExtractSongInformationFailed("Song duration is more than 5 minutes")
 
     return duration, name
@@ -118,44 +107,43 @@ def extract_and_check_song_info(youtube_id) -> tuple:
 def download_youtube_audio(youtube_id) -> float:
     """Downloads the youtube song and returns the time it took to download"""
 
-    Log.trace(f"Downloading audio: youtube_id={youtube_id}")
     backend_cache = f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}"
 
+    for file in os.listdir(backend_cache):
+        if file.startswith(youtube_id):  # already downloaded a file (not necessarily mp3) for the given song id
+            Log.trace("Found existing file in backend, not downloading")
+            return 0
+
+    Log.trace(f"Downloading song: youtube_id={youtube_id}")
+
     # todo benchmark -f \"bestaudio[filesize<3M]/bestaudio/best[filesize<3M]/best\" vs worstaudio/worst
-    # youtube_dl_command1 = " ".join([  # log available formats
-    #     "youtube-dl",
-    #     f"https://youtube.com/watch?v={youtube_id}",
-    #     "--force-ipv4",
-    #     "-F"
-    # ])
-    youtube_dl_command2 = " ".join([  # actually download it
+    youtube_dl_command = " ".join([  # actually download it
         "youtube-dl",
         f"-o {backend_cache}/%(id)s.%(ext)s",
         f"https://youtube.com/watch?v={youtube_id}",
         "--force-ipv4",  # ipv4 to fix hanging bug - https://www.reddit.com/r/youtubedl/comments/i7gqhu/youtubedl_stuck_at_downloading_webpage/
         "--format mp3/bestaudio",  # if downloading mp3 is an option, try that (saves time converting to mp3)
-        f"--download-archive {backend_cache}/archive.txt",
+        # f"--download-archive {backend_cache}/archive.txt",  # shouldn't be necessary as we have a database now
         # "--user-agent \"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\"",  # might prevent some errors, not certain
         "--verbose" if LOG_YOUTUBE_DL_VERBOSE else "",
         "--no-warnings" if not LOG_YOUTUBE_DL_WARNINGS else "",
     ])
 
-    Log.trace(f"Calling YTDL subprocess")
     start_time = time.time()
     # todo possibily dangerous, see https://docs.python.org/3/library/subprocess.html#security-considerations
-    youtube_dl_error1 = 0  # subprocess.call(youtube_dl_command1, shell=True)
-    youtube_dl_error2 = subprocess.call(youtube_dl_command2, shell=True)
+    youtube_dl_error = subprocess.call(youtube_dl_command, shell=True)
     download_time = time.time() - start_time
     Log.trace(f"YTDL done in {round(download_time, 3)} s")
 
-    if youtube_dl_error1 or youtube_dl_error2:
-        raise DownloadSongFailed(f"Subprocess returned {youtube_dl_error1 or youtube_dl_command2}")
+    if youtube_dl_error:
+        raise DownloadSongFailed(f"Subprocess returned {youtube_dl_command}")
 
     return download_time
 
 
 def convert_youtube_audio(youtube_id) -> float:
-    Log.trace(f"Converting audio to mp3: youtube_id={youtube_id}")
+    """Converts the file in the backend to .mp3 (compatible with HTML <audio>)"""
+
     backend_cache = f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}"
 
     filename = None
@@ -165,11 +153,13 @@ def convert_youtube_audio(youtube_id) -> float:
             break
 
     if not filename:
-        raise ConvertSongFailed("Audio file missing from backend cache dir")
+        raise ConvertSongFailed("Song file missing from backend cache dir")
 
     if filename.endswith(".mp3"):  # no need to convert to mp3, done todo doesn't return a converting time
         Log.trace("Downloaded file in backend cache is already .mp3, not converting")
-        return 0.0
+        return 0
+
+    Log.trace(f"Converting file to mp3: youtube_id={youtube_id}")
 
     # todo loudless normalization? "\"ffmpeg -i {} -c:a mp3 -filter:a loudnorm=i=-18:lra=17 -qscale:a 2 " + f"{audio_cache}/{ffmpeg_filename}" + " && del {}\""
     convert_command = " ".join([
@@ -179,7 +169,6 @@ def convert_youtube_audio(youtube_id) -> float:
         "-loglevel warning"
     ])
 
-    Log.trace(f"Calling ffmpeg convert subprocess")
     start_time = time.time()
     convert_error = subprocess.call(convert_command, shell=True)
     convert_time = time.time() - start_time

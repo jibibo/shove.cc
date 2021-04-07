@@ -31,11 +31,16 @@ let deaf = true;
 
 function AudioPlayer() {
     const [source, setSource] = useState();
-    const [volume, setVolume] = useState(0.25);
+    const [volume, setVolume] = useState(0.1);
     const [playing, setPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
     const [duration, setDuration] = useState(0.1); // prevent ZeroDivision in the future (x% done ratios)
     const [loop, setLoop] = useState(false);
+    const [likes, setLikes] = useState(0);
+    const [dislikes, setDislikes] = useState(0);
+    const [plays, setPlays] = useState(0);
+    const [hasLiked, setHasLiked] = useState(false);
+    const [hasDisliked, setHasDisliked] = useState(false);
 
     const audioRef = useRef();
 
@@ -45,6 +50,15 @@ function AudioPlayer() {
         socket.on("play_song", (packet) => {
             console.debug("> play_song", packet);
             loadNewAudio(packet.url);
+            setPlays(packet.plays);
+        });
+
+        socket.on("song_rating", (packet) => {
+            console.debug("> song_rating", packet);
+            setDislikes(packet.dislikes);
+            setLikes(packet.likes);
+            setHasDisliked(packet.you.disliked);
+            setHasLiked(packet.you.liked);
         });
 
         // socket.on audio_data, loop enable/disable, play/pause, new url (with author)
@@ -85,14 +99,6 @@ function AudioPlayer() {
             audioRef.current.play();
         }
         setPlaying(!playing);
-    }
-
-    function onClickToggleDislike() {
-        sendPacket("toggle_song_dislike", {});
-    }
-
-    function onClickToggleLike() {
-        sendPacket("toggle_song_like", {});
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/audio#events
@@ -176,7 +182,7 @@ function AudioPlayer() {
         <>
             <Typography>{`${secondsToString(progress)} / ${secondsToString(
                 duration
-            )}`}</Typography>
+            )} - plays: ${plays}`}</Typography>
             <Button
                 variant="outlined"
                 color="secondary"
@@ -209,18 +215,26 @@ function AudioPlayer() {
                 Get live
             </Button>
             <Button
-                variant="outlined"
+                variant={hasLiked ? "contained" : "outlined"}
                 color="secondary"
-                onClick={onClickToggleLike}
+                onClick={() =>
+                    sendPacket("rate_song", {
+                        action: "toggle_like",
+                    })
+                }
             >
-                Like
+                {`Like (${likes})`}
             </Button>
             <Button
-                variant="outlined"
+                variant={hasDisliked ? "contained" : "outlined"}
                 color="secondary"
-                onClick={onClickToggleDislike}
+                onClick={() =>
+                    sendPacket("rate_song", {
+                        action: "toggle_dislike",
+                    })
+                }
             >
-                Dislike
+                {`Dislike (${dislikes})`}
             </Button>
 
             {/*todo Should just be an Audio() object, no html required*/}

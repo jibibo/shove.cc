@@ -26,7 +26,7 @@ def handle_packets_loop(shove):
             }
 
         except PacketHandlingFailed as ex:
-            Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")
+            Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")  # ex.__name__ as PacketHandlingFailed has children
             response = "error", {
                 "description": ex.description
             }
@@ -39,7 +39,7 @@ def handle_packets_loop(shove):
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_packet", ex)
-            response = "error", error_packet(description="Handling packet broke (not good")
+            response = "error", error_packet(description="Handling packet broke (not good)")
 
         if response:
             response_model, response_packet = response
@@ -99,16 +99,10 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if model == "get_song":
         Log.trace(f"Song count: {shove.songs.get_song_count()}")
-        song = random.choice(shove.songs.get_entries())
+        song = random.choice(list(shove.songs.get_entries()))
         Log.trace(f"Random song: {song}")
-        song.copy_to_frontend_if_absent()
-        song.increment_plays()
-        return "play_song", {
-            "author": shove.latest_song_author,
-            "name": song["name"],
-            "plays": song["plays"],
-            "url": song.get_url()
-        }
+        song.play(shove, user)
+        return
 
     if model == "get_game_data":
         room = shove.get_room_of_user(user)
@@ -201,6 +195,29 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
         return "latency", {
             "latency": user.latency
+        }
+
+    if model == "rate_song":
+        if not user.is_logged_in():
+            raise UserNotLoggedIn
+
+        username = user.get_username()
+        action = packet["action"]
+        song = shove.latest_song
+
+        if action == "toggle_dislike":
+            song.toggle_dislike(username)
+        elif action == "toggle_like":
+            song.toggle_like(username)
+        else:
+            raise PacketInvalid("Invalid rate song action")
+
+        song.trigger_db_write()
+
+        return "song_rating", {
+            "dislikes": song.get_dislike_count(),
+            "likes": song.get_like_count(),
+            "you": song.get_rating_of(username)
         }
 
     if model == "register":
