@@ -7,10 +7,10 @@ import App from "./App";
 import "./index.css";
 
 ReactDOM.render(
-    <GlobalContextProvider>
-        <App />
-    </GlobalContextProvider>,
-    document.getElementById("root")
+  <GlobalContextProvider>
+    <App />
+  </GlobalContextProvider>,
+  document.getElementById("root")
 );
 
 // import reportWebVitals from './reportWebVitals';

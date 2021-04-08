@@ -1,12 +1,12 @@
 .coin.spinning {
-    animation: spinning linear 1s infinite;
+  animation: spinning linear 1s infinite;
 }
 
 @keyframes spinning {
-    from {
-        transform: rotate3d(0, 0, 0, 0deg);
-    }
-    to {
-        transform: rotate3d(1, 1, 1, 360deg);
-    }
+  from {
+    transform: rotate3d(0, 0, 0, 0deg);
+  }
+  to {
+    transform: rotate3d(1, 1, 1, 360deg);
+  }
 }

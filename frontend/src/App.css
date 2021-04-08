@@ -1,17 +1,17 @@
 .connection-status-container {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    z-index: 1;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  z-index: 1;
 }
 
 .message-box-container {
-    position: fixed;
-    width: 450px;
-    left: 0;
-    bottom: 0;
-    margin: 5px;
-    z-index: 1;
+  position: fixed;
+  width: 450px;
+  left: 0;
+  bottom: 0;
+  margin: 5px;
+  z-index: 1;
 }
 
 /* @media (max-width: 540px) {

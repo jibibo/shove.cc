@@ -11,41 +11,39 @@ import UserAvatar from "./UserAvatar";
 import "./HeaderAccountButtons.css";
 
 function HeaderAccountButtons() {
-    const { accountData } = useContext(GlobalContext);
+  const { accountData } = useContext(GlobalContext);
 
-    function onClickLogOut() {
-        sendPacket("log_out", {});
-    }
-    return (
-        <div className="account-buttons-container">
-            <div className="account-button">
-                <Button
-                    variant="contained"
-                    startIcon={
-                        <UserAvatar
-                            username={accountData.username}
-                            money={accountData.money}
-                        />
-                    }
-                    onClick={onClickLogOut}
-                >
-                    {`${accountData.username} | $${abbreviate(
-                        accountData.money
-                    )}`}
-                </Button>
-            </div>
-            <div className="account-button">
-                <Button
-                    variant="outlined"
-                    color="secondary"
-                    startIcon={<ExitToApp />}
-                    onClick={onClickLogOut}
-                >
-                    Log out
-                </Button>
-            </div>
-        </div>
-    );
+  function onClickLogOut() {
+    sendPacket("log_out", {});
+  }
+  return (
+    <div className="account-buttons-container">
+      <div className="account-button">
+        <Button
+          variant="contained"
+          startIcon={
+            <UserAvatar
+              username={accountData.username}
+              money={accountData.money}
+            />
+          }
+          onClick={onClickLogOut}
+        >
+          {`${accountData.username} | $${abbreviate(accountData.money)}`}
+        </Button>
+      </div>
+      <div className="account-button">
+        <Button
+          variant="outlined"
+          color="secondary"
+          startIcon={<ExitToApp />}
+          onClick={onClickLogOut}
+        >
+          Log out
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export default HeaderAccountButtons;

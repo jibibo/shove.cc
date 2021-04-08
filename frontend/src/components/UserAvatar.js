@@ -5,21 +5,21 @@ import { makeStyles } from "@material-ui/core/styles";
 import { thousandsSeperatorFull } from "../formatting";
 
 const useStyles = makeStyles((theme) => ({
-    root: {
-        cursor: "pointer",
-    },
+  root: {
+    cursor: "pointer",
+  },
 }));
 
 function UserAvatar({ username, money }) {
-    const classes = useStyles();
+  const classes = useStyles();
 
-    return money ? (
-        <Tooltip title={`$${thousandsSeperatorFull(money)}`} arrow>
-            <Avatar className={classes.root} src={`avatars/${username}.png`} />
-        </Tooltip>
-    ) : (
-        <Avatar className={classes.root} src={`avatars/${username}.png`} />
-    );
+  return money ? (
+    <Tooltip title={`$${thousandsSeperatorFull(money)}`} arrow>
+      <Avatar className={classes.root} src={`avatars/${username}.png`} />
+    </Tooltip>
+  ) : (
+    <Avatar className={classes.root} src={`avatars/${username}.png`} />
+  );
 }
 
 export default UserAvatar;

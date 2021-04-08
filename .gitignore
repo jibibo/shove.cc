@@ -10,3 +10,5 @@ private.py
 /frontend/node_modules/
 /frontend/public/audio/
 /frontend/public/avatars/
+cert.pem
+key.pem

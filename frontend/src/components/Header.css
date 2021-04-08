@@ -1,15 +1,15 @@
 header {
-    background: rgb(23, 23, 41);
-    margin-bottom: 24px;
-    display: flex;
-    justify-content: space-between;
+  background: rgb(23, 23, 41);
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
 }
 
 .header-child {
-    margin: 16px;
+  margin: 16px;
 }
 
 .header-child > div {
-    display: inline-flex;
-    justify-content: space-between;
+  display: inline-flex;
+  justify-content: space-between;
 }
