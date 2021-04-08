@@ -19,13 +19,12 @@ def send_packets_loop(shove, sio: socketio.Server):
             Log.fatal(f"UNHANDLED {type(ex).__name__} on send_packet", ex)
 
 
-def send_packet(sio, users, model: str, packet: dict, skip, is_response: bool):
+def send_packet(sio, users: Union[User, Set[User]], model: str, packet: dict, skip: Union[User, Set[User]], is_response: bool):
     if type(users) == User:
         users = [users]
 
-    elif type(users) == list:
-        if users and type(users[0]) != User:
-            raise ValueError(f"'users' does not contain 'User' object(s), but: {type(users[0])}")
+    elif type(users) == set:
+        pass
 
     else:
         raise ValueError(f"Invalid 'users' type: {type(users)}")
@@ -34,9 +33,8 @@ def send_packet(sio, users, model: str, packet: dict, skip, is_response: bool):
         if type(skip) == User:
             skip = [skip]
 
-        elif type(skip) == list:
-            if skip and type(skip[0]) != User:
-                raise ValueError(f"'skip' does not contain 'User' object(s), but: {type(users[0])}")
+        elif type(skip) == set:
+            pass
 
         else:
             raise ValueError(f"Invalid 'skip' type: {type(users)}")
@@ -50,8 +48,7 @@ def send_packet(sio, users, model: str, packet: dict, skip, is_response: bool):
 
     Log.trace(f"Sending {'response' if is_response else 'packet'}: '{model}'")
 
-    sids = [user.sid for user in users]
-    for sid in sids:
-        sio.emit(model, packet, to=sid)
+    for user in users:
+        sio.emit(model, packet, to=user.sid)
 
     Log.debug(f"Sent {'response' if is_response else 'packet'}: '{model}'\n to: {[str(user)[1:-1] for user in users]}\n packet: {packet}")

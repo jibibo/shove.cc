@@ -19,7 +19,7 @@ import traceback
 from queue import Queue
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Dict, List, Union, Optional, Tuple, Set
+from typing import Dict, Iterable, List, Union, Optional, Tuple, Set
 
 
 # 3rd-party modules

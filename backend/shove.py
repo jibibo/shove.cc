@@ -1,8 +1,9 @@
 from convenience import *
 
-from database import Accounts, Song, Songs
-from user import User
+from accounts import Accounts
+from songs import Song, Songs
 from room import Room
+from user import User
 
 from games.coinflip import Coinflip
 
@@ -17,16 +18,16 @@ class Shove:
         self._default_game = Coinflip
         self._next_bot_number = 0
         self._next_packet_number = 0
-        self._users: List[User] = []
-        self._rooms: List[Room] = []
+        self._users: Set[User] = set()
+        self._rooms: Set[Room] = set()
 
         self.accounts = Accounts()
         self.songs = Songs()
 
         self.reset_rooms(2)
         # self.rooms[0].add_bot(3)
-        for i in range(1):
-            self.get_rooms()[0].try_to_start_game()
+        # for i in range(1):
+        #     self.get_rooms()[0].try_to_start_game()
 
         if PRIVATE_ACCESS:
             Log.trace("Initializing Trello client, fetching card list")
@@ -69,16 +70,16 @@ class Shove:
             raise ValueError(f"SID already exists: {sid}")  # shouldn't ever happen
 
         user = User(sid)
-        self._users.append(user)
+        self._users.add(user)
         return user
 
     def get_room_names(self) -> List[str]:
         return [room.name for room in self.get_rooms()]
 
-    def get_rooms(self) -> List[Room]:
+    def get_rooms(self) -> Set[Room]:
         return self._rooms.copy()
 
-    def get_all_users(self) -> List[User]:
+    def get_all_users(self) -> Set[User]:
         return self._users.copy()
 
     def get_default_game(self):
@@ -125,6 +126,18 @@ class Shove:
     def get_user_count(self) -> int:
         return len(self._users)
 
+    def log_out_user(self, user):
+        Log.trace(f"Logging out user {user}")
+
+        room = self.get_room_of_user(user)
+        if room:
+            room.user_leave(user)
+
+        user.log_out()
+        Log.trace(f"User {user} logged out")
+
+        self.send_packet_to(user, "log_out", {})
+
     def on_connect(self, sid: str) -> User:
         user = self.create_new_user_from_sid(sid)
         if not user:
@@ -147,9 +160,7 @@ class Shove:
         return user
 
     def on_disconnect(self, user: User):  # todo disconnect reasons
-        room = self.get_room_of_user(user)
-        if room:
-            room.user_leave(user)
+        self.log_out_user(user)
 
         self._users.remove(user)
 
@@ -166,7 +177,7 @@ class Shove:
         for _ in range(n_rooms):
             self._rooms.append(Room(self))
 
-    def send_packet_to(self, users: Union[User, List[User]], model: str, packet: dict, skip: Union[User, List[User]] = None, is_response=False):
+    def send_packet_to(self, users: Union[User, Iterable[User]], model: str, packet: dict, skip: Union[User, List[User]] = None, is_response=False):
         self.outgoing_packets_queue.put((users, model, packet, skip, is_response))
 
     def send_packet_to_everyone(self, model: str, packet: dict, skip: Union[User, List[User]] = None):

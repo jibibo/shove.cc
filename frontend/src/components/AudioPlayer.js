@@ -136,7 +136,8 @@ function AudioPlayer() {
   }
 
   function onEnded() {
-    // console.log("ended");
+    console.log("ended");
+    sendPacket("get_song", {});
   }
 
   function onError() {
