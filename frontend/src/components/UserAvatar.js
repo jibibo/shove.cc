@@ -15,10 +15,10 @@ function UserAvatar({ username, money }) {
 
   return money ? (
     <Tooltip title={`$${thousandsSeperatorFull(money)}`} arrow>
-      <Avatar className={classes.root} src={`avatars/${username}.png`} />
+      <Avatar className={classes.root} src={`cache/avatars/${username}.png`} />
     </Tooltip>
   ) : (
-    <Avatar className={classes.root} src={`avatars/${username}.png`} />
+    <Avatar className={classes.root} src={`cache/avatars/${username}.png`} />
   );
 }
 

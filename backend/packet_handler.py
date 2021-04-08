@@ -263,6 +263,10 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
 
 COMMANDS = {  # todo make OOP classes for commands in command_handler.py or something
+    "createaccount": {
+        "aliases": [],
+        "usage": "/createaccount [preferred username]"
+    },
     "error": {
         "aliases": [],
         "usage": "/error"
@@ -303,6 +307,16 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
     if not command or is_command(command, "help"):
         return f"{[c for c in COMMANDS.keys()]}"
+
+    if is_command(command, "createaccount"):
+        if len(command_args_real):
+            preferred_username = command_args_real[0]
+        else:
+            preferred_username = None
+
+        account = shove.accounts.create_random_account(preferred_username)
+        # todo shove.send.account_list() or something as account list has been updated
+        return f"Created {account['username']}"
 
     if is_command(command, "error"):  # raises an error to test error handling and logging
         raise Exception("/error was executed, all good")

@@ -67,27 +67,27 @@ except ImportError:
     PRIVATE_ACCESS = False
 
 
-def cleanup_backend_youtube_cache():
-    """Remove non-mp3 files from backend youtube cache folder"""
+def cleanup_backend_songs_folder():
+    """Remove non-mp3 files from backend songs folder"""
 
     count = 0
-    for filename in os.listdir(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}"):
-        if not (filename.endswith(".mp3") or filename.endswith(".txt")):
-            os.remove(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{filename}")
+    for filename in os.listdir(f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}"):
+        if not filename.endswith(".mp3"):
+            os.remove(f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{filename}")
             count += 1
 
-    Log.trace(f"Removed {count} file(s) that weren't .mp3 or .txt from backend/youtube_cache")
+    Log.trace(f"Removed {count} file(s) that weren't .mp3 from songs folder")
 
 
 def empty_frontend_cache():
     """Empty contents of the frontend audio cache folder"""
 
     count = 0
-    for filename in os.listdir(f"{CWD_PATH}/{FRONTEND_AUDIO_CACHE}"):
-        os.remove(f"{CWD_PATH}/{FRONTEND_AUDIO_CACHE}/{filename}")
+    for filename in os.listdir(f"{CWD_PATH}/{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}"):
+        os.remove(f"{CWD_PATH}/{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}/{filename}")
         count += 1
 
-    Log.trace(f"Removed {count} file(s) in frontend/audio")
+    Log.trace(f"Removed {count} file(s) from frontend cache")
 
 
 def simulate_intensive_function(seconds):

@@ -1,20 +1,10 @@
 from convenience import *
 
 from database import Accounts, Song, Songs
-from user import User, FakeUser
+from user import User
 from room import Room
 
 from games.coinflip import Coinflip
-
-
-# _ACCOUNTS = [Account(username=u, password="1", money=m)
-#              for u, m in [("a", 100000), ("badr", 77777777778), ("jim", 420000)]]
-
-# _SONGS = []
-# with open(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/archive.txt") as f:
-#     for _line in f.readlines():
-#         _mp3 = MP3(f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{_line.split()[1]}.mp3")
-#         _SONGS.append(Song(_line.split()[0], _line.split()[1], None, _mp3.info.length, None, None))
 
 
 class Shove:
@@ -45,8 +35,8 @@ class Shove:
                 api_secret=TRELLO_API_SECRET,
                 token=TRELLO_TOKEN
             )
-            board = client.get_board("603c469a39b5466c51c3a176")
-            self._trello_card_list = board.get_list("60587b1f02721f0c7b547f5b")
+            board = client.get_board(TRELLO_BOARD_ID)
+            self._trello_card_list = board.get_list(TRELLO_LIST_ID)
         else:
             Log.trace("No private access, not initializing Trello client")
 
@@ -61,12 +51,6 @@ class Shove:
 
         self.latest_song: Union[Song, None] = None
         self.latest_song_author: Union[User, None] = None
-
-        # Log.test("Faking play packet")
-        # fake_link = "XwxLwG2_Sxk"
-        # self.incoming_packets_queue.put((FakeUser(), "send_message", {
-        #     "message": f"/play {fake_link}"
-        # }, 0))
 
         Log.trace("Shove initialized")
 

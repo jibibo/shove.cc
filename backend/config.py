@@ -4,7 +4,7 @@ PORT = 777
 
 
 # Startup
-STARTUP_EMPTY_FRONTEND_CACHE = True
+STARTUP_EMPTY_FRONTEND_CACHE = False
 STARTUP_CLEANUP_BACKEND_CACHE = True
 DELAY_BEFORE_RESTART = 20  # seconds
 
@@ -29,25 +29,38 @@ CONSOLE_LOGGING_LEVEL = "TRACE"
 CONSOLE_LOGGING_LENGTH_CUTOFF = 800
 
 
-# Directories
-BACKEND_AUDIO_CACHE = "backend/audio_cache"
-FRONTEND_AUDIO_CACHE = "frontend/public/audio"
-DATABASES_DIRECTORY = "backend/databases"
-
-
-# Sound notifications
-ERROR_SOUND_NOTIFICATION_LEVEL = "WARN"
-ERROR_SOUND_FILE_PATH = "backend/audio/error.mp3"
-ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
+# Data storage
+BACKEND_DATA_FOLDER = "backend/data"
+FRONTEND_CACHE_FOLDER = "frontend/public/cache"
+SONGS_FOLDER = "songs"
+AVATARS_FOLDER = "avatars"
 
 
 # File logging
+LOGS_FOLDER = "backend/logs"
+LATEST_LOG_FILENAME = ".latest.log"
 ENABLE_FILE_LOGGING = True
 FILE_LOGGING_LEVEL = "WARN"
-LOGS_DIRECTORY = "backend/logs"
-LATEST_LOG_FILENAME = ".latest.log"
+
+
+# Sound notifications
+ERROR_SOUND_FILE_PATH = "backend/logs/error.mp3"
+ERROR_SOUND_NOTIFICATION_LEVEL = "WARN"
+ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
 
 
 # Songs
 SONG_MAX_DURATION = 600  # seconds
-LOG_IN_TO_REQUEST = True  # todo impl check
+LOG_IN_TO_REQUEST_SONG = True  # todo impl check
+
+
+# Trello
+TRELLO_BOARD_ID = "603c469a39b5466c51c3a176"
+TRELLO_LIST_ID = "60587b1f02721f0c7b547f5b"
+
+
+# Account creation
+USERNAME_VALID_CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789"
+USERNAME_MAX_LENGTH = 16
+RANDOM_MONEY_MIN = 1e3
+RANDOM_MONEY_MAX = 1e6

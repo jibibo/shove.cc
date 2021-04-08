@@ -72,9 +72,3 @@ class User:
 
     def set_game_data(self, data: dict):
         self._game_data = data
-
-
-class FakeUser(User):
-    def __init__(self, sid=""):
-        super().__init__(sid)
-        Log.trace("Fake user created")

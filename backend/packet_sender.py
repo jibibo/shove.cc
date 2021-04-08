@@ -1,6 +1,6 @@
 from convenience import *
 
-from user import User, FakeUser
+from user import User
 
 
 def send_packets_loop(shove, sio: socketio.Server):
@@ -26,10 +26,6 @@ def send_packet(sio, users, model: str, packet: dict, skip, is_response: bool):
     elif type(users) == list:
         if users and type(users[0]) != User:
             raise ValueError(f"'users' does not contain 'User' object(s), but: {type(users[0])}")
-
-    elif type(users) == FakeUser:
-        Log.trace(f"Fake user provided, not sending packet, model: '{model}'")
-        return
 
     else:
         raise ValueError(f"Invalid 'users' type: {type(users)}")

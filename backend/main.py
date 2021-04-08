@@ -81,13 +81,20 @@ def main():
     if PING_USERS_ENABLED:
         eventlet.spawn(ping_users_loop, shove)
     if STARTUP_CLEANUP_BACKEND_CACHE:
-        cleanup_backend_youtube_cache()
+        cleanup_backend_songs_folder()
     if STARTUP_EMPTY_FRONTEND_CACHE:
         empty_frontend_cache()
 
     Log.info(f"Starting SocketIO WSGI on port {PORT}")
-    server_socket = eventlet.listen((HOST, PORT))
-    eventlet.wsgi.server(server_socket, wsgi_app, log_output=LOG_WSGI)  # blocking - reading console input is not compatible with greenthreads
+    listen_socket = eventlet.listen((HOST, PORT))
+    # wrap_ssl https://stackoverflow.com/a/39420484/13216113
+    # listen_socket_ssl = eventlet.wrap_ssl(
+    #     listen_socket,
+    #     certfile=f"{CWD_PATH}/cert.pem",
+    #     keyfile=f"{CWD_PATH}/key.pem",
+    #     server_side=True
+    # )
+    eventlet.wsgi.server(listen_socket, wsgi_app, log_output=LOG_WSGI)  # blocking - reading console input is not compatible with greenthreads
 
 
 if __name__ == "__main__":

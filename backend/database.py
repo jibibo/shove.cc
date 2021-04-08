@@ -3,15 +3,21 @@ from convenience import *
 
 # Astract classes
 
-class AbstractDatabase(ABC):
-    def __init__(self, filename):
+class AbstractDatabase(ABC):  # todo implement unique id's, tracked in the json.file, so db becomes a dict with {next_id: int, entries: []}
+    def __init__(self, filename: str):
         self._filename = filename
-        self._file_abs = f"{CWD_PATH}/{DATABASES_DIRECTORY}/{filename}"
-        self._entries = set()
+        self._file_abs = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{filename}"
+        self._entries: Set[AbstractDatabaseEntry] = set()
+        self._type_name = type(self).__name__
+
+        Log.trace(f"Creating DB from file: {self}")
 
         self.read_from_file()
 
-        Log.trace(f"Created DB for filename: {filename}")
+        Log.trace(f"Created DB: {self}")
+
+    def __repr__(self):
+        return f"<DB '{self._type_name}', entries: {self.get_entries_count()}>"
 
     def add_entry(self, entry):
         self._entries.add(entry)
@@ -52,25 +58,27 @@ class AbstractDatabase(ABC):
     def get_entries(self) -> set:
         return self._entries
 
+    def get_entries_count(self) -> int:
+        return len(self._entries)
+
     @abstractmethod
     def get_entries_as_json(self) -> list:
         pass
 
     @abstractmethod
-    def get_entries_from_json(self, entries_as_json) -> set:
+    def get_entries_from_json(self, entries_as_json: list) -> set:
         pass
 
     def get_sorted(self, key, reverse=False) -> list:
         return sorted(self._entries, key=key, reverse=reverse)
 
-    def read_from_file(self) -> set:
+    def read_from_file(self):
         """Read and load the DB's entries from file. Called once upon DB creation."""
 
         with open(self._file_abs, "r") as f:
             entries_as_json = json.load(f)
 
-        entries = self.get_entries_from_json(entries_as_json)
-        return entries
+        self._entries = self.get_entries_from_json(entries_as_json)
 
     def write_to_file(self):  # todo write to temp file while writing to prevent potential data loss during crashes (if needed?)
         """Write the DB's entries to disk, taking into account non-JSON variable types.
@@ -84,7 +92,7 @@ class AbstractDatabase(ABC):
 
 
 class AbstractDatabaseEntry(ABC):
-    def __init__(self, database, default_data: dict, **kwargs):
+    def __init__(self, database: AbstractDatabase, default_data: dict, **kwargs):
         self._type_name = type(self).__name__
         self._data = default_data
 
@@ -94,11 +102,14 @@ class AbstractDatabaseEntry(ABC):
 
         self._data.update(kwargs)
 
-        self._database = database
+        self._database: AbstractDatabase = database
         database.add_entry(self)
         self.trigger_db_write()  # write db to file if new database entry gets created
 
         Log.trace(f"Created DB entry: {self}")
+
+    # def __del__(self):
+    #     raise NotImplementedError  # todo impl
 
     def __getitem__(self, key):
         try:
@@ -167,8 +178,35 @@ class Accounts(AbstractDatabase):
 
         return entries
 
-    def create_random_account(self):  # todo implement
-        raise NotImplementedError
+    def create_random_account(self, preferred_username=None):
+        """Creates a random Account (with optional name) instance and returns it"""
+
+        Log.trace("Creating random account")
+
+        username = None
+        if preferred_username:
+            if self.find_single(raise_not_found=False, username=preferred_username):
+                username = None
+            else:
+                username = preferred_username  # username is not taken, so we good
+
+        if not username:
+            username_attempts = 0
+            max_attempts = 1
+            while username_attempts < max_attempts:  # prevent hardcoding "while True" for infinite loops
+                username = "".join(random.choices(USERNAME_VALID_CHARACTERS, k=USERNAME_MAX_LENGTH))
+                if self.find_single(raise_not_found=False, username=username):  # username exists (chance of 1 in >1e24)
+                    username_attempts += 1
+                    if username_attempts == max_attempts:
+                        raise RuntimeError(f"Could not create a unique username in {max_attempts} attempts")
+
+                else:
+                    break
+
+        money = random.randint(RANDOM_MONEY_MIN, RANDOM_MONEY_MAX)
+        account = Account(self, username=username, money=money)
+
+        return account
 
 
 class Songs(AbstractDatabase):
@@ -223,7 +261,7 @@ class Song(AbstractDatabaseEntry):
         }, **kwargs)
 
     def __repr__(self):
-        return f"<Song {self['song_id']}, name={self['name']}>"
+        return f"<Song {self['song_id']}, name: {self['name']}>"
 
     def get_filter_keys(self) -> List[str]:
         pass  # all data of a song is public
@@ -231,8 +269,8 @@ class Song(AbstractDatabaseEntry):
     def copy_to_frontend_if_absent(self):
         """Copy the song file to frontend cache if it is absent"""
 
-        backend_file = f"{CWD_PATH}/{BACKEND_AUDIO_CACHE}/{self['song_id']}.mp3"
-        frontend_file = f"{CWD_PATH}/{FRONTEND_AUDIO_CACHE}/{self['song_id']}.mp3"
+        backend_file = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3"
+        frontend_file = f"{CWD_PATH}/{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3"
 
         if os.path.exists(frontend_file):
             Log.trace("Frontend cache already has song file")
@@ -253,7 +291,7 @@ class Song(AbstractDatabaseEntry):
         }
 
     def get_url(self):
-        return f"audio/{self['song_id']}.mp3"
+        return f"cache/songs/{self['song_id']}.mp3"
 
     def increment_plays(self, amount=1):
         self["plays"] += amount  # triggers db write
@@ -312,7 +350,7 @@ class Song(AbstractDatabaseEntry):
 
 
 class Account(AbstractDatabaseEntry):
-    def __init__(self, database, **kwargs):
+    def __init__(self, database: AbstractDatabase, **kwargs):
         super().__init__(database, {
             "username": None,
             "password": None,
@@ -320,7 +358,7 @@ class Account(AbstractDatabaseEntry):
         }, **kwargs)
 
     def __repr__(self):
-        return f"<Account {self['username']}, money={self['money']}>"
+        return f"<Account {self['username']}, money: {self['money']}>"
 
     def get_filter_keys(self) -> List[str]:
         return ["password"]

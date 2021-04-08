@@ -1,14 +1,13 @@
 .idea/
 __pycache__/
 
-/backend/audio_cache/
-/backend/databases/
+cert.pem
+key.pem
+
+/backend/data/
 /backend/logs/
 /backend/test/
 private.py
 
 /frontend/node_modules/
-/frontend/public/audio/
-/frontend/public/avatars/
-cert.pem
-key.pem
+/frontend/public/cache/
