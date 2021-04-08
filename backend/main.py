@@ -1,14 +1,15 @@
 import eventlet
-eventlet.monkey_patch()  # required to patch modules for socketio
+eventlet.monkey_patch()  # required to patch modules for using threads with socketio
 
 from convenience import *
 
 from shove import Shove
 from packet_sender import send_packets_loop
 from packet_handler import handle_packets_loop
-from user_pinging import ping_users_loop
+from user_pinger import ping_users_loop
 
 set_greenthread_name("Main")
+
 # eventlet usage consequences:
 # time.sleep() should become eventlet.sleep()
 # instead of creating a threading.Thread, call eventlet.spawn(func, *args) etc
@@ -69,14 +70,11 @@ def on_message(sid, model: str, packet: dict):
 
 def main():
     print("\n\n\t\"Waazzaaaaaap\" - Michael Stevens\n\n")
-    # set_greenthread_name("LogFileWriter", eventlet.spawn(Log.write_file_loop))  # special case, randomly causes a NameError
     eventlet.spawn(Log.write_file_loop)
 
     global shove
     shove = Shove(sio)
 
-    # sio.start_background_task(send_packets_loop, shove, sio)
-    # eventlet.spawn(send_packets_loop, shove, sio)
     eventlet.spawn(send_packets_loop, shove, sio)
     eventlet.spawn(handle_packets_loop, shove)
 
@@ -87,9 +85,9 @@ def main():
     if STARTUP_EMPTY_FRONTEND_CACHE:
         empty_frontend_cache()
 
-    Log.info(f"Running SocketIO on port {PORT}")
-
-    eventlet.wsgi.server(eventlet.listen((HOST, PORT)), wsgi_app, log_output=LOG_WSGI)
+    Log.info(f"Starting SocketIO WSGI on port {PORT}")
+    server_socket = eventlet.listen((HOST, PORT))
+    eventlet.wsgi.server(server_socket, wsgi_app, log_output=LOG_WSGI)  # blocking - reading console input is not compatible with greenthreads
 
 
 if __name__ == "__main__":

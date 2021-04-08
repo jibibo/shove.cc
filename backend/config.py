@@ -1,4 +1,4 @@
-# Socket settings
+# SocketIO settings
 HOST = "0.0.0.0"
 PORT = 777
 
@@ -6,7 +6,7 @@ PORT = 777
 # Startup
 STARTUP_EMPTY_FRONTEND_CACHE = True
 STARTUP_CLEANUP_BACKEND_CACHE = True
-DELAY_BEFORE_RESTART = 20
+DELAY_BEFORE_RESTART = 20  # seconds
 
 
 # User pinging
@@ -15,12 +15,13 @@ PING_USERS_INTERVAL = 5  # seconds
 PONG_DELAY_BEFORE_TIMEOUT = 5  # todo fix: timeout < interval should be possible
 
 
-# What to log todo use logging module for proper logging?
+# What to log
 LOG_SOCKETIO = False
 LOG_ENGINEIO = False
 LOG_WSGI = False
 LOG_YOUTUBE_DL_VERBOSE = False
 LOG_YOUTUBE_DL_WARNINGS = False
+FFMPEG_LOGGING_LEVEL = "warning"  # https://ffmpeg.org/ffmpeg.html CTRL+F "loglevel"
 
 
 # Console logging
@@ -48,4 +49,5 @@ LATEST_LOG_FILENAME = ".latest.log"
 
 
 # Songs
-SONG_MAX_DURATION = 600
+SONG_MAX_DURATION = 600  # seconds
+LOG_IN_TO_REQUEST = True  # todo impl check

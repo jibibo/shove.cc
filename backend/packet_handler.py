@@ -291,7 +291,7 @@ def is_command(input_str, match_command):
     return input_str == match_command or input_str in COMMANDS[match_command]
 
 
-def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:  # todo make OOP
+def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
     Log.trace(f"Handling command message: '{message}'")
     _message_full_real = message[1:].strip()  # [1:] -> ignore the leading "/"
     _message_full = _message_full_real.lower()

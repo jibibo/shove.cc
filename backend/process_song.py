@@ -116,14 +116,12 @@ def download_youtube_audio(youtube_id) -> float:
 
     Log.trace(f"Downloading song: youtube_id={youtube_id}")
 
-    # todo benchmark -f \"bestaudio[filesize<3M]/bestaudio/best[filesize<3M]/best\" vs worstaudio/worst
     youtube_dl_command = " ".join([  # actually download it
         "youtube-dl",
         f"-o {backend_cache}/%(id)s.%(ext)s",
         f"https://youtube.com/watch?v={youtube_id}",
         "--force-ipv4",  # ipv4 to fix hanging bug - https://www.reddit.com/r/youtubedl/comments/i7gqhu/youtubedl_stuck_at_downloading_webpage/
         "--format mp3/bestaudio",  # if downloading mp3 is an option, try that (saves time converting to mp3)
-        # f"--download-archive {backend_cache}/archive.txt",  # shouldn't be necessary as we have a database now
         # "--user-agent \"Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)\"",  # might prevent some errors, not certain
         "--verbose" if LOG_YOUTUBE_DL_VERBOSE else "",
         "--no-warnings" if not LOG_YOUTUBE_DL_WARNINGS else "",
@@ -155,18 +153,18 @@ def convert_youtube_audio(youtube_id) -> float:
     if not filename:
         raise ConvertSongFailed("Song file missing from backend cache")
 
-    if filename.endswith(".mp3"):  # no need to convert to mp3, done todo doesn't return a converting time
+    if filename.endswith(".mp3"):  # no need to convert to mp3, done
         Log.trace("Downloaded file in backend cache is already .mp3, not converting")
         return 0
 
     Log.trace(f"Converting file to mp3: youtube_id={youtube_id}")
 
-    # todo loudless normalization? "\"ffmpeg -i {} -c:a mp3 -filter:a loudnorm=i=-18:lra=17 -qscale:a 2 " + f"{cache}/{ffmpeg_filename}" + " && del {}\""
+    # todo loudless normalization? "\"ffmpeg -i {} -c:a mp3 -filter:a loudnorm=i=-18:lra=17 -qscale:a 2 " + f"{cache}/{ffmpeg_filename}""
     convert_command = " ".join([
         "ffmpeg",
         f"-i {backend_cache}/{filename}",
         f"{backend_cache}/{youtube_id}.mp3",
-        "-loglevel warning"
+        f"-loglevel {FFMPEG_LOGGING_LEVEL}"
     ])
 
     start_time = time.time()
