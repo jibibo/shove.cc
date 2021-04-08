@@ -1,6 +1,6 @@
 from convenience import *
 
-from database import AbstractDatabase, AbstractDatabaseEntry
+from abstract_database import AbstractDatabase, AbstractDatabaseEntry
 
 
 class Songs(AbstractDatabase):

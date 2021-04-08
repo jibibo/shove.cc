@@ -1,6 +1,6 @@
 from convenience import *
 
-from database import Account
+from abstract_database import Account
 
 
 class User:
