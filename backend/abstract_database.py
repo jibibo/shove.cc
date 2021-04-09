@@ -83,8 +83,8 @@ class AbstractDatabase(ABC):
         return self._last_entry_id
 
     def read_from_file(self):
-        """Read and loa7d the DB's entries from file.
-        Called once upon DB creation."""
+        """Read and load the DB's entries from file.
+        Called ONCE: on DB creation."""
 
         if self.has_read_from_file:
             Log.warn("Already read from DB file! Ignoring read_from_file call")
@@ -130,26 +130,27 @@ class AbstractDatabase(ABC):
 
 
 class AbstractDatabaseEntry(ABC):
-    def __init__(self, database: AbstractDatabase, default_data: dict, **kwargs):
+    def __init__(self, database: AbstractDatabase, default_data: dict, db_creation: bool = False, **kwargs):
         """Creates a new DB entry for specific database.
         default_data contains dict of default key-values, keys absent in this dict raise a ValueError.
         **kwargs contains overriding key-values."""
 
-        self._type_name = type(self).__name__
-        self._database: AbstractDatabase = database
-
-        assert "entry_id" not in default_data, "Key 'entry_id' not allowed in default_data!"
-        self._data = default_data
-
-        if "entry_id" not in kwargs:
-            # initialized during runtime (not on startup file read), create new entry id
-            # if not initialized during runtime, kwargs should NEVER contain entry_id!
-            self._data.update(entry_id=database.get_next_entry_id())
+        if "entry_id" in default_data:
+            raise ValueError("Key 'entry_id' not allowed in default_data")
+        if "entry_id" in kwargs and not db_creation:
+            raise ValueError("Key 'entry_id' not allowed in kwargs after DB creation")
 
         for key in kwargs:
             if key not in default_data and key != "entry_id":
                 raise ValueError(f"Invalid key '{key}' for: {self}")
 
+        self._type_name = type(self).__name__
+        self._database: AbstractDatabase = database
+
+        # if entry_id not set in kwargs, create new one
+        entry_id = kwargs["entry_id"] if "entry_id" in kwargs else database.get_next_entry_id()
+        self._data = {"entry_id": entry_id}
+        self._data.update(default_data)
         self._data.update(kwargs)
 
         self._database.add_entry(self)

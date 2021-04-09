@@ -20,7 +20,7 @@ class Accounts(AbstractDatabase):
         entries = set()
 
         for entry_as_json in entries_as_json_list:
-            entries.add(Account(self, **entry_as_json))
+            entries.add(Account(self, db_creation=True, **entry_as_json))
 
         return entries
 

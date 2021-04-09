@@ -24,7 +24,7 @@ class Songs(AbstractDatabase):
         entries = set()
 
         for entry_as_json in entries_as_json_list:
-            entry = Song(self, **entry_as_json)
+            entry = Song(self, db_creation=True, **entry_as_json)
             for k in ["dislikes", "likes"]:  # convert these data types from list to set
                 entry[k] = set(entry[k])
 

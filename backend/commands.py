@@ -3,6 +3,7 @@ from convenience import *
 from shove import Shove
 from user import User
 from process_song import process_song_task
+from songs import Song
 
 
 COMMANDS = {
@@ -23,11 +24,11 @@ COMMANDS = {
         "usage": "/money"
     },
     "play": {
-        "aliases": ["audio", "music", "song"],
+        "aliases": ["p", "audio", "music", "song"],
         "usage": "/play <url/ID>"
     },
     "trello": {
-        "aliases": [],
+        "aliases": ["t"],
         "splitter": "...",
         "usage": "/trello <card name> '...' [card description]"
     }
@@ -101,6 +102,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         raise CommandInvalid(COMMANDS["account"]["usage"])
 
     if is_command(command, "error"):  # raises an error to test error handling and logging
+        Song(shove.songs, entry_id=0)
         raise Exception("/error was executed, all good")
 
     if is_command(command, "money"):
