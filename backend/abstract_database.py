@@ -61,17 +61,17 @@ class AbstractDatabase(ABC):
         kwargs contains overriding key-values.
         Returns the newly created DB entry instance."""
 
+        if read_from_file:
+            # entry created because DB read from file, so convert JSON-serializable
+            # objects to their proper counterpart if required
+            kwargs = self._entry_class.convert_parsed_json_data(kwargs)
+
         if "entry_id" in kwargs:
             if not read_from_file:
                 raise ValueError("Key 'entry_id' not allowed in kwargs if not reading from file")
         else:
             # if entry_id not set in kwargs, assign a new one
             kwargs["entry_id"] = self._get_next_entry_id()
-
-        if read_from_file:
-            # entry created because DB read from file, so convert JSON-serializable
-            # objects to their proper counterpart if required
-            kwargs = self._entry_class.convert_parsed_json_data(kwargs)
 
         new_entry = self._entry_class(self, **kwargs)
 
@@ -159,7 +159,12 @@ class AbstractDatabase(ABC):
 class AbstractDatabaseEntry(ABC):
     def __init__(self, database: AbstractDatabase, **kwargs):
         """Creates a new instance of the DB's entry type.
-        Instantiate objects through the DB object, not by initializing this directly."""
+        Instantiate objects through the DB object, not by initializing this directly.
+        If called directly, shit probably goes down, best case scenario: the new entry
+        doesn't get added to the DB."""
+
+        if not database or "entry_id" not in kwargs:
+            raise ValueError("Use Database.create_entry(**kwargs), not DatabaseEntry(**kwargs)!")
 
         default_data = self.get_default_data()
 

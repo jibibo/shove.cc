@@ -15,7 +15,6 @@ import ListSubheader from "@material-ui/core/ListSubheader";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
-import Divider from "@material-ui/core/Divider";
 
 import { socket, sendPacket } from "../connection";
 
@@ -292,9 +291,6 @@ function Room() {
                             }}
                           />
                         </ListItem>
-                        // {/* {username === accountData.username ? (
-                        //   <Divider />
-                        // ) : null} */}
                       );
                     })}
                   </List>
@@ -324,9 +320,6 @@ function Room() {
                             }}
                           />
                         </ListItem>
-                        // {/* {username === accountData.username ? (
-                        //   <Divider />
-                        // ) : null} */}
                       );
                     })}
                   </List>

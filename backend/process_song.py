@@ -1,7 +1,5 @@
 from convenience import *
 
-from songs import Song
-
 
 def process_song_task(shove, youtube_id: str, user):
     set_greenthread_name(f"ProcessSong/{youtube_id}")
@@ -70,8 +68,7 @@ def process_song_task(shove, youtube_id: str, user):
         if not os.path.exists(backend_audio_file):
             raise RuntimeError("Song file missing from backend songs folder")
 
-        song = Song(
-            shove.songs,
+        song = shove.songs.create_entry(
             convert_time=convert_time,
             download_time=download_time,
             duration=duration,

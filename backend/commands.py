@@ -102,7 +102,6 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         raise CommandFailed(COMMANDS["account"]["usage"])
 
     if is_command(command, "error"):  # raises an error to test error handling and logging
-        Song(shove.songs, entry_id=0)
         raise Exception("/error was executed, all good")
 
     if is_command(command, "money"):

@@ -36,9 +36,9 @@ function AudioPlayer() {
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0.1); // prevent ZeroDivision in the future (x% done ratios)
   const [loop, setLoop] = useState(false);
+  const [currentSong, setCurrentSong] = useState();
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
-  const [plays, setPlays] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
   const [hasDisliked, setHasDisliked] = useState(false);
 
@@ -50,7 +50,7 @@ function AudioPlayer() {
     socket.on("play_song", (packet) => {
       console.debug("> play_song", packet);
       loadNewAudio(packet.url);
-      setPlays(packet.plays);
+      setCurrentSong(packet);
     });
 
     socket.on("song_rating", (packet) => {
@@ -189,15 +189,20 @@ function AudioPlayer() {
 
   return (
     <>
-      <Typography>{`${secondsToString(progress)} / ${secondsToString(
-        duration
-      )} - plays: ${plays}`}</Typography>
+      {currentSong ? (
+        <Typography>{`${secondsToString(progress)} / ${secondsToString(
+          duration
+        )} - ${currentSong.name}, plays: ${currentSong.plays}`}</Typography>
+      ) : null}
+
       <Button variant="outlined" color="secondary" onClick={onClickTogglePlay}>
         {playing ? "Pause" : "Play"}
       </Button>
+
       <Button variant="outlined" color="secondary" onClick={onClickToggleLoop}>
         Loop: {loop ? "ye" : "no"}
       </Button>
+
       <Slider
         className="bet-slider"
         min={0}
@@ -208,6 +213,7 @@ function AudioPlayer() {
         valueLabelDisplay="auto"
         valueLabelFormat={(value) => percentage(value)}
       />
+
       <Button
         variant="outlined"
         color="secondary"
@@ -215,6 +221,7 @@ function AudioPlayer() {
       >
         Play random
       </Button>
+
       <Button
         variant="outlined"
         color="secondary"
@@ -222,6 +229,7 @@ function AudioPlayer() {
       >
         Play popular
       </Button>
+
       <Button
         variant={hasLiked ? "contained" : "outlined"}
         color="secondary"
@@ -233,6 +241,7 @@ function AudioPlayer() {
       >
         {`Like (${likes})`}
       </Button>
+
       <Button
         variant={hasDisliked ? "contained" : "outlined"}
         color="secondary"
