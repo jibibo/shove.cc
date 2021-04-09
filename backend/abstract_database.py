@@ -124,7 +124,7 @@ class AbstractDatabase(ABC):
             json.dump({
                 "last_entry_id": self._last_entry_id,
                 "entries": entries_as_json_list_sorted
-            }, f, indent=2)
+            }, f, indent=2, sort_keys=True)
 
         # Log.trace(f"{self} wrote to DB file")
 

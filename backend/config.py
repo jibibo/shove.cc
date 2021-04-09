@@ -50,7 +50,7 @@ ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
 
 
 # Songs
-SONG_MAX_DURATION = 600  # seconds
+SONG_MAX_DURATION = 1200  # seconds
 LOG_IN_TO_REQUEST_SONG = True  # todo impl check
 
 
