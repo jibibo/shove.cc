@@ -79,7 +79,7 @@ class AbstractDatabase(ABC):
 
     def get_next_entry_id(self) -> int:
         self._last_entry_id += 1
-        Log.trace(f"Got next entry ID: {self._last_entry_id}")
+        Log.trace(f"Got next DB entry ID: {self._last_entry_id}")
         return self._last_entry_id
 
     def read_from_file(self):

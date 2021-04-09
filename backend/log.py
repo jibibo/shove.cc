@@ -4,8 +4,6 @@ from convenience import *
 colorama.init(autoreset=False)
 
 ERROR_SOUND_ABS = f"{CWD_PATH}/{ERROR_SOUND_FILE_PATH}"
-LOGS_DIRECTORY_ABS = f"{CWD_PATH}/{LOGS_FOLDER}"
-LATEST_LOG_FILENAME_ABS = f"{LOGS_DIRECTORY_ABS}/{LATEST_LOG_FILENAME}"
 
 
 class LogLevel:
@@ -105,15 +103,17 @@ class Log:
         """Blocking loop to write messages and exceptions to file (from the queue)"""
 
         set_greenthread_name("LogFileWriter")
+        logs_folder_abs = f"{CWD_PATH}/{LOGS_FOLDER}"
+        latest_log_abs = f"{logs_folder_abs}/{LATEST_LOG_FILENAME}"
 
         try:
-            open(LATEST_LOG_FILENAME_ABS, "w").close()
+            open(latest_log_abs, "w").close()
             print(f"Emptied {LATEST_LOG_FILENAME}")
 
         except FileNotFoundError:
-            os.mkdir(LOGS_DIRECTORY_ABS)
-            print(f"Created {LOGS_DIRECTORY_ABS}")
-            open(LATEST_LOG_FILENAME_ABS, "w").close()
+            os.mkdir(logs_folder_abs)
+            print(f"Created {logs_folder_abs}")
+            open(latest_log_abs, "w").close()
             print(f"Created {LATEST_LOG_FILENAME}")
 
         Log.trace("Write log file loop ready")
@@ -121,7 +121,7 @@ class Log:
         while True:
             now_str, level, thread_name, message, exception = Log.FILE_WRITING_QUEUE.get()
 
-            with open(LATEST_LOG_FILENAME_ABS, "a", encoding="utf-8") as f:
+            with open(latest_log_abs, "a", encoding="utf-8") as f:
                 f.write(f"[{now_str}][{level[1]}][{thread_name}] {message}\n")
                 if exception:
                     traceback.print_exception(type(exception), exception, exception.__traceback__, file=f)

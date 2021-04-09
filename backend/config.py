@@ -38,13 +38,13 @@ AVATARS_FOLDER = "avatars"
 
 # File logging
 LOGS_FOLDER = "backend/logs"
-LATEST_LOG_FILENAME = ".latest.log"
+LATEST_LOG_FILENAME = ".latest.txt"
 ENABLE_FILE_LOGGING = True
 FILE_LOGGING_LEVEL = "WARN"
 
 
 # Sound notifications
-ERROR_SOUND_FILE_PATH = "backend/logs/error.mp3"
+ERROR_SOUND_FILE_PATH = "error.mp3"
 ERROR_SOUND_NOTIFICATION_LEVEL = "WARN"
 ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
 

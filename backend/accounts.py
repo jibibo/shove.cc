@@ -64,7 +64,7 @@ class Account(AbstractDatabaseEntry):
         }, **kwargs)
 
     def __repr__(self):
-        return f"<Account {self['entry_id']}, money: {self['money']}>"
+        return f"<Account {self['entry_id']}, username: {self['username']}>"
 
     def get_filter_keys(self) -> List[str]:
         return ["password"]
