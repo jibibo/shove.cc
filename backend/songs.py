@@ -1,13 +1,14 @@
 from convenience import *
 
 from abstract_database import AbstractDatabase, AbstractDatabaseEntry
+from user import User
 
 
 class Songs(AbstractDatabase):
     def __init__(self):
         super().__init__("songs.json")
 
-    def get_entries_as_json(self) -> list:
+    def get_entries_as_json_list(self) -> list:
         entries_as_json = []
 
         for entry in self.get_entries():
@@ -19,10 +20,10 @@ class Songs(AbstractDatabase):
 
         return entries_as_json
 
-    def get_entries_from_json(self, entries_as_json) -> set:
+    def get_entries_from_json_list(self, entries_as_json_list: list) -> set:
         entries = set()
 
-        for entry_as_json in entries_as_json:
+        for entry_as_json in entries_as_json_list:
             entry = Song(self, **entry_as_json)
             for k in ["dislikes", "likes"]:  # convert these data types from list to set
                 entry[k] = set(entry[k])
@@ -53,10 +54,16 @@ class Song(AbstractDatabaseEntry):
         }, **kwargs)
 
     def __repr__(self):
-        return f"<Song {self['song_id']}, name: {self['name']}>"
+        return f"<Song {self['entry_id']}, name: {self['name']}>"
 
     def get_filter_keys(self) -> List[str]:
         pass  # all data of a song is public
+
+    def broadcast_rating(self, shove):
+        """Broadcast this song's rating to all users, and whether they liked/disliked"""
+
+        for user in shove.get_all_users():
+            shove.send_packet_to(user, "song_rating", self.get_rating(user))
 
     def copy_to_frontend_if_absent(self):
         """Copy the song file to frontend cache if it is absent"""
@@ -76,17 +83,11 @@ class Song(AbstractDatabaseEntry):
     def get_like_count(self) -> int:
         return len(self["likes"])
 
-    def get_rating_of(self, username) -> dict:
-        return {
-            "disliked": username in self["dislikes"] if username else False,
-            "liked": username in self["likes"] if username else False
-        }
-
     def get_url(self):
         return f"cache/songs/{self['song_id']}.mp3"
 
     def increment_plays(self, amount=1):
-        self["plays"] += amount  # triggers db write
+        self["plays"] += amount  # triggers db write as it assigns with "="
 
     def play(self, shove, author):
         Log.trace(f"Playing {self}")
@@ -95,8 +96,6 @@ class Song(AbstractDatabaseEntry):
         shove.latest_song = self
         shove.latest_song_author = author
 
-        self.send_rating_packet(shove)
-
         shove.send_packet_to_everyone("play_song", {
             "author": shove.latest_song_author.get_username(),
             "url": self.get_url(),
@@ -104,38 +103,42 @@ class Song(AbstractDatabaseEntry):
             "plays": self["plays"],
         })
 
-    def send_rating_packet(self, shove):
-        """Send a packet containing the current song's ratings.
-        Called when the rating has been updated or a new song started playing."""
+        self.broadcast_rating(shove)
+
+    def get_rating(self, user: Union[User, None]) -> dict:
+        """The packet containing the current song's ratings,
+        unique for each user as they might have liked/disliked the song"""
 
         dislike_count = self.get_dislike_count()
         like_count = self.get_like_count()
 
-        for user in shove.get_all_users():
-            shove.send_packet_to(user, "song_rating", {
-                "dislikes": dislike_count,
-                "likes": like_count,
-                "you": self.get_rating_of(user.get_username())
-            })
+        return {
+            "dislikes": dislike_count,
+            "likes": like_count,
+            "you": {
+                "disliked": user.get_username() in self["dislikes"] if user and user.is_logged_in() else False,
+                "liked": user.get_username() in self["likes"] if user and user.is_logged_in() else False
+            }
+        }
 
-    def toggle_dislike(self, username) -> bool:
+    def toggle_dislike(self, username):
+        if username in self["likes"]:  # remove the user's like in any case
+            self["likes"].remove(username)
+
         if username in self["dislikes"]:  # if user disliked, remove the dislike
             self["dislikes"].remove(username)
-            return False
+        else:
+            self["dislikes"].add(username)
 
-        if username in self["likes"]:  # else if user wants to dislike, so remove their like
-            self["likes"].remove(username)
+        self.trigger_db_write()
 
-        self["dislikes"].add(username)
-        return True
-
-    def toggle_like(self, username) -> bool:
-        if username in self["likes"]:  # if user liked, remove them
-            self["likes"].remove(username)
-            return False
-
-        if username in self["dislikes"]:  # else if user wants to like, remove their dislike
+    def toggle_like(self, username):
+        if username in self["dislikes"]:  # remove the user's dislike in any case
             self["dislikes"].remove(username)
 
-        self["likes"].add(username)
-        return True
+        if username in self["likes"]:  # if user liked, remove the like
+            self["likes"].remove(username)
+        else:
+            self["likes"].add(username)
+
+        self.trigger_db_write()

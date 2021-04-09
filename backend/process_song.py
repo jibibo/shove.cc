@@ -1,6 +1,6 @@
 from convenience import *
 
-from abstract_database import Song
+from songs import Song
 
 
 def process_song_task(shove, youtube_id, user):

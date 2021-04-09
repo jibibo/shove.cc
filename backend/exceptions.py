@@ -27,6 +27,10 @@ class NoPrivateAccess(PacketHandlingFailed):
     description = "Backend host has no access to private information (not good)"
 
 
+class NoSongsAvailable(PacketHandlingFailed):
+    description = "No songs available"
+
+
 class PacketInvalid(PacketHandlingFailed):
     def __init__(self, description=None):
         self.description = description or "Invalid packet"

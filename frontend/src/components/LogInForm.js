@@ -29,6 +29,8 @@ const LogInForm = () => {
     setUsernameInput("");
   }
 
+  console.log("account list:", accountList);
+
   return (
     <>
       <div className="log-in-form">
@@ -61,20 +63,22 @@ const LogInForm = () => {
       </div>
       Quick log in:
       <div className="account-list">
-        {accountList.map((account, i) => {
-          return (
-            <div className="account-list-entry" key={i}>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  onClickAccount(account.username);
-                }}
-              >
-                {account.username}
-              </Button>
-            </div>
-          );
-        })}
+        {accountList
+          ? accountList.map((account, i) => {
+              return (
+                <div className="account-list-entry" key={i}>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      onClickAccount(account.username);
+                    }}
+                  >
+                    {account.username}
+                  </Button>
+                </div>
+              );
+            })
+          : "No accounts!"}
       </div>
     </>
   );

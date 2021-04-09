@@ -7,7 +7,7 @@ class Accounts(AbstractDatabase):
     def __init__(self):
         super().__init__("accounts.json")
 
-    def get_entries_as_json(self) -> list:
+    def get_entries_as_json_list(self) -> list:
         entries_as_json = []
 
         for entry in self.get_entries():
@@ -16,10 +16,10 @@ class Accounts(AbstractDatabase):
 
         return entries_as_json
 
-    def get_entries_from_json(self, entries_as_json) -> set:
+    def get_entries_from_json_list(self, entries_as_json_list: list) -> set:
         entries = set()
 
-        for entry_as_json in entries_as_json:
+        for entry_as_json in entries_as_json_list:
             entries.add(Account(self, **entry_as_json))
 
         return entries
@@ -64,7 +64,7 @@ class Account(AbstractDatabaseEntry):
         }, **kwargs)
 
     def __repr__(self):
-        return f"<Account {self['username']}, money: {self['money']}>"
+        return f"<Account {self['entry_id']}, money: {self['money']}>"
 
     def get_filter_keys(self) -> List[str]:
         return ["password"]

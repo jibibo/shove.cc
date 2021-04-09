@@ -110,7 +110,7 @@ function App() {
 
     socket.on("account_list", (packet) => {
       console.debug("> account_list", packet);
-      setAccountList(packet.account_list);
+      setAccountList(packet);
     });
 
     socket.on("command_success", (packet) => {

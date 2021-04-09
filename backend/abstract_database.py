@@ -1,17 +1,19 @@
 from convenience import *
 
 
-class AbstractDatabase(ABC):  # todo implement unique id's, tracked in the json.file, so db becomes a dict with {next_id: int, entries: []}
+class AbstractDatabase(ABC):
     def __init__(self, filename: str):
         """Abstract class for database instance that contains entries, to be saved in a json file"""
 
-        self._filename = filename
-        self._file_abs = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{filename}"
+        self._filename: str = filename
+        self._file_abs: str = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{filename}"
+        self._last_entry_id: int = 0
         self._entries: Set[AbstractDatabaseEntry] = set()
         self._type_name = type(self).__name__
 
         Log.trace(f"Creating DB from file: {self}")
 
+        self.has_read_from_file: bool = False
         self.read_from_file()
 
         Log.trace(f"Created DB: {self}")
@@ -19,18 +21,16 @@ class AbstractDatabase(ABC):  # todo implement unique id's, tracked in the json.
     def __repr__(self):
         return f"<DB '{self._type_name}', entries: {self.get_entries_count()}>"
 
-    @abstractmethod
-    def get_entries_as_json(self) -> list:
-        pass
-
-    @abstractmethod
-    def get_entries_from_json(self, entries_as_json: list) -> set:
-        pass
-
     def add_entry(self, entry):
-        Log.trace(f"Adding entry {entry} to {self}")
         self._entries.add(entry)
-        self.write_to_file()  # write to file as new entry has been added
+
+    @abstractmethod
+    def get_entries_as_json_list(self) -> list:
+        pass
+
+    @abstractmethod
+    def get_entries_from_json_list(self, entries_as_json_list: list) -> set:
+        pass
 
     def find_multiple(self, raise_if_missing: bool = True, **kwargs) -> set:
         Log.trace(f"Finding DB entries w/ kwargs: {kwargs}")
@@ -77,48 +77,85 @@ class AbstractDatabase(ABC):  # todo implement unique id's, tracked in the json.
     def get_entries_sorted(self, key, reverse=False) -> list:  # unused?
         return sorted(self._entries, key=key, reverse=reverse)
 
+    def get_next_entry_id(self) -> int:
+        self._last_entry_id += 1
+        Log.trace(f"Got next entry ID: {self._last_entry_id}")
+        return self._last_entry_id
+
     def read_from_file(self):
-        """Read and load the DB's entries from file. Called once upon DB creation."""
+        """Read and loa7d the DB's entries from file.
+        Called once upon DB creation."""
+
+        if self.has_read_from_file:
+            Log.warn("Already read from DB file! Ignoring read_from_file call")
+            return
 
         with open(self._file_abs, "r") as f:
-            entries_as_json = json.load(f)
+            data = json.load(f)
 
-        self._entries = self.get_entries_from_json(entries_as_json)
+        try:
+            self._last_entry_id = data["last_entry_id"]
+        except KeyError:  # database is empty, use default value (already 0)
+            pass
+
+        try:
+            entries_as_json_list = data["entries"]
+        except KeyError:  # database is empty, use default value (empty set)
+            pass
+        else:
+            self._entries = self.get_entries_from_json_list(entries_as_json_list)
+
+        self.has_read_from_file = True
+        Log.debug(f"{self} read from file")
 
     def remove_entry(self, entry):
-        Log.trace(f"Removing entry {entry} from {self}")
         self._entries.remove(entry)
-        self.write_to_file()  # update as an entry has been removed
 
     def write_to_file(self):  # todo write to temp file while writing to prevent potential data loss during crashes (if needed?)
         """Write the DB's entries to disk, taking into account non-JSON variable types.
         Called when creating new DB entries or modifying existing ones."""
 
-        # Log.trace(f"Writing to database file {self._filename}")
+        # Log.trace(f"{self} writing to DB file")
 
-        data_as_json = self.get_entries_as_json()
+        # sort by entry id in the database
+        entries_as_json_list_sorted = sorted(self.get_entries_as_json_list(), key=lambda e: e["entry_id"])
+
         with open(self._file_abs, "w") as f:
-            json.dump(data_as_json, f, indent=2)
+            json.dump({
+                "last_entry_id": self._last_entry_id,
+                "entries": entries_as_json_list_sorted
+            }, f, indent=2)
+
+        # Log.trace(f"{self} wrote to DB file")
 
 
 class AbstractDatabaseEntry(ABC):
     def __init__(self, database: AbstractDatabase, default_data: dict, **kwargs):
+        """Creates a new DB entry for specific database.
+        default_data contains dict of default key-values, keys absent in this dict raise a ValueError.
+        **kwargs contains overriding key-values."""
+
         self._type_name = type(self).__name__
+        self._database: AbstractDatabase = database
+
+        assert "entry_id" not in default_data, "Key 'entry_id' not allowed in default_data!"
         self._data = default_data
 
+        if "entry_id" not in kwargs:
+            # initialized during runtime (not on startup file read), create new entry id
+            # if not initialized during runtime, kwargs should NEVER contain entry_id!
+            self._data.update(entry_id=database.get_next_entry_id())
+
         for key in kwargs:
-            if key not in default_data:
+            if key not in default_data and key != "entry_id":
                 raise ValueError(f"Invalid key '{key}' for: {self}")
 
         self._data.update(kwargs)
 
-        self._database: AbstractDatabase = database
-        database.add_entry(self)
+        self._database.add_entry(self)
+        self.trigger_db_write()  # write to file as new entry has been added
 
         Log.trace(f"Created DB entry: {self}")
-
-    def __del__(self):
-        self._database.remove_entry(self)
 
     def __getitem__(self, key):
         try:
@@ -136,6 +173,12 @@ class AbstractDatabaseEntry(ABC):
 
         except KeyError as ex:
             Log.error(f"Invalid key '{key}' for: {self}", ex)
+
+    def delete(self):
+        Log.trace(f"Deleting DB entry {self}")
+        self._database.remove_entry(self)
+        self.trigger_db_write()  # update DB as an entry has been removed
+        Log.trace(f"Deleted DB entry {self}")
 
     def get_data_copy(self, filter_keys: bool = True) -> dict:
         data = self._data.copy()

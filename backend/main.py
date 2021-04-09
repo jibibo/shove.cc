@@ -30,7 +30,7 @@ shove: Union[Shove, None] = None  # Union -> for editor (pycharm) type hint dete
 @sio.on("connect")
 def on_connect(sid, environ):
     set_greenthread_name("sio/on_connect")
-    Log.trace(f"Handling connect of {sid}, environ: {environ}", cutoff=True)
+    Log.trace(f"Handling connect of SID '{sid}', environ: {environ}", cutoff=True)
     user = shove.on_connect(sid)
     Log.info(f"{user} connected from {environ['REMOTE_ADDR']}")
 

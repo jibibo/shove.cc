@@ -1,6 +1,6 @@
 from convenience import *
 
-from abstract_database import Account
+from accounts import Account
 
 
 class User:
@@ -14,14 +14,13 @@ class User:
         Log.trace(f"Created new User object for SID '{sid}'")
 
     def __repr__(self):
-        return f"<User {self}, account: {self._account}>"
-
-    def __str__(self):
-        if self._account:
-            return f"'{self._account['username']}/{self.sid}'"
+        if self.is_logged_in():
+            identity_string = f"'{self._account['username']}/SID {self.sid}'"
 
         else:
-            return f"'SID {self.sid}'"
+            identity_string = f"'SID {self.sid}'"
+
+        return f"<User {identity_string}, account: {self._account}>"
 
     def clear_game_data(self):
         self._game_data = None

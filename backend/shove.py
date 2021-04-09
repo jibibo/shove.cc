@@ -134,11 +134,10 @@ class Shove:
             room.user_leave(user)
 
         user.log_out()
-        Log.trace(f"User {user} logged out")
 
         self.send_packet_to(user, "log_out", {})
 
-    def on_connect(self, sid: str) -> User:
+    def on_connect(self, sid: str) -> User:  # todo on connect send room list etc packets!
         user = self.create_new_user_from_sid(sid)
         if not user:
             raise ValueError("No User object provided")

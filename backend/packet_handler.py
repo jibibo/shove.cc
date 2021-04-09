@@ -34,7 +34,7 @@ def handle_packets_loop(shove):
         except NotImplementedError as ex:
             Log.error("Not implemented", ex)
             response = "error", {
-                "description": "Not implemented"
+                "description": "Not implemented (yet)"
             }
 
         except Exception as ex:
@@ -47,7 +47,7 @@ def handle_packets_loop(shove):
             shove.send_packet_to(user, response_model, response_packet, is_response=True)
 
         else:
-            Log.trace(f"Handled packet #{packet_number}, no response")
+            Log.trace(f"Handled packet #{packet_number}, no direct response")
 
 
 def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
@@ -93,13 +93,16 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         return "account_data", account.get_data_copy()
 
     if model == "get_account_list":
-        return "account_list", {
-            "account_list": shove.accounts.get_entries_data_sorted(key=lambda e: e["username"])
-        }
+        return "account_list", shove.accounts.get_entries_data_sorted(key=lambda e: e["username"])
 
     if model == "get_song":
         Log.trace(f"Song count: {shove.songs.get_song_count()}")
-        song = random.choice(list(shove.songs.get_entries()))
+
+        try:
+            song = random.choice(list(shove.songs.get_entries()))
+        except IndexError:
+            raise NoSongsAvailable
+
         Log.trace(f"Random song: {song}")
         song.play(shove, user)
         return
@@ -119,7 +122,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         raise NotImplementedError
 
     if model == "get_room_list":  # send a list of dicts with each room's data
-        return "room_list", {
+        return "room_list", {  # todo make this a list not an object/dict
             "room_list": [room.get_data() for room in shove.get_rooms()]
         }
 
@@ -196,9 +199,12 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         if not user.is_logged_in():
             raise UserNotLoggedIn
 
+        song = shove.latest_song
+        if not song:
+            raise PacketInvalid("No song is currently playing, can't rate")
+
         username = user.get_username()
         action = packet["action"]
-        song = shove.latest_song
 
         if action == "toggle_dislike":
             song.toggle_dislike(username)
@@ -207,8 +213,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         else:
             raise PacketInvalid("Invalid rate song action")
 
-        song.trigger_db_write()
-        song.send_rating_packet(shove)
+        song.broadcast_rating(shove)
 
         return
 
@@ -246,11 +251,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             Log.trace("No song playing, not sending rating")
             return
 
-        return "song_rating", {
-            "dislikes": shove.latest_song.get_dislike_count(),
-            "likes": shove.latest_song.get_like_count(),
-            "you": shove.latest_song.get_rating_of(user.get_username())
-        }
+        return "song_rating", shove.latest_song.get_rating(user)
 
     raise PacketInvalid(f"Unknown packet model: '{model}'")
 

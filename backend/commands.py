@@ -7,7 +7,7 @@ from process_song import process_song_task
 
 COMMANDS = {
     "account": {
-        "aliases": [],
+        "aliases": ["a"],
         "usage": "/account <create/delete> <username>"
     },
     "error": {
@@ -34,8 +34,8 @@ COMMANDS = {
 }
 
 
-def is_command(input_str, match_command):
-    return input_str == match_command or input_str in COMMANDS[match_command]
+def is_command(command, match_with):
+    return command == match_with or command in COMMANDS[match_with]["aliases"]
 
 
 def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
@@ -57,9 +57,6 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
         if command_args_real[0] == "create":
             if len(command_args_real) == 1:
-                if not user.is_logged_in():
-                    raise UserNotLoggedIn
-
                 preferred_username = None
 
             elif len(command_args_real) == 2:
@@ -72,33 +69,36 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
             shove.send_packet_to_everyone("account_list", shove.accounts.get_entries_data_sorted(lambda e: e["username"]))
 
-            return f"Created account '{username}'"
+            return f"Created account {username}"
 
         if command_args_real[0] == "delete":
-            if len(command_args_real) == 1:
+            if len(command_args_real) == 1:  # /command delete
                 if not user.is_logged_in():
                     raise UserNotLoggedIn
 
                 delete_username = user.get_username()
 
-            elif len(command_args_real) == 2:
+            elif len(command_args_real) == 2:  # /command delete x
                 delete_username = command_args_real[1]
 
             else:
                 raise CommandInvalid(COMMANDS["account"]["usage"])
 
-            found_account = shove.accounts.find_single(raise_if_missing=False, username=delete_username)
-            if found_account:
-                for user in shove.get_all_users():
-                    if user.get_username() == delete_username:
-                        shove.log_out_user(user)
-
-                del found_account
-
-            else:
+            try:
+                found_account = shove.accounts.find_single(username=delete_username)
+            except DatabaseEntryNotFound:
                 raise CommandInvalid(f"Account with username '{delete_username}' not found")
 
-            return f"Deleted account '{delete_username}'"
+            for user in shove.get_all_users():
+                if user.get_username() == delete_username:
+                    shove.log_out_user(user)
+
+            found_account.delete()
+            shove.send_packet_to_everyone("account_list", shove.accounts.get_entries_data_sorted(key=lambda e: e["username"]))
+
+            return f"Deleted account {delete_username}"
+
+        raise CommandInvalid(COMMANDS["account"]["usage"])
 
     if is_command(command, "error"):  # raises an error to test error handling and logging
         raise Exception("/error was executed, all good")
