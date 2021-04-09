@@ -67,21 +67,21 @@ class Coinflip(AbstractGame):
             action = packet["action"]
 
             if action != "bet":
-                raise PacketHandlingFailed("Invalid action")
+                raise ActionInvalid
 
             if user in self.players:
-                raise GameActionFailed("Already placed a bet")
+                raise ActionInvalid("Already placed a bet")
 
             if not user.get_account_data_copy()["money"]:
-                raise GameActionFailed("You are broke!")
+                raise ActionInvalid("You are broke!")
 
             bet = int(packet["bet"])
 
             if bet <= 0:
-                raise GameActionFailed(f"Invalid bet amount: {bet}")
+                raise ActionInvalid(f"Invalid bet amount: {bet}")
 
             if user.get_account_data_copy()["money"] < bet:  # maybe returns True due to floating point error or something
-                raise GameActionFailed(f"Not enough money to bet {bet} (you have {user.get_account_data_copy()['money']})")
+                raise ActionInvalid(f"Not enough money to bet {bet} (you have {user.get_account_data_copy()['money']})")
 
             user.get_account()["money"] -= bet
             choice = packet["choice"]
@@ -104,7 +104,7 @@ class Coinflip(AbstractGame):
                 "choice": choice
             }
 
-        raise PacketHandlingFailed(f"Unknown game packet model: '{model}'")
+        raise ModelInvalid
 
     def try_to_start(self):
         if self.room.is_empty():

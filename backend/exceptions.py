@@ -1,4 +1,4 @@
-DEFAULT_DESCRIPTION = "Unknown error (no description, not good)"
+DEFAULT_DESCRIPTION = "No further information"
 
 
 # packet handling errors
@@ -7,24 +7,32 @@ class PacketHandlingFailed(Exception):
     description = DEFAULT_DESCRIPTION
 
 
-class DatabaseEntryNotFound(PacketHandlingFailed):
-    description = "Database entry not found"
-
-
-class GameActionFailed(PacketHandlingFailed):
-    def __init__(self, description):
+class ActionInvalid(PacketHandlingFailed):
+    def __init__(self, description="Action invalid"):
         self.description = description
 
     def __str__(self):
         return str(self.description)
 
 
+class DatabaseEntryNotFound(PacketHandlingFailed):
+    description = "Database entry not found"
+
+
 class GameNotSet(PacketHandlingFailed):
     description = "Room has no game set"
 
 
+class ModelInvalid(PacketHandlingFailed):
+    description = "Invalid model"
+
+
 class NoPrivateAccess(PacketHandlingFailed):
     description = "Backend host has no access to private information (not good)"
+
+
+class NoSongPlaying(PacketHandlingFailed):
+    description = "No song is currently playing"
 
 
 class NoSongsAvailable(PacketHandlingFailed):

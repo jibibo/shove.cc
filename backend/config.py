@@ -1,6 +1,3 @@
-import re
-
-
 # SocketIO settings
 HOST = "0.0.0.0"
 PORT = 777
@@ -53,6 +50,7 @@ ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
 
 
 # Songs
+POPULAR_SONGS_RATIO_MIN = 0.5
 SONG_MAX_DURATION = 1200  # seconds
 LOG_IN_TO_REQUEST_SONG = True  # todo impl check
 YOUTUBE_ID_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"

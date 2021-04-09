@@ -134,7 +134,7 @@ function AudioPlayer() {
 
   function onEnded() {
     console.log("ended");
-    sendPacket("get_song");
+    sendPacket("play_song", { category: "popular" });
   }
 
   function onError() {
@@ -211,9 +211,16 @@ function AudioPlayer() {
       <Button
         variant="outlined"
         color="secondary"
-        onClick={() => sendPacket("get_song")}
+        onClick={() => sendPacket("play_song", { category: "random" })}
       >
-        Get live
+        Play random
+      </Button>
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={() => sendPacket("play_song", { category: "popular" })}
+      >
+        Play popular
       </Button>
       <Button
         variant={hasLiked ? "contained" : "outlined"}

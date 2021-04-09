@@ -83,11 +83,24 @@ class Song(AbstractDatabaseEntry):
     def get_like_count(self) -> int:
         return len(self["likes"])
 
+    def get_like_ratio(self) -> float:
+        likes = self.get_like_count()
+        dislikes = self.get_dislike_count()
+        total = likes + dislikes
+
+        try:
+            return likes / total
+        except ZeroDivisionError:  # if there are no likes or dislikes, it is considered 0.5
+            return 0.5
+
     def get_url(self):
         return f"cache/songs/{self['song_id']}.mp3"
 
     def increment_plays(self, amount=1):
         self["plays"] += amount  # triggers db write as it assigns with "="
+
+    def is_popular(self) -> bool:
+        return self.get_like_ratio() >= POPULAR_SONGS_RATIO_MIN
 
     def play(self, shove, author):
         Log.trace(f"Playing {self}")

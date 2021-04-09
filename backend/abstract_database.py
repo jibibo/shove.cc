@@ -170,7 +170,7 @@ class AbstractDatabaseEntry(ABC):
             old = self._data[key]
             self._data[key] = value
             self.trigger_db_write()  # as the entry's data was changed, write database to disk
-            return old
+            return old  # return previous value
 
         except KeyError as ex:
             Log.error(f"Invalid key '{key}' for: {self}", ex)

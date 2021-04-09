@@ -117,7 +117,7 @@ class Shove:
     def get_user_count(self) -> int:
         return len(self._users)
 
-    def log_out_user(self, user):
+    def log_out_user(self, user, disconnected=False):
         Log.trace(f"Logging out user {user}")
 
         room = self.get_room_of_user(user)
@@ -126,7 +126,8 @@ class Shove:
 
         user.log_out()
 
-        self.send_packet_to(user, "log_out", {})
+        if not disconnected:
+            self.send_packet_to(user, "log_out", {})
 
     def on_connect(self, sid: str) -> User:  # todo on connect send room list etc packets!
         user = self.create_new_user_from_sid(sid)
@@ -152,8 +153,8 @@ class Shove:
 
         return user
 
-    def on_disconnect(self, user: User):  # todo disconnect reasons
-        self.log_out_user(user)
+    def on_disconnect(self, user: User):
+        self.log_out_user(user, disconnected=True)
 
         self._users.remove(user)
 

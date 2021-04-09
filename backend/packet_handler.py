@@ -34,7 +34,7 @@ def handle_packets_loop(shove):
         except NotImplementedError as ex:
             Log.error("Not implemented", ex)
             direct_response = "error", {
-                "description": "Not implemented (yet)"
+                "description": "Not implemented (yet)!"
             }
 
         except Exception as ex:
@@ -56,14 +56,14 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     """Handles the packet and returns an optional DIRECT response model + packet"""
 
     if not model:
-        raise PacketHandlingFailed("No model provided")
+        raise ValueError("No model provided")
 
     # if packet was missing from the socketio message, it is None by default
     if packet is None:
         packet = {}  # if no packet provided, just pass on an empty dict to prevent None.getattribute errors
 
     if type(packet) is not dict:
-        raise PacketHandlingFailed(f"Invalid packet type: {type(packet).__name__}")
+        raise ValueError(f"Invalid packet type: {type(packet).__name__}")
 
     if model == "error":  # only errors that should NEVER happen are to be sent to backend (not errors like log in failure)
         Log.error(f"User received a severe error: {packet['description']}")
@@ -94,24 +94,12 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             account = user.get_account()
 
         else:
-            raise PacketHandlingFailed("Not logged in and no username provided")
+            raise UserNotLoggedIn
 
         return "account_data", account.get_data_copy()
 
     if model == "get_account_list":
         return "account_list", shove.accounts.get_entries_data_sorted(key=lambda e: e["username"])
-
-    if model == "get_song":
-        Log.trace(f"Song count: {shove.songs.get_song_count()}")
-
-        try:
-            song = random.choice(list(shove.songs.get_entries()))
-        except IndexError:
-            raise NoSongsAvailable
-
-        Log.trace(f"Random song: {song}")
-        song.play(shove, user)
-        return
 
     if model == "get_game_data":
         room = shove.get_room_of_user(user)
@@ -196,6 +184,31 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
         return
 
+    if model == "play_song":
+        category = packet["category"]
+
+        if category == "popular":
+            eligible = set()
+            # if a song has a good enough likes/(likes+dislikes)) ratio, it is "popular"
+            for song in shove.songs.get_entries():
+                if song.is_popular():
+                    eligible.add(song)
+
+        elif category == "random":
+            eligible = shove.songs.get_entries()
+
+        else:
+            raise ActionInvalid(f"Invalid song category provided: {category}")
+
+        Log.trace(f"Eligible songs count: {len(eligible)}")
+        if not eligible:
+            raise NoSongsAvailable
+
+        song = random.choice(list(eligible))
+        Log.trace(f"Picked song to play: {song}")
+        song.play(shove, user)
+        return
+
     if model == "pong":
         now = time.time()
         user.latency = now - user.pinged_timestamp
@@ -212,7 +225,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
         song = shove.latest_song
         if not song:
-            raise PacketHandlingFailed("No song is currently playing, can't rate")
+            raise NoSongPlaying
 
         username = user.get_username()
         action = packet["action"]
@@ -222,7 +235,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         elif action == "toggle_like":
             song.toggle_like(username)
         else:
-            raise PacketHandlingFailed("Invalid rate song action")
+            raise ActionInvalid
 
         song.broadcast_rating(shove)
 
@@ -257,5 +270,5 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         })
         return
 
-    raise PacketHandlingFailed(f"Unknown packet model: '{model}'")
+    raise ModelInvalid
 
