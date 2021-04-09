@@ -6,42 +6,26 @@ from user import User
 
 class Songs(AbstractDatabase):
     def __init__(self):
-        super().__init__("songs.json")
-
-    def get_entries_as_json_list(self) -> list:
-        entries_as_json = []
-
-        for entry in self.get_entries():
-            entry_as_json = entry.get_data_copy()
-            for k in ["dislikes", "likes"]:  # convert these data types from set to list
-                entry_as_json[k] = list(entry_as_json[k])
-
-            entries_as_json.append(entry_as_json)
-
-        return entries_as_json
-
-    def get_entries_from_json_list(self, entries_as_json_list: list) -> set:
-        entries = set()
-
-        for entry_as_json in entries_as_json_list:
-            entry = Song(self, db_creation=True, **entry_as_json)
-            for k in ["dislikes", "likes"]:  # convert these data types from list to set
-                entry[k] = set(entry[k])
-
-            entries.add(entry)
-
-        return entries
-
-    def get_song_by_id(self, song_id: str):
-        self.find_single(song_id=song_id)
-
-    def get_song_count(self) -> int:
-        return len(self._entries)
+        super().__init__(Song, "songs.json")
 
 
 class Song(AbstractDatabaseEntry):
     def __init__(self, database, **kwargs):
-        super().__init__(database, {
+        super().__init__(database, **kwargs)
+
+    def __repr__(self):
+        return f"<Song #{self['entry_id']}, name: {self['name']}>"
+
+    @staticmethod
+    def convert_parsed_json_data(json_data: dict) -> dict:
+        for k in ["dislikes", "likes"]:  # convert these data types from list to set
+            json_data[k] = set(json_data[k])
+
+        return json_data
+
+    @staticmethod
+    def get_default_data() -> dict:
+        return {
             "convert_time": 0,
             "dislikes": set(),
             "download_time": 0,
@@ -51,13 +35,19 @@ class Song(AbstractDatabaseEntry):
             "platform": None,
             "plays": 0,
             "song_id": None,
-        }, **kwargs)
+        }
 
-    def __repr__(self):
-        return f"<Song #{self['entry_id']}, name: {self['name']}>"
-
-    def get_filter_keys(self) -> List[str]:
+    @staticmethod
+    def get_filter_keys() -> List[str]:
         pass  # nothing to filter, all data of a song is public
+
+    def get_json_serializable(self, filter_data=True) -> dict:
+        data_copy = self.get_data_copy(filter_data=filter_data)
+
+        for k in ["dislikes", "likes"]:  # convert these data types from set to list
+            data_copy[k] = list(data_copy[k])
+
+        return data_copy
 
     def broadcast_rating(self, shove):
         """Broadcast this song's rating to all users, and whether they liked/disliked"""
@@ -145,7 +135,7 @@ class Song(AbstractDatabaseEntry):
 
         self.trigger_db_write()
 
-    def toggle_like(self, username):
+    def toggle_like(self, username):  # todo toggle_like and toggle_dislike are not DRY
         if username in self["dislikes"]:  # remove the user's dislike in any case
             self["dislikes"].remove(username)
 

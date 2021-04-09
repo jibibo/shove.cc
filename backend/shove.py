@@ -141,7 +141,7 @@ class Shove:
             "user_count": self.get_user_count()
         })
 
-        self.send_packet_to(user, "account_list", self.accounts.get_entries_data_sorted(key=lambda e: e["username"]))
+        self.send_packet_to(user, "account_list", self.accounts.get_entries_json_serializable(key=lambda e: e["username"]))
         self.send_packet_to(user, "room_list", [room.get_data() for room in self.get_rooms()])
 
         self.send_packet_to_everyone("user_connected", {

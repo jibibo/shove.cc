@@ -2,37 +2,88 @@ from convenience import *
 
 
 class AbstractDatabase(ABC):
-    def __init__(self, filename: str):
+    def __init__(self, entry_class, filename: str):
         """Abstract class for database instance that contains entries, to be saved in a json file"""
 
+        self._entry_class = entry_class
         self._filename: str = filename
         self._file_abs: str = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{filename}"
         self._last_entry_id: int = 0
         self._entries: Set[AbstractDatabaseEntry] = set()
-        self._type_name = type(self).__name__
 
         Log.trace(f"Creating DB from file: {self}")
 
-        self.has_read_from_file: bool = False
-        self.read_from_file()
+        self._has_read_from_file: bool = False
+        self._read_from_disk()
 
         Log.trace(f"Created DB: {self}")
 
     def __repr__(self):
-        return f"<DB '{self._type_name}', entries: {self.get_entries_count()}>"
+        return f"<DB '{type(self).__name__}', entries: {self.get_entries_count()}>"
 
-    def add_entry(self, entry):
-        self._entries.add(entry)
+    def _get_next_entry_id(self) -> int:
+        self._last_entry_id += 1
+        Log.trace(f"Got next DB entry ID: {self._last_entry_id}")
+        return self._last_entry_id
 
-    @abstractmethod
-    def get_entries_as_json_list(self) -> list:
-        pass
+    def _read_from_disk(self):
+        """Read and load the DB's entries from disk.
+        Called ONCE: on DB creation."""
 
-    @abstractmethod
-    def get_entries_from_json_list(self, entries_as_json_list: list) -> set:
-        pass
+        if self._has_read_from_file:
+            Log.warn(f"{self} already read from disk! Ignoring call")
+            return
 
-    def find_multiple(self, raise_if_missing: bool = True, match_casing: bool = False, **kwargs) -> set:
+        with open(self._file_abs, "r") as f:
+            data = json.load(f)
+
+        try:
+            self._last_entry_id = data["last_entry_id"]
+        except KeyError:
+            pass  # database is empty, keep last_entry_id 0
+
+        try:
+            entries_as_json_list = data["entries"]
+        except KeyError:
+            pass  # database is empty, keep entries as an empty set
+        else:
+            # database on disk is not empty, create DB entries
+            for entry_as_json_dict in entries_as_json_list:
+                self.create_entry(read_from_file=True, **entry_as_json_dict)
+
+        self._has_read_from_file = True
+        Log.debug(f"{self} read from file")
+
+    def create_entry(self, read_from_file=False, **kwargs):
+        """Creates a new DB entry for this database.
+        default_data contains dict of default key-values.
+        kwargs keys absent in this dict raise a ValueError.
+        kwargs contains overriding key-values.
+        Returns the newly created DB entry instance."""
+
+        if "entry_id" in kwargs:
+            if not read_from_file:
+                raise ValueError("Key 'entry_id' not allowed in kwargs if not reading from file")
+        else:
+            # if entry_id not set in kwargs, assign a new one
+            kwargs["entry_id"] = self._get_next_entry_id()
+
+        if read_from_file:
+            # entry created because DB read from file, so convert JSON-serializable
+            # objects to their proper counterpart if required
+            kwargs = self._entry_class.convert_parsed_json_data(kwargs)
+
+        new_entry = self._entry_class(self, **kwargs)
+
+        self._entries.add(new_entry)
+
+        if not read_from_file:
+            # entry created during runtime, so new data that has to be saved to file
+            self.write_to_disk()
+
+        return new_entry
+
+    def find_multiple(self, raise_if_missing=True, match_casing=False, **kwargs) -> set:
         Log.trace(f"Finding DB entries w/ kwargs (match casing: {match_casing}): {kwargs}")
 
         if not kwargs:
@@ -49,8 +100,9 @@ class AbstractDatabase(ABC):
             raise DatabaseEntryNotFound
         else:
             Log.trace(f"No DB entries found")
+            return set()
 
-    def find_single(self, raise_if_missing: bool = True, match_casing: bool = False, **kwargs):
+    def find_single(self, raise_if_missing=True, match_casing=False, **kwargs):
         Log.trace(f"Finding DB entry w/ kwargs (match casing: {match_casing}): {kwargs}")
 
         if not kwargs:
@@ -71,90 +123,59 @@ class AbstractDatabase(ABC):
     def get_entries_count(self) -> int:
         return len(self._entries)
 
-    def get_entries_data_sorted(self, key, reverse=False) -> list:
-        return [entry.get_data_copy() for entry in sorted(self._entries, key=key, reverse=reverse)]
+    def get_entries_json_serializable(self, filter_data=True, key=None, reverse=False) -> list:
+        """Get this DB's entries' data as a JSON serializable list.
+        Optional key and reverse arguments for sorting."""
 
-    def get_entries_sorted(self, key, reverse=False) -> list:  # unused?
-        return sorted(self._entries, key=key, reverse=reverse)
-
-    def get_next_entry_id(self) -> int:
-        self._last_entry_id += 1
-        Log.trace(f"Got next DB entry ID: {self._last_entry_id}")
-        return self._last_entry_id
-
-    def read_from_file(self):
-        """Read and load the DB's entries from file.
-        Called ONCE: on DB creation."""
-
-        if self.has_read_from_file:
-            Log.warn("Already read from DB file! Ignoring read_from_file call")
-            return
-
-        with open(self._file_abs, "r") as f:
-            data = json.load(f)
-
-        try:
-            self._last_entry_id = data["last_entry_id"]
-        except KeyError:  # database is empty, use default value (already 0)
-            pass
-
-        try:
-            entries_as_json_list = data["entries"]
-        except KeyError:  # database is empty, use default value (empty set)
-            pass
+        if key:
+            return [entry.get_json_serializable(filter_data) for entry in sorted(self._entries, key=key, reverse=reverse)]
         else:
-            self._entries = self.get_entries_from_json_list(entries_as_json_list)
-
-        self.has_read_from_file = True
-        Log.debug(f"{self} read from file")
+            return [entry.get_json_serializable(filter_data) for entry in self._entries]
 
     def remove_entry(self, entry):
+        Log.trace(f"Removing DB entry {self}")
         self._entries.remove(entry)
+        self.write_to_disk()
+        Log.trace(f"Removed DB entry {self}")
 
-    def write_to_file(self):  # todo write to temp file while writing to prevent potential data loss during crashes (if needed?)
+    def write_to_disk(self):
         """Write the DB's entries to disk, taking into account non-JSON variable types.
-        Called when creating new DB entries or modifying existing ones."""
+        Called when creating new DB entries or modifying existing entries."""
 
         # Log.trace(f"{self} writing to DB file")
 
         # sort by entry id in the database
-        entries_as_json_list_sorted = sorted(self.get_entries_as_json_list(), key=lambda e: e["entry_id"])
+        entries_json_serializable_sorted = self.get_entries_json_serializable(filter_data=False, key=lambda e: e["entry_id"])
 
         with open(self._file_abs, "w") as f:
             json.dump({
                 "last_entry_id": self._last_entry_id,
-                "entries": entries_as_json_list_sorted
+                "entries": entries_json_serializable_sorted
             }, f, indent=2, sort_keys=True)
 
         # Log.trace(f"{self} wrote to DB file")
 
 
 class AbstractDatabaseEntry(ABC):
-    def __init__(self, database: AbstractDatabase, default_data: dict, db_creation: bool = False, **kwargs):
-        """Creates a new DB entry for specific database.
-        default_data contains dict of default key-values, keys absent in this dict raise a ValueError.
-        **kwargs contains overriding key-values."""
+    def __init__(self, database: AbstractDatabase, **kwargs):
+        """Creates a new instance of the DB's entry type.
+        Instantiate objects through the DB object, not by initializing this directly."""
+
+        default_data = self.get_default_data()
 
         if "entry_id" in default_data:
             raise ValueError("Key 'entry_id' not allowed in default_data")
-        if "entry_id" in kwargs and not db_creation:
-            raise ValueError("Key 'entry_id' not allowed in kwargs after DB creation")
 
         for key in kwargs:
             if key not in default_data and key != "entry_id":
                 raise ValueError(f"Invalid key '{key}' for: {self}")
 
         self._type_name = type(self).__name__
+        # attach the containing DB as an easy way tell the DB to write to disk when this entry's data has been updated
         self._database: AbstractDatabase = database
 
-        # if entry_id not set in kwargs, create new one
-        entry_id = kwargs["entry_id"] if "entry_id" in kwargs else database.get_next_entry_id()
-        self._data = {"entry_id": entry_id}
-        self._data.update(default_data)
-        self._data.update(kwargs)
-
-        self._database.add_entry(self)
-        self.trigger_db_write()  # write to file as new entry has been added
+        self._data = default_data
+        self._data.update(kwargs)  # kwargs contains the "entry_id" key
 
         Log.trace(f"Created DB entry: {self}")
 
@@ -167,34 +188,48 @@ class AbstractDatabaseEntry(ABC):
 
     def __setitem__(self, key, value):
         try:
-            old = self._data[key]
             self._data[key] = value
-            self.trigger_db_write()  # as the entry's data was changed, write database to disk
-            return old  # return previous value
 
         except KeyError as ex:
             Log.error(f"Invalid key '{key}' for: {self}", ex)
 
-    def delete(self):
-        Log.trace(f"Deleting DB entry {self}")
-        self._database.remove_entry(self)
-        self.trigger_db_write()  # update DB as an entry has been removed
-        Log.trace(f"Deleted DB entry {self}")
+        self._database.write_to_disk()  # as the entry's data was changed, write database to disk
 
-    def get_data_copy(self, filter_keys: bool = True) -> dict:
+    @staticmethod
+    @abstractmethod
+    def convert_parsed_json_data(json_data: dict) -> dict:
+        """Convert parsed JSON data to a non-JSON data dict compatible with this DB entry type (if required).
+        ONLY called ONCE after entry's data is read and parsed from disk.
+        For example convert lists to sets, as those are used by this entry"""
+        pass
+
+    def get_data_copy(self, filter_data=True) -> dict:
         data = self._data.copy()
 
-        if filter_keys and self.get_filter_keys():
+        if filter_data and self.get_filter_keys():
             for key in self.get_filter_keys():
                 data[key] = "<filtered>"
 
         return data
 
+    @staticmethod
     @abstractmethod
-    def get_filter_keys(self) -> List[str]:
+    def get_default_data() -> dict:
+        """Get the default key-values of this DB entry type."""
         pass
 
-    def matches_kwargs(self, match_casing: bool = False, **kwargs) -> bool:
+    @staticmethod
+    @abstractmethod
+    def get_filter_keys() -> List[str]:
+        """Get the data keys of this DB entry type require filtering before the data goes public."""
+        pass
+
+    @abstractmethod
+    def get_json_serializable(self, filter_data=True) -> dict:
+        """Get this entry's data but JSON serializable for file writing or sending as a packet."""
+        pass
+
+    def matches_kwargs(self, match_casing=False, **kwargs) -> bool:
         if match_casing:
             for k, v in kwargs.items():
                 if self[k] != v:
@@ -215,5 +250,6 @@ class AbstractDatabaseEntry(ABC):
 
     def trigger_db_write(self):
         """Trigger the DB this entry is attached to to write the DB entries to disk.
-        Required to call if variables are modified indirectly (e.g. list appends/removes)"""
-        self._database.write_to_file()
+        Required to call if variables are modified indirectly (e.g. list appends/removes).
+        If this entry's data is updated by assigning (entry[x] = y), call this is not needed."""
+        self._database.write_to_disk()

@@ -52,7 +52,7 @@ def handle_packets_loop(shove):
             Log.trace(f"Handled packet, no direct response")
 
 
-def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, Union[dict, list]]]:  # todo non-dict packets (and none is alloweD)
+def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, Union[dict, list]]]:
     """Handles the packet and returns an optional DIRECT response model + packet"""
 
     if not model:
@@ -96,7 +96,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         else:
             raise UserNotLoggedIn
 
-        return "account_data", account.get_data_copy()
+        return "account_data", account.get_json_serializable()
 
     if model == "get_account_list":
         return "account_list", shove.accounts.get_entries_data_sorted(key=lambda e: e["username"])
