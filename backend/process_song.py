@@ -45,12 +45,12 @@ def process_song_task(shove, youtube_id, user):
         try:
             convert_time = convert_youtube_audio(youtube_id)  # convert to mp3
         except ConvertSongFailed as ex:
-            Log.error(f"Song conversion failed, update youtube-dl?: {ex}", ex)
-            shove.send_packet_to(user, "error", error_packet("Song conversion failed"))
+            Log.error(f"File conversion failed, update youtube-dl?: {ex}", ex)
+            shove.send_packet_to(user, "error", error_packet("File conversion failed"))
             return
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on convert_youtube_audio", ex)
-            shove.send_packet_to(user, "error", error_packet("Song conversion failed"))
+            shove.send_packet_to(user, "error", error_packet("File conversion failed"))
             return
 
         backend_audio_file = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{youtube_id}.mp3"
@@ -65,7 +65,7 @@ def process_song_task(shove, youtube_id, user):
             duration=duration,
             name=name,
             platform="youtube",
-            song_id=youtube_id,
+            song_id=youtube_id
         )
 
     else:
@@ -159,7 +159,6 @@ def convert_youtube_audio(youtube_id) -> float:
 
     Log.trace(f"Converting file to mp3: youtube_id={youtube_id}")
 
-    # todo loudless normalization? "\"ffmpeg -i {} -c:a mp3 -filter:a loudnorm=i=-18:lra=17 -qscale:a 2 " + f"{cache}/{ffmpeg_filename}""
     convert_command = " ".join([
         "ffmpeg",
         f"-i {backend_cache}/{filename}",
