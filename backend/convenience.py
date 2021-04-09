@@ -25,15 +25,14 @@ import urllib.parse as urlparse
 import colorama
 from colorama import Fore, Style
 import eventlet
-# greenlet-friendly versions of builtin modules
-from eventlet.green import subprocess
+from eventlet.green import subprocess  # greenlet-friendly versions of builtin modules
 from eventlet.green.Queue import Queue
 import eventlet.wsgi
 import isodate
 import playsound
 import socketio
-from trello import TrelloClient
-# import youtube_dl  # possibly not greenlet friendly
+import trello
+import youtube_dl  # possibly not greenlet friendly
 
 
 # these need to be defined before importing local modules

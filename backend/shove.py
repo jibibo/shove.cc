@@ -31,7 +31,7 @@ class Shove:
 
         if PRIVATE_ACCESS:
             Log.trace("Initializing Trello client, fetching card list")
-            client = TrelloClient(
+            client = trello.TrelloClient(
                 api_key=TRELLO_API_KEY,
                 api_secret=TRELLO_API_SECRET,
                 token=TRELLO_TOKEN
