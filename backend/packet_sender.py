@@ -10,16 +10,28 @@ def send_packets_loop(shove, sio: socketio.Server):
     Log.trace("Send packets loop ready")
 
     while True:
-        users, model, packet, skip, is_response = shove.outgoing_packets_queue.get()
+        users, model, packet, skip, packet_id = shove.outgoing_packets_queue.get()
+        set_greenthread_name(f"PacketSender/#{packet_id}")
+        Log.debug(f"Sending packet #{packet_id}: '{model}'\n packet: {packet}")
 
         try:
-            send_packet(sio, users, model, packet, skip, is_response)
+            sent_to = send_packet(sio, users, model, packet, skip)
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on send_packet", ex)
 
+        else:
+            if sent_to:
+                Log.trace(f"Sent '{model}' to {len(sent_to)} user(s)\n to: {sent_to}")
+            else:
+                Log.trace(f"No recipients for '{model}'")
 
-def send_packet(sio, users: Union[User, Set[User]], model: str, packet: dict, skip: Union[User, Set[User]], is_response: bool):
+
+def send_packet(sio: socketio.Server, users: Union[User, Set[User]], model: str,
+                packet: Union[dict, list], skip: Union[User, Set[User]]) -> set:
+    """Actually sends the packet through SocketIO.
+    Returns the amount of users the packet was sent to"""
+
     if type(users) == User:
         users = [users]
 
@@ -27,7 +39,7 @@ def send_packet(sio, users: Union[User, Set[User]], model: str, packet: dict, sk
         pass
 
     else:
-        raise ValueError(f"Invalid 'users' type: {type(users)}")
+        raise ValueError(f"Invalid 'users' type: {type(users).__name__}")
 
     if skip:
         if type(skip) == User:
@@ -37,18 +49,12 @@ def send_packet(sio, users: Union[User, Set[User]], model: str, packet: dict, sk
             pass
 
         else:
-            raise ValueError(f"Invalid 'skip' type: {type(users)}")
+            raise ValueError(f"Invalid 'skip' type: {type(users).__name__}")
 
         for skip_user in skip:
             users.remove(skip_user)
 
-    if not users:
-        Log.trace(f"No recipients for outgoing {'response' if is_response else 'packet'} '{model}', not sending\n packet: {packet}")
-        return
-
-    Log.trace(f"Sending {'response' if is_response else 'packet'}: '{model}'")
-
     for user in users:
         sio.emit(model, packet, to=user.sid)
 
-    Log.debug(f"Sent {'response' if is_response else 'packet'}: '{model}'\n to: {[str(user)[1:-1] for user in users]}\n packet: {packet}")
+    return users

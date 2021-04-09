@@ -1,3 +1,6 @@
+import re
+
+
 # SocketIO settings
 HOST = "0.0.0.0"
 PORT = 777
@@ -52,6 +55,9 @@ ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
 # Songs
 SONG_MAX_DURATION = 1200  # seconds
 LOG_IN_TO_REQUEST_SONG = True  # todo impl check
+YOUTUBE_ID_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
+YOUTUBE_ID_LENGTH = 11
+YOUTUBE_ID_REGEX_PATTERN = r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})"
 
 
 # Trello
@@ -60,7 +66,7 @@ TRELLO_LIST_ID = "60587b1f02721f0c7b547f5b"
 
 
 # Account creation
-USERNAME_VALID_CHARACTERS = "abcdefghijklmnopqrstuvwxyz0123456789"
+USERNAME_VALID_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyz"
 USERNAME_MAX_LENGTH = 16
 RANDOM_MONEY_MIN = 1e3
 RANDOM_MONEY_MAX = 1e6

@@ -8,7 +8,7 @@ class Room:
         self.shove = shove
         self.name = f"R{shove.get_room_count() + 1}"
         self.game: AbstractGame = shove.get_default_game()(self)
-        self._users: List[User] = []
+        self._users: Set[User] = set()
         self.max_user_count: int = 0
 
         Log.info(f"Created room {self}")
@@ -29,8 +29,8 @@ class Room:
     def get_user_count(self) -> int:
         return len(self._users)
 
-    def get_users(self) -> List[User]:
-        return self._users.copy()
+    def get_users(self) -> Set[User]:
+        return self._users
 
     def is_empty(self):
         return self.get_user_count() == 0
@@ -38,7 +38,7 @@ class Room:
     def is_full(self):
         return self.max_user_count and self.get_user_count() >= self.max_user_count
 
-    def send_packet_to_occupants(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
+    def send_packet_to_occupants(self, model: str, packet: Union[dict, list], skip: Union[User, Set[User]] = None):
         """Send packet to everyone in this room"""
 
         self.shove.send_packet_to(self.get_users(), model, packet, skip)
@@ -70,18 +70,18 @@ class Room:
             raise RoomFull
 
         if self.game:  # if game is not set, user can join for sure
-            self.game.user_tries_to_join_room(user)  # tries to drop user in the room, if fails, raises exception
+            self.game.user_tries_to_join_room(user)
 
-        self._users.append(user)
+        self._users.add(user)
 
-        self.shove.send_packet_to_everyone("room_list", {  # update room list for all connected users
-            "room_list": [room.get_data() for room in self.shove.get_rooms()]
-        })
+        # update room list for all connected users
+        self.shove.send_packet_to_everyone("room_list", [room.get_data() for room in self.shove.get_rooms()])
 
         Log.info(f"{user} joined room {self}")
 
     def user_leave(self, user: User):
-        """Method for the room to handle when a user leaves the room"""
+        """Method for the room to handle when a user leaves the room.
+        Clears user's game data as well."""
 
         Log.trace(f"Removing user {user} from room {self}")
 
@@ -92,12 +92,11 @@ class Room:
             except Exception as ex:
                 Log.fatal(f"UNHANDLED {type(ex).__name__} on user_left_room", ex)
 
-            user.clear_game_data()  # clear any game data the user could have because of the game they left
+            user.clear_game_data()
 
         self._users.remove(user)
 
-        self.shove.send_packet_to_everyone("room_list", {  # update room list for all connected users
-            "room_list": [room.get_data() for room in self.shove.get_rooms()]
-        })
+        # update room list for all connected users
+        self.shove.send_packet_to_everyone("room_list", [room.get_data() for room in self.shove.get_rooms()])
 
         Log.trace(f"Removed user {user} from room {self}")

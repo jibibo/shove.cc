@@ -30,7 +30,6 @@ class LogLevel:
 
 
 class Log:
-    PRINT_LOCK = threading.Lock()
     FILE_WRITING_QUEUE = Queue()  # now_str, level, thread_name, message, exception
 
     @staticmethod
@@ -69,8 +68,8 @@ class Log:
             # dirty way of setting/getting Greenthread names, as threading.current_thread().getName() doesn't works for Greenthreads
             thread_name = eventlet.getcurrent().__dict__["greenthread_name"]
         except KeyError:
-            # Probably a Greenthread spawned by SocketIO, doesn't have a name
-            thread_name = threading.current_thread().getName()
+            # in case the greenthread doesn't have a name set, always provides a value
+            thread_name = "unknown?"
 
         now_console = datetime.now().strftime("%H:%M:%S")
         now_file = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -83,10 +82,10 @@ class Log:
             message = raw_message
 
         if level[0] >= LogLevel.get_level_int(CONSOLE_LOGGING_LEVEL):  # check log level for console logging
-            with Log.PRINT_LOCK:
-                print(f"{level[2]}[{now_console}][{level[1]}][{thread_name}]{Style.RESET_ALL} {message}")
-                if exception:
-                    traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stdout)
+            # Greenthreads don't require locks, so this is fine (https://stackoverflow.com/a/2854703/13216113)
+            print(f"{level[2]}[{now_console}][{level[1]}][{thread_name}]{Style.RESET_ALL} {message}")
+            if exception:
+                traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stdout)
 
         if level[0] >= LogLevel.get_level_int(ERROR_SOUND_NOTIFICATION_LEVEL) \
                 and level[1] not in ERROR_SOUND_IGNORE_LEVELS:

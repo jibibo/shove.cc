@@ -14,15 +14,10 @@ class User:
         Log.trace(f"Created new User object for SID '{sid}'")
 
     def __repr__(self):
-        if self.is_logged_in():
-            identity_string = f"'{self._account['username']}/SID {self.sid}'"
-
-        else:
-            identity_string = f"'SID {self.sid}'"
-
-        return f"<User {identity_string}, account: {self._account}>"
+        return f"<User name: {self.get_username()}, SID: {self.sid[:5]}>"
 
     def clear_game_data(self):
+        """Clear any game data the user has"""
         self._game_data = None
 
     def get_account(self):
@@ -69,5 +64,5 @@ class User:
         Log.info(f"{self} logged out")
         return
 
-    def set_game_data(self, data: dict):
-        self._game_data = data
+    def set_game_data(self, game_data: dict):
+        self._game_data = game_data

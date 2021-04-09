@@ -29,7 +29,7 @@ def abbreviate(number: int) -> str:
     # print(f"\tdivided by magnitude of {magnitude}, result: {new_number}")
 
     magnitude_remainder = magnitude % 3
-    decimals = None if (magnitude_remainder == 2 or magnitude < 3) else 2 - magnitude_remainder
+    decimals = None if (magnitude_remainder == 2 or magnitude < 3) else 2 - magnitude_remainder  # what
     # print(f"\tmagnitude_remainder = {magnitude_remainder}, decimals = {decimals}")
 
     new_number *= 10 ** magnitude_remainder

@@ -451,7 +451,7 @@ class Holdem(AbstractGame):
 
     # todo move commented methods to (abstract) game
     # def add_bot(self, seat=None) -> int:
-    #     bot_player = Player(bot_number=self.shove.get_next_bot_number())
+    #     bot_player = Player(bot_number=self.shove.get_next_bot_id())
     #     seat = self.add_player(bot_player, seat)
     #     return seat
     #

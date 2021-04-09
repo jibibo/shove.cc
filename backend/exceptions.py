@@ -12,8 +12,8 @@ class DatabaseEntryNotFound(PacketHandlingFailed):
 
 
 class GameActionFailed(PacketHandlingFailed):
-    def __init__(self, description=None):
-        self.description = description or "Game action failed"
+    def __init__(self, description):
+        self.description = description
 
     def __str__(self):
         return str(self.description)
@@ -31,12 +31,8 @@ class NoSongsAvailable(PacketHandlingFailed):
     description = "No songs available"
 
 
-class PacketInvalid(PacketHandlingFailed):
-    def __init__(self, description=None):
-        self.description = description or "Invalid packet"
-
-    def __str__(self):
-        return str(self.description)
+class PacketMissing(PacketHandlingFailed):
+    description = "Model is missing a (required) packet"
 
 
 class PasswordInvalid(PacketHandlingFailed):
@@ -60,19 +56,11 @@ class UserNotInRoom(PacketHandlingFailed):
 
 
 class UserNotLoggedIn(PacketHandlingFailed):
-    def __init__(self, description=None):
-        self.description = description or "User not logged in"
-
-    def __str__(self):
-        return str(self.description)
+    description = "User not logged in"
 
 
 class UserUnauthorized(PacketHandlingFailed):
-    def __init__(self, description=None):
-        self.description = description or "User unauthorized"
-
-    def __str__(self):
-        return str(self.description)
+    description = "User unauthorized"
 
 
 # game start errors
@@ -91,15 +79,8 @@ class RoomEmpty(GameStartFailed):
 
 # song processing
 
-class ConvertSongFailed(Exception):
-    def __init__(self, description):
-        self.description = str(description)
 
-    def __str__(self):
-        return self.description
-
-
-class DownloadSongFailed(Exception):
+class SubprocessFailed(Exception):
     def __init__(self, description):
         self.description = str(description)
 
@@ -117,23 +98,17 @@ class ExtractSongInformationFailed(Exception):
 
 # other exceptions
 
-class CommandInvalid(Exception):
-    def __init__(self, description=None):
-        self.description = description or "Invalid command"
+class CommandFailed(Exception):
+    def __init__(self, description="Command failed"):
+        self.description = description
 
     def __str__(self):
         return str(self.description)
 
 
 class GameEventInvalid(Exception):
-    def __init__(self, description):
-        self.description = description or "Game event failed"
+    def __init__(self, description="Game event invalid"):
+        self.description = description
 
     def __str__(self):
         return str(self.description)
-
-
-class GameEventNotImplemented(Exception):
-    pass
-
-

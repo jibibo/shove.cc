@@ -1,46 +1,44 @@
-"""This file should be able to be imported by every local .py file for convenience"""
+"""Convenience file for easy imports"""
 
 # builtin modules
 
-import time
-import json
-import os
-import sys
-import threading  # use green variant!?
-import secrets
-import random
-import math
-import pathlib
-import re
-import requests
-import shutil
-import urllib.parse as urlparse
-import traceback
-from queue import Queue
 from abc import ABC, abstractmethod
 from datetime import datetime
+import json
+import math
+import os
+import pathlib
+import random
+import re
+import requests  # possibly not greenlet-friendly (builtin IO module)
+import secrets
+import shutil
+import sys
+import time
+import traceback
 from typing import Dict, Iterable, List, Union, Optional, Tuple, Set
+import urllib.parse as urlparse
 
 
 # 3rd-party modules
 
-import eventlet
-import eventlet.wsgi
-from eventlet.green import subprocess  # https://stackoverflow.com/a/34649180/13216113
-# from eventlet.green import threading
-from trello import TrelloClient
-import playsound
-import socketio
-import isodate
 import colorama
 from colorama import Fore, Style
-# import googleapiclient
-# import youtube_dl
+import eventlet
+# greenlet-friendly versions of builtin modules
+from eventlet.green import subprocess
+from eventlet.green.Queue import Queue
+import eventlet.wsgi
+import isodate
+import playsound
+import socketio
+from trello import TrelloClient
+# import youtube_dl  # possibly not greenlet friendly
 
 
 # these need to be defined before importing local modules
 
-CWD_PATH = os.path.abspath(os.getcwd()).replace("\\", "/")  # used by many local modules
+CWD_PATH = os.path.abspath(os.getcwd()).replace("\\", "/")  # prettified cwd path on windows
 
 
 def set_greenthread_name(name: str):  # log.Log uses this function, causes NameError if defined later
@@ -54,7 +52,7 @@ def set_greenthread_name(name: str):  # log.Log uses this function, causes NameE
 
 from config import *  # needs to be imported first for CWD_PATH
 from exceptions import *
-import formatting
+# import formatting  # unused as of now
 from log import Log  # shouldn't be a circular import: from x import y shouldn't execute module x
 
 
@@ -104,3 +102,18 @@ def error_packet(description=None) -> dict:
     return {
         "description": description or DEFAULT_DESCRIPTION
     }
+
+
+def shlex_quote_windows(s):
+    """Custom Windows version of shlex.quote(), replacing single with double quotes.
+    Return a shell-escaped version of the string *s*.
+    https://superuser.com/q/324278"""
+
+    if not s:
+        return "\"\""
+    if re.compile(r"[^\w@%+=:,./-]", re.ASCII).search(s) is None:
+        return s
+
+    # use DOUBLE quotes, and put DOUBLE quotes into SINGLE quotes
+    # the string $'b is then quoted as "$"'"'"b"
+    return "\"" + s.replace("\'", "\"\'\"\'\"") + "\""

@@ -54,7 +54,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
     if is_command(command, "account"):
         if len(command_args_real) == 0:
-            raise CommandInvalid(COMMANDS["account"]["usage"])
+            raise CommandFailed(COMMANDS["account"]["usage"])
 
         if command_args_real[0] == "create":
             if len(command_args_real) == 1:
@@ -64,7 +64,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
                 preferred_username = command_args_real[1]
 
             else:
-                raise CommandInvalid(COMMANDS["account"]["usage"])
+                raise CommandFailed(COMMANDS["account"]["usage"])
 
             username = shove.accounts.create_random_account(preferred_username)["username"]
 
@@ -83,12 +83,12 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
                 delete_username = command_args_real[1]
 
             else:
-                raise CommandInvalid(COMMANDS["account"]["usage"])
+                raise CommandFailed(COMMANDS["account"]["usage"])
 
             try:
                 found_account = shove.accounts.find_single(username=delete_username)
             except DatabaseEntryNotFound:
-                raise CommandInvalid(f"Account with username '{delete_username}' not found")
+                raise CommandFailed(f"Account with username '{delete_username}' not found")
 
             for user in shove.get_all_users():
                 if user.get_username() == delete_username:
@@ -99,7 +99,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
             return f"Deleted account {delete_username}"
 
-        raise CommandInvalid(COMMANDS["account"]["usage"])
+        raise CommandFailed(COMMANDS["account"]["usage"])
 
     if is_command(command, "error"):  # raises an error to test error handling and logging
         Song(shove.songs, entry_id=0)
@@ -125,33 +125,33 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
             name, description = trello_args
 
         else:
-            raise CommandInvalid(f"Invalid arguments, usage: {COMMANDS['trello']['usage']}")
+            raise CommandFailed(f"Invalid arguments, usage: {COMMANDS['trello']['usage']}")
 
         if not name:
-            raise CommandInvalid(f"No card name, usage: {COMMANDS['trello']['usage']}")
+            raise CommandFailed(f"No card name, usage: {COMMANDS['trello']['usage']}")
 
         shove.add_trello_card(name, description)
         return "Card added"
 
     if is_command(command, "play"):
         if not command_args:
-            raise CommandInvalid(f"No link provided, usage: {COMMANDS['play']['usage']}")
+            raise CommandFailed(f"No link provided, usage: {COMMANDS['play']['usage']}")
 
         check_for_id_string = command_args_real[0]
 
-        # check if user dropped an 11-char YT id
-        if len(check_for_id_string) == 11:
+        # check if user dropped a plain YT id
+        if len(check_for_id_string) == YOUTUBE_ID_LENGTH:
             youtube_id = check_for_id_string
 
         # regex magic to find the id in some url
         else:
             match = re.search(
-                r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})",
+                YOUTUBE_ID_REGEX_PATTERN,
                 check_for_id_string
             )
 
             if not match:
-                raise CommandInvalid(f"Couldn't find a video ID in the given link, usage: {COMMANDS['play']['usage']}")
+                raise CommandFailed(f"Couldn't find a video ID in the given link, usage: {COMMANDS['play']['usage']}")
 
             youtube_id = match.group("id")
             Log.trace(f"Found ID using regex")
@@ -161,4 +161,4 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
         return "Success"
 
-    raise CommandInvalid(f"Unknown command: '{command}'")
+    raise CommandFailed(f"Unknown command: '{command}'")

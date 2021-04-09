@@ -62,7 +62,7 @@ function AudioPlayer() {
     });
 
     socket.on("log_in", () => {
-      sendPacket("song_rating", {});
+      sendPacket("get_song_rating");
     });
 
     socket.on("log_out", () => {
@@ -76,14 +76,11 @@ function AudioPlayer() {
 
   const loadNewAudio = (url) => {
     console.log("Load new audio:", url);
-    audioRef.current.pause();
-    console.log("Paused:", audioRef.current.paused);
+    // audioRef.current.pause();
+    // console.log("Paused:", audioRef.current.paused);
     setSource(url);
-    // if (audioRef.current) {
-    // how does this work
     audioRef.current.load(); // tell element to load new source
     // audioRef.current.play();
-    // }
   };
 
   function onChangeVolumeSlider(e, value) {
@@ -137,7 +134,7 @@ function AudioPlayer() {
 
   function onEnded() {
     console.log("ended");
-    sendPacket("get_song", {});
+    sendPacket("get_song");
   }
 
   function onError() {
@@ -147,6 +144,7 @@ function AudioPlayer() {
       console.log("Not sending error packet - source is undefined");
     } else {
       sendPacket("error", {
+        // bad: non-source related errors get passed like this aswell
         description: `Failed to load source: '${source}'`,
       });
     }
@@ -213,7 +211,7 @@ function AudioPlayer() {
       <Button
         variant="outlined"
         color="secondary"
-        onClick={() => sendPacket("get_song", {})}
+        onClick={() => sendPacket("get_song")}
       >
         Get live
       </Button>

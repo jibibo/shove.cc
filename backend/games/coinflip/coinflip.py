@@ -27,7 +27,7 @@ class Coinflip(AbstractGame):
                 "heads": self.heads_odds,
                 "tails": self.tails_odds
             },
-            "players": {player.get_username(): player.get_game_data_copy()["bet"]
+            "players": {player.get_username(): player.get_game_data_copy()["bet"]  # todo should be a list of 1 dict/player
                         for player in self.players},
             "time_left": self.time_left,
             "gains": self.gains  # the winners of the last coin flip
@@ -39,11 +39,11 @@ class Coinflip(AbstractGame):
             return
 
         if event == "timer_ticked":
-            self.send_data_packet(event="timer_ticked")
+            self.broadcast_data(event="timer_ticked")
             return
 
         if event == "user_bet":
-            self.send_data_packet(event="user_bet")
+            self.broadcast_data(event="user_bet")
 
             try:
                 self.try_to_start()
@@ -54,11 +54,11 @@ class Coinflip(AbstractGame):
             return
 
         if event in ["user_joined", "user_left"]:
-            self.send_data_packet(event=event)  # todo these packets likely don't have an updated users list
+            self.broadcast_data(event=event)  # todo these packets likely don't have an updated users list
             return
 
         if event in ["coin_flipped"]:
-            raise GameEventNotImplemented
+            raise NotImplementedError
 
         raise GameEventInvalid(f"Unknown event: '{event}'")
 
@@ -67,7 +67,7 @@ class Coinflip(AbstractGame):
             action = packet["action"]
 
             if action != "bet":
-                raise PacketInvalid("Invalid action")
+                raise PacketHandlingFailed("Invalid action")
 
             if user in self.players:
                 raise GameActionFailed("Already placed a bet")
@@ -100,11 +100,11 @@ class Coinflip(AbstractGame):
 
             return "game_action_success", {
                 "action": "bet",
-                "bet": bet,
+                "bet": bet,  # todo just send user's game data
                 "choice": choice
             }
 
-        raise PacketInvalid(f"Unknown game packet model: '{model}'")
+        raise PacketHandlingFailed(f"Unknown game packet model: '{model}'")
 
     def try_to_start(self):
         if self.room.is_empty():
@@ -119,7 +119,7 @@ class Coinflip(AbstractGame):
         eventlet.spawn(flip_timer, self)
 
         Log.info("Game started")
-        self.send_data_packet(event="started")
+        self.broadcast_data(event="started")
 
     def user_leaves_room(self, user: User):
         if user in self.players:
@@ -165,5 +165,5 @@ class Coinflip(AbstractGame):
         self.force_result = None
         self.state = GameState.ENDED
         self.players.clear()
-        self.send_data_packet(event="ended")  # todo should probably be an some kind of event packet, info is continuous
+        self.broadcast_data(event="ended")  # todo should probably be an some kind of event packet, info is continuous
 

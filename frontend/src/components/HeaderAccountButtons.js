@@ -14,7 +14,7 @@ function HeaderAccountButtons() {
   const { accountData } = useContext(GlobalContext);
 
   function onClickLogOut() {
-    sendPacket("log_out", {});
+    sendPacket("log_out");
   }
   return (
     <div className="account-buttons-container">

@@ -85,8 +85,6 @@ function App() {
 
     socket.on("connect", () => {
       console.debug("> connect event");
-      sendPacket("get_room_list", {});
-      sendPacket("get_account_list", {});
     });
 
     socket.on("connect_error", () => {
@@ -163,12 +161,12 @@ function App() {
 
     socket.on("ping", (packet) => {
       console.debug("> ping", packet);
-      sendPacket("pong", {});
+      sendPacket("pong");
     });
 
     socket.on("room_list", (packet) => {
       console.debug("> room_list", packet);
-      setRoomList(packet.room_list);
+      setRoomList(packet);
     });
 
     socket.on("song_like", (packet) => {

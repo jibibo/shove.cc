@@ -13,13 +13,13 @@ class Shove:
         Log.trace("Initializing Shove")
         self.sio: socketio.Server = sio
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
-        self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, is_response)
+        self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, packet_number)
 
         self._default_game = Coinflip
-        self._next_bot_number = 0
-        self._next_packet_number = 0
-        self._users: Set[User] = set()
-        self._rooms: Set[Room] = set()
+        self._last_bot_id = 0
+        self._last_packet_id = 0
+        self._users: Set[User] = set()  # todo implement as DB with DB entries?
+        self._rooms: Set[Room] = set()  # todo implement as DB with DB entries?
 
         self.accounts = Accounts()
         self.songs = Songs()
@@ -40,15 +40,6 @@ class Shove:
             self._trello_card_list = board.get_list(TRELLO_LIST_ID)
         else:
             Log.trace("No private access, not initializing Trello client")
-
-        # todo implement non-subprocess version of YT DL
-        # youtube_dl_options = {
-        #     "verbose": True,
-        #     "listformats": True,
-        #     "prefer_ffmpeg": True,
-        # }
-        # self.youtube_dl = youtube_dl.YoutubeDL(youtube_dl_options)
-        # self.youtube_dl.download([f"https://youtube.com/watch?v={youtube_id}"])
 
         self.latest_song: Union[Song, None] = None
         self.latest_song_author: Union[User, None] = None
@@ -85,13 +76,13 @@ class Shove:
     def get_default_game(self):
         return self._default_game
 
-    def get_next_bot_number(self) -> int:
-        self._next_bot_number += 1
-        return self._next_bot_number
+    def get_next_bot_id(self) -> int:
+        self._last_bot_id += 1
+        return self._last_bot_id
 
-    def get_next_packet_number(self) -> int:
-        self._next_packet_number += 1
-        return self._next_packet_number
+    def get_next_packet_id(self) -> int:
+        self._last_packet_id += 1
+        return self._last_packet_id
 
     def get_room(self, room_name: str) -> Room:
         Log.trace(f"Getting room with name: '{room_name}'")
@@ -149,6 +140,9 @@ class Shove:
             "user_count": self.get_user_count()
         })
 
+        self.send_packet_to(user, "account_list", self.accounts.get_entries_data_sorted(key=lambda e: e["username"]))
+        self.send_packet_to(user, "room_list", [room.get_data() for room in self.get_rooms()])
+
         self.send_packet_to_everyone("user_connected", {
             "you": False,
             "users": [user.get_account_data_copy()
@@ -176,8 +170,8 @@ class Shove:
         for _ in range(n_rooms):
             self._rooms.append(Room(self))
 
-    def send_packet_to(self, users: Union[User, Iterable[User]], model: str, packet: dict, skip: Union[User, List[User]] = None, is_response=False):
-        self.outgoing_packets_queue.put((users, model, packet, skip, is_response))
+    def send_packet_to(self, users: Union[User, Set[User]], model: str, packet: Union[dict, list], skip: Union[User, Set[User]] = None):
+        self.outgoing_packets_queue.put((users, model, packet, skip, self.get_next_packet_id()))
 
-    def send_packet_to_everyone(self, model: str, packet: dict, skip: Union[User, List[User]] = None):
+    def send_packet_to_everyone(self, model: str, packet: Union[dict, list], skip: Union[User, Set[User]] = None):
         self.send_packet_to(self.get_all_users(), model, packet, skip)

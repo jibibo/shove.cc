@@ -22,8 +22,8 @@ def game_event_loop(game):
         except GameEventInvalid as ex:
             Log.error(f"Event invalid: {ex}")
 
-        except GameEventNotImplemented:
-            Log.error("Event not implemented")
+        except NotImplementedError as ex:
+            Log.error("Not implemented", ex)
 
         except Exception as ex:
             Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_event", ex)
@@ -41,6 +41,11 @@ class AbstractGame(ABC):
         eventlet.spawn(game_event_loop, self)
         Log.trace(f"Game '{type(self).__name__}' initialized for room {room}")
 
+    def broadcast_data(self, event: str = None):
+        Log.trace(f"Broadcasting game data to occupants, event: '{event}'")
+        packet = self.get_data(event)
+        self.room.send_packet_to_occupants("game_data", packet)
+
     @abstractmethod
     def get_data(self, event: str = None) -> dict:
         pass
@@ -55,11 +60,6 @@ class AbstractGame(ABC):
     @abstractmethod
     def handle_packet(self, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
         pass
-
-    def send_data_packet(self, event: str = None):
-        Log.trace(f"Queueing game data packet for all users, event: '{event}'")
-        packet = self.get_data(event)
-        self.room.send_packet_to_occupants("game_data", packet)
 
     @abstractmethod
     def try_to_start(self):

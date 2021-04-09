@@ -54,16 +54,16 @@ class Song(AbstractDatabaseEntry):
         }, **kwargs)
 
     def __repr__(self):
-        return f"<Song {self['entry_id']}, name: {self['name']}>"
+        return f"<Song #{self['entry_id']}, name: {self['name']}>"
 
     def get_filter_keys(self) -> List[str]:
-        pass  # all data of a song is public
+        pass  # nothing to filter, all data of a song is public
 
     def broadcast_rating(self, shove):
         """Broadcast this song's rating to all users, and whether they liked/disliked"""
 
         for user in shove.get_all_users():
-            shove.send_packet_to(user, "song_rating", self.get_rating(user))
+            shove.send_packet_to(user, "song_rating", self.get_rating_of(user))
 
     def copy_to_frontend_if_absent(self):
         """Copy the song file to frontend cache if it is absent"""
@@ -105,7 +105,7 @@ class Song(AbstractDatabaseEntry):
 
         self.broadcast_rating(shove)
 
-    def get_rating(self, user: Union[User, None]) -> dict:
+    def get_rating_of(self, user: User) -> dict:
         """The packet containing the current song's ratings,
         unique for each user as they might have liked/disliked the song"""
 

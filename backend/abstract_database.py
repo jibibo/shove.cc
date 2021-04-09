@@ -32,15 +32,15 @@ class AbstractDatabase(ABC):
     def get_entries_from_json_list(self, entries_as_json_list: list) -> set:
         pass
 
-    def find_multiple(self, raise_if_missing: bool = True, **kwargs) -> set:
-        Log.trace(f"Finding DB entries w/ kwargs: {kwargs}")
+    def find_multiple(self, raise_if_missing: bool = True, match_casing: bool = False, **kwargs) -> set:
+        Log.trace(f"Finding DB entries w/ kwargs (match casing: {match_casing}): {kwargs}")
 
         if not kwargs:
             raise ValueError("No kwargs provided")
 
         candidates = set()
         for entry in self._entries:
-            if entry.matches_kwargs(**kwargs):
+            if entry.matches_kwargs(match_casing, **kwargs):
                 candidates.add(entry)
 
         if candidates:
@@ -50,14 +50,14 @@ class AbstractDatabase(ABC):
         else:
             Log.trace(f"No DB entries found")
 
-    def find_single(self, raise_if_missing: bool = True, **kwargs):
-        Log.trace(f"Finding DB entry w/ kwargs: {kwargs}")
+    def find_single(self, raise_if_missing: bool = True, match_casing: bool = False, **kwargs):
+        Log.trace(f"Finding DB entry w/ kwargs (match casing: {match_casing}): {kwargs}")
 
         if not kwargs:
             raise ValueError("No kwargs provided")
 
         for entry in self._entries:
-            if entry.matches_kwargs(**kwargs):
+            if entry.matches_kwargs(match_casing, **kwargs):
                 return entry
 
         if raise_if_missing:
@@ -194,10 +194,21 @@ class AbstractDatabaseEntry(ABC):
     def get_filter_keys(self) -> List[str]:
         pass
 
-    def matches_kwargs(self, **kwargs) -> bool:
-        for k, v in kwargs.items():
-            if self[k] != v:
-                return False
+    def matches_kwargs(self, match_casing: bool = False, **kwargs) -> bool:
+        if match_casing:
+            for k, v in kwargs.items():
+                if self[k] != v:
+                    return False
+
+        else:
+            for k, v in kwargs.items():
+                # only call .lower() (for ignoring casing) if checking strings
+                if type(self[k]) == type(v) == str:
+                    if self[k].lower() != v.lower():
+                        return False
+                else:
+                    if self[k] != v:
+                        return False
 
         Log.trace(f"{self} matched with kwargs")
         return True

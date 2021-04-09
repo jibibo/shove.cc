@@ -29,8 +29,6 @@ const LogInForm = () => {
     setUsernameInput("");
   }
 
-  console.log("account list:", accountList);
-
   return (
     <>
       <div className="log-in-form">

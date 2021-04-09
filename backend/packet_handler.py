@@ -12,55 +12,61 @@ def handle_packets_loop(shove):
     Log.trace("Handle packets loop ready")
 
     while True:
-        user, model, packet, packet_number = shove.incoming_packets_queue.get()
-        set_greenthread_name(f"PacketHandler/#{packet_number}")
-        Log.trace(f"Handling packet #{packet_number}")
+        user, model, packet, packet_id = shove.incoming_packets_queue.get()
+        set_greenthread_name(f"PacketHandler/#{packet_id}")
+        Log.debug(f"Handling packet #{packet_id}: '{model}'\n packet: {packet}")
 
         try:
-            response = handle_packet(shove, user, model, packet)
+            direct_response = handle_packet(shove, user, model, packet)
 
-        except CommandInvalid as ex:
+        except CommandFailed as ex:
             Log.trace(f"Command invalid: {ex.description}")
-            response = "error", {
+            direct_response = "error", {
                 "description": ex.description
             }
 
         except PacketHandlingFailed as ex:
             Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")  # ex.__name__ as PacketHandlingFailed has children
-            response = "error", {
+            direct_response = "error", {
                 "description": ex.description
             }
 
         except NotImplementedError as ex:
             Log.error("Not implemented", ex)
-            response = "error", {
+            direct_response = "error", {
                 "description": "Not implemented (yet)"
             }
 
         except Exception as ex:
+            # note: if user purposely sends broken packets, KeyErrors will end up here aswell
             Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_packet", ex)
-            response = "error", error_packet(description="Unhandled exception on handling packet (very bad)")
+            direct_response = "error", error_packet(description="Unhandled exception on handling packet (shouldn't happen)")
 
-        if response:
-            response_model, response_packet = response
-            Log.trace(f"Handled packet #{packet_number}, response model: '{response_model}'")
-            shove.send_packet_to(user, response_model, response_packet, is_response=True)
+        if direct_response:
+            response_model, response_packet = direct_response
+            response_packet_id = shove.get_next_packet_id()
+            Log.trace(f"Handled packet, direct response packet is #{response_packet_id}")
+            shove.outgoing_packets_queue.put((user, response_model, response_packet, None, response_packet_id))
 
         else:
-            Log.trace(f"Handled packet #{packet_number}, no direct response")
+            Log.trace(f"Handled packet, no direct response")
 
 
-def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, dict]]:
-    """Handles the packet and returns an optional response model + packet"""
+def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optional[Tuple[str, Union[dict, list]]]:  # todo non-dict packets (and none is alloweD)
+    """Handles the packet and returns an optional DIRECT response model + packet"""
 
     if not model:
-        raise PacketInvalid("No model provided")
+        raise PacketHandlingFailed("No model provided")
 
-    if type(packet) != dict:
-        raise PacketInvalid(f"Invalid packet type: {type(packet).__name__}")
+    # if packet was missing from the socketio message, it is None by default
+    if packet is None:
+        packet = {}  # if no packet provided, just pass on an empty dict to prevent None.getattribute errors
 
-    if model == "error":
-        Log.error(f"User received an error: {packet['description']}")
+    if type(packet) is not dict:
+        raise PacketHandlingFailed(f"Invalid packet type: {type(packet).__name__}")
+
+    if model == "error":  # only errors that should NEVER happen are to be sent to backend (not errors like log in failure)
+        Log.error(f"User received a severe error: {packet['description']}")
         return
 
     # special game packet, should be handled by game's packet handler
@@ -71,7 +77,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         room = shove.get_room_of_user(user)
 
         if not room:
-            raise PacketInvalid("Not in a room")
+            raise UserNotInRoom
 
         if not room.game:
             raise GameNotSet
@@ -81,14 +87,14 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if model == "get_account_data":
         if "username" in packet:
-            username = packet["username"].strip().lower()
-            account = shove.accounts.find_single(username=username)
+            username = packet["username"].strip()
+            account = shove.accounts.find_single(match_casing=False, username=username)
 
         elif user.is_logged_in():
             account = user.get_account()
 
         else:
-            raise PacketInvalid("Not logged in and no username provided")
+            raise PacketHandlingFailed("Not logged in and no username provided")
 
         return "account_data", account.get_data_copy()
 
@@ -111,7 +117,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         room = shove.get_room_of_user(user)
 
         if not room:
-            raise PacketInvalid("Not in a room")
+            raise UserNotInRoom
 
         if not room.game:
             raise GameNotSet
@@ -121,10 +127,15 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     if model == "get_room_data":
         raise NotImplementedError
 
-    if model == "get_room_list":  # send a list of dicts with each room's data
-        return "room_list", {  # todo make this a list not an object/dict
-            "room_list": [room.get_data() for room in shove.get_rooms()]
-        }
+    if model == "get_room_list":
+        return "room_list", [room.get_data() for room in shove.get_rooms()]
+
+    if model == "get_song_rating":
+        if not shove.latest_song:
+            Log.trace("No song playing, ignoring")
+            return
+
+        return "song_rating", shove.latest_song.get_rating_of(user)
 
     if model == "join_room":
         if shove.get_room_of_user(user):
@@ -201,7 +212,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
         song = shove.latest_song
         if not song:
-            raise PacketInvalid("No song is currently playing, can't rate")
+            raise PacketHandlingFailed("No song is currently playing, can't rate")
 
         username = user.get_username()
         action = packet["action"]
@@ -211,7 +222,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         elif action == "toggle_like":
             song.toggle_like(username)
         else:
-            raise PacketInvalid("Invalid rate song action")
+            raise PacketHandlingFailed("Invalid rate song action")
 
         song.broadcast_rating(shove)
 
@@ -246,12 +257,5 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         })
         return
 
-    if model == "song_rating":
-        if not shove.latest_song:
-            Log.trace("No song playing, not sending rating")
-            return
-
-        return "song_rating", shove.latest_song.get_rating(user)
-
-    raise PacketInvalid(f"Unknown packet model: '{model}'")
+    raise PacketHandlingFailed(f"Unknown packet model: '{model}'")
 

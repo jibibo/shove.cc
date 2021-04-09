@@ -20,7 +20,7 @@ function HeaderRoomButtons() {
   }
 
   function onClickLeaveRoom() {
-    sendPacket("leave_room", {});
+    sendPacket("leave_room");
   }
 
   return (

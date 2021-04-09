@@ -50,7 +50,7 @@ def on_disconnect(sid):
 
 # todo on connect, receive session cookie from user, check if session token valid, log in as that _account
 @sio.on("message")
-def on_message(sid, model: str, packet: dict):
+def on_message(sid, model: str, packet: Optional[dict]):
     set_greenthread_name("sio/on_message")
     user = shove.get_user_by_sid(sid)
     if not user:
@@ -61,9 +61,9 @@ def on_message(sid, model: str, packet: dict):
         }, to=sid)
         return
 
-    packet_number = shove.get_next_packet_number()
-    Log.debug(f"Received packet #{packet_number}: '{model}'\n from: {user}\n packet: {packet}")
-    shove.incoming_packets_queue.put((user, model, packet, packet_number))
+    packet_id = shove.get_next_packet_id()
+    Log.trace(f"Received packet #{packet_id} from {user}")
+    shove.incoming_packets_queue.put((user, model, packet, packet_id))
 
 
 # main function

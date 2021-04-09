@@ -19,6 +19,7 @@ function abbreviate(number) {
   let newNumber = number / Math.pow(10, magnitude);
 
   if (newNumber >= 9.995) {
+    // carry-over zeroes problem: otherwise incorrect rounding to 10.00*10^m instead of 1.000*10^(m+1)
     magnitude += 1;
     newNumber /= 10;
   }
