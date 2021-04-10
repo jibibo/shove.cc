@@ -2,6 +2,6 @@
 2 - https://certbot.eff.org/lets-encrypt/ubuntufocal-webproduct
 3 - put shove.cc in the FQDN
 4 - rename privkey to key, put cert and key to /build
-5 - serve the build using http-server
-    -> http-server -S -C cert.pem -p 443
+5 - serve the build using serve
+    -> https://github.com/vercel/serve/blob/master/bin/serve.js#L56
 6 - connection.js socketio URL shove.cc
