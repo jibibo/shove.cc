@@ -5,7 +5,7 @@ import Slider from "@material-ui/core/Slider";
 
 import { socket, sendPacket } from "../connection";
 import { secondsToString, percentage } from "../formatting";
-import { Typography } from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
 
 let deaf = true;
 
