@@ -11,3 +11,4 @@ private.py
 
 /frontend/node_modules/
 /frontend/public/cache/
+/frontend/build
