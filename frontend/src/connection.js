@@ -14,13 +14,13 @@ function initSocket() {
 }
 
 function sendPacket(model, packet) {
-  if (socket === undefined) {
-    console.warn("Tried to send packet with no socket set", model, packet);
+  if (socket?.connected) {
+    socket.send(model, packet);
+    console.debug("Sent", model, packet);
     return;
   }
 
-  socket.send(model, packet);
-  console.debug("Sent", model, packet);
+  console.debug("Did not send packet, socket not connected");
 }
 
 export { initSocket, sendPacket, socket };
