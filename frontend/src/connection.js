@@ -20,7 +20,7 @@ function sendPacket(model, packet) {
     return;
   }
 
-  console.debug("Did not send packet, socket not connected");
+  console.warn("Did not send packet, socket not connected");
 }
 
 export { initSocket, sendPacket, socket };
