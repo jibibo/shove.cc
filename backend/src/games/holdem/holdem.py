@@ -1,5 +1,5 @@
-from convenience import *
-from abstract_game import AbstractGame
+from src.convenience import *
+from src.abstract_game import AbstractGame
 
 from .player import Player
 from .deuces_custom import Card, Deck, Evaluator
@@ -273,7 +273,7 @@ class Holdem(AbstractGame):
 
             cards_formatted = f"{Card.RANKS_INT_TO_RANK_CHAR[rank_ints[0]]}{Card.RANKS_INT_TO_RANK_CHAR[rank_ints[1]]}{suffix}"
 
-            with open("test/pocket_cards.json", "r") as f:
+            with open("backend/test/pocket_cards.json", "r") as f:
                 pocket_cards = json.load(f)
 
             pocket_cards[cards_formatted]["dealt"] += 1

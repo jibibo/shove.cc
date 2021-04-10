@@ -5,7 +5,7 @@ from songs import Song, Songs
 from room import Room
 from user import User
 
-from games.coinflip import Coinflip
+from src.games.coinflip import Coinflip
 
 
 class Shove:
@@ -24,7 +24,7 @@ class Shove:
         self.accounts = Accounts()
         self.songs = Songs()
 
-        self.reset_rooms(2)
+        self.reset_rooms(3)
         # self.rooms[0].add_bot(3)
         # for i in range(1):
         #     self.get_rooms()[0].try_to_start_game()

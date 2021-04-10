@@ -7,7 +7,7 @@ key.pem
 backend/data/
 backend/logs/
 backend/test/
-private.py
+backend/src/private.py
 
 frontend/node_modules/
 frontend/public/cache/

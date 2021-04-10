@@ -1,4 +1,4 @@
-from convenience import *
+from src.convenience import *
 
 from .card import Card
 
