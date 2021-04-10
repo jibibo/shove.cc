@@ -209,9 +209,9 @@ function App() {
   }
 
   return (
+    <>
+    <Header />
     <Container>
-      <Header />
-
       <div>
         {/* {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null} */}
 
@@ -236,6 +236,7 @@ function App() {
         <AudioPlayer />
       </div>
     </Container>
+    </>
   );
 }
 

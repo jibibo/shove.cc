@@ -19,18 +19,10 @@ function HeaderAccountButtons() {
   return (
     <div className="account-buttons-container">
       <div className="account-button">
-        <Button
-          variant="contained"
-          startIcon={
-            <UserAvatar
-              username={accountData.username}
-              money={accountData.money}
-            />
-          }
-          onClick={onClickLogOut}
-        >
-          {`${accountData.username} | $${abbreviate(accountData.money)}`}
-        </Button>
+        <UserAvatar
+          username={accountData.username}
+          money={accountData.money}
+        />
       </div>
       <div className="account-button">
         <Button

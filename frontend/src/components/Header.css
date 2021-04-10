@@ -1,15 +1,21 @@
 header {
   background: rgb(23, 23, 41);
   margin-bottom: 24px;
-  display: flex;
+}
+
+.header-container {
+  display: flex !important;
   justify-content: space-between;
+  padding: 10px 0px;
 }
 
 .header-child {
-  margin: 16px;
+  display: flex;
+  align-items: center;
 }
 
+/* 
 .header-child > div {
   display: inline-flex;
   justify-content: space-between;
-}
+} */

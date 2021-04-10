@@ -7,6 +7,7 @@ import { thousandsSeperatorFull } from "../formatting";
 const useStyles = makeStyles((theme) => ({
   root: {
     cursor: "pointer",
+    border: "solid 2px #f50057"
   },
 }));
 
