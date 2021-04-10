@@ -4,7 +4,7 @@ import Button from "@material-ui/core/Button";
 import ExitToApp from "@material-ui/icons/ExitToApp";
 
 import { sendPacket } from "../connection";
-import { abbreviate } from "../formatting";
+// import { abbreviate } from "../formatting";
 import { GlobalContext } from "./GlobalContext";
 import UserAvatar from "./UserAvatar";
 

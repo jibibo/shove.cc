@@ -1,6 +1,9 @@
-import { useContext } from "react";
+import { useState, useContext } from "react";
 
 import Container from "@material-ui/core/Container";
+import AppBar from "@material-ui/core/AppBar";
+import Tabs from "@material-ui/core/Tabs";
+import Tab from "@material-ui/core/Tab";
 
 import { initSocket, socket, sendPacket } from "./connection";
 
@@ -10,6 +13,7 @@ import ConnectionStatus from "./components/ConnectionStatus";
 import LogInForm from "./components/LogInForm";
 import MessageBox from "./components/MessageBox";
 import Header from "./components/Header";
+import TabPanel from "./components/TabPanel";
 
 import "./App.css";
 import Room from "./components/CoinflipRoom";
@@ -18,6 +22,9 @@ import AudioPlayer from "./components/AudioPlayer";
 let deaf = true;
 
 function App() {
+
+  const [value, setValue] = useState(0);
+
   const {
     accountData,
     setAccountData,
@@ -208,34 +215,48 @@ function App() {
     });
   }
 
+  const handleChange = (event, newValue) => setValue(newValue)
+
   return (
     <>
-    <Header />
-    <Container>
-      <div>
-        {/* {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null} */}
-
+      <Header />
+      <AppBar style={{ backgroundColor: "rgb(23, 23, 41)", marginBottom: "20px" }} position="static">
+        <Container>
+          <Tabs textColor="white" value={value} onChange={handleChange} >
+            <Tab label="Room" />
+            <Tab label="Room List" />
+            <Tab label="Settings" />
+          </Tabs>
+        </Container>
+      </AppBar>
+      <TabPanel value={value} index={0}>
+        Item One
+      </TabPanel>
+      <Container>
         <div>
-          {accountData ? (
-            roomData ? (
-              <Room />
-            ) : (
-              "join a room yh?"
-            )
-          ) : (
-            <LogInForm />
-          )}
-        </div>
-        <div className="message-box-container">
-          <MessageBox />
-        </div>
+          {/* {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null} */}
 
-        <div className="connection-status-container">
-          <ConnectionStatus />
+          <div>
+            {accountData ? (
+              roomData ? (
+                <Room />
+              ) : (
+                "join a room yh?"
+              )
+            ) : (
+              <LogInForm />
+            )}
+          </div>
+          <div className="message-box-container">
+            <MessageBox />
+          </div>
+
+          <div className="connection-status-container">
+            <ConnectionStatus />
+          </div>
+          <AudioPlayer />
         </div>
-        <AudioPlayer />
-      </div>
-    </Container>
+      </Container>
     </>
   );
 }
