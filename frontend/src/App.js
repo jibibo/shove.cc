@@ -12,18 +12,19 @@ import { GlobalContext } from "./components/GlobalContext";
 import ConnectionStatus from "./components/ConnectionStatus";
 import LogInForm from "./components/LogInForm";
 import MessageBox from "./components/MessageBox";
+import HeaderRoomButtons from "./components/HeaderRoomButtons";
 import Header from "./components/Header";
 import TabPanel from "./components/TabPanel";
 
 import "./App.css";
 import Room from "./components/CoinflipRoom";
 import AudioPlayer from "./components/AudioPlayer";
+import { abbreviate } from "./formatting";
 
 let deaf = true;
 
 function App() {
-
-  const [value, setValue] = useState(0);
+  const [tabIndex, setTabIndex] = useState(0);
 
   const {
     accountData,
@@ -37,16 +38,6 @@ function App() {
     setRoomData,
     setRoomList,
   } = useContext(GlobalContext);
-
-  // const [width, setWidth] = useState(window.innerWidth);
-  // const [height, setHeight] = useState(window.innerHeight);
-
-  // useEffect(() => {
-  //     window.addEventListener("resize", () => {
-  //         setWidth(window.innerWidth);
-  //         setHeight(window.innerHeight);
-  //     });
-  // });
 
   function addMessage(type, author, text) {
     setMessages((currentMessages) => {
@@ -103,6 +94,7 @@ function App() {
       setAccountData();
       setRoomData();
       setGameData();
+      setTabIndex(0);
     });
 
     // packet handlers
@@ -133,6 +125,7 @@ function App() {
       addMessage(null, "Joined room " + packet.room_data.name, null);
       setRoomData(packet.room_data);
       setGameData(packet.game_data);
+      setTabIndex(2);
     });
 
     socket.on("latency", (packet) => {
@@ -145,12 +138,14 @@ function App() {
       addMessage(null, "Left room " + packet.room_name, null);
       setRoomData();
       setGameData();
+      setTabIndex(1);
     });
 
     socket.on("log_in", (packet) => {
       console.debug("> log_in", packet);
       addMessage(null, "Logged in as " + packet.account_data.username, null);
       setAccountData(packet.account_data);
+      setTabIndex(1);
     });
 
     socket.on("log_out", (packet) => {
@@ -215,48 +210,55 @@ function App() {
     });
   }
 
-  const handleChange = (event, newValue) => setValue(newValue)
+  const handleChange = (event, newValue) => setTabIndex(newValue);
 
   return (
     <>
       <Header />
-      <AppBar style={{ backgroundColor: "rgb(23, 23, 41)", marginBottom: "20px" }} position="static">
+
+      <AppBar style={{ backgroundColor: "rgb(23, 23, 41)" }} position="static">
         <Container>
-          <Tabs textColor="white" value={value} onChange={handleChange} >
-            <Tab label="Room" />
+          <Tabs value={tabIndex} onChange={handleChange}>
+            <Tab label="Account" />
             <Tab label="Room List" />
+            <Tab label="Room" />
+            <Tab label="Music" />
             <Tab label="Settings" />
           </Tabs>
         </Container>
       </AppBar>
-      <TabPanel value={value} index={0}>
-        Item One
-      </TabPanel>
+
       <Container>
-        <div>
-          {/* {width / height < 2 && width < 600 ? "ROTATE PHONE 😡" : null} */}
+        <TabPanel value={tabIndex} index={0}>
+          {accountData ? (
+            `Logged in as ${accountData.username} with $${abbreviate(
+              accountData.money
+            )} in the pocket`
+          ) : (
+            <LogInForm />
+          )}
+        </TabPanel>
 
-          <div>
-            {accountData ? (
-              roomData ? (
-                <Room />
-              ) : (
-                "join a room yh?"
-              )
-            ) : (
-              <LogInForm />
-            )}
-          </div>
-          <div className="message-box-container">
-            <MessageBox />
-          </div>
+        <TabPanel value={tabIndex} index={1}>
+          <HeaderRoomButtons />
+        </TabPanel>
 
-          <div className="connection-status-container">
-            <ConnectionStatus />
-          </div>
+        <TabPanel value={tabIndex} index={2}>
+          {roomData ? <Room /> : "join a room yh?"}
+        </TabPanel>
+
+        <TabPanel value={tabIndex} index={3}>
           <AudioPlayer />
-        </div>
+        </TabPanel>
       </Container>
+
+      <div className="message-box-container">
+        <MessageBox />
+      </div>
+
+      <div className="connection-status-container">
+        <ConnectionStatus />
+      </div>
     </>
   );
 }

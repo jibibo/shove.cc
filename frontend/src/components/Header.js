@@ -1,7 +1,6 @@
 import { useContext } from "react";
 
 import { GlobalContext } from "./GlobalContext";
-import HeaderRoomButtons from "./HeaderRoomButtons";
 import HeaderAccountButtons from "./HeaderAccountButtons";
 
 import "./Header.css";
@@ -12,14 +11,19 @@ import Typography from "@material-ui/core/Typography";
 function Header() {
   const { accountData } = useContext(GlobalContext);
 
-  // 625 is when it breaks 
+  // 625 is when it breaks
 
   return (
     <header>
       <Container className="header-container">
         <div className="header-child">
-          <Typography variant="h4">🎲 Shove</Typography>
+          <Typography variant="h5">🎲 Shove</Typography>
         </div>
+
+        <div className="header-child">
+          <HeaderLinkButtons />
+        </div>
+
         {accountData ? (
           <div className="header-child">
             <HeaderAccountButtons />
@@ -31,11 +35,3 @@ function Header() {
 }
 
 export default Header;
-
-{/* <div className="header-child">
-<HeaderRoomButtons />
-</div>
-<div className="header-child">
-<HeaderLinkButtons />
-</div>
-*/}

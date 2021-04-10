@@ -85,7 +85,8 @@ class Log:
             if exception:
                 traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stdout)
 
-        if level[0] >= LogLevel.get_level_int(ERROR_SOUND_NOTIFICATION_LEVEL) \
+        if ERROR_SOUND_ENABLED \
+                and level[0] >= LogLevel.get_level_int(ERROR_SOUND_NOTIFICATION_LEVEL) \
                 and level[1] not in ERROR_SOUND_IGNORE_LEVELS:
             try:
                 playsound.playsound(sound=ERROR_SOUND_FILE_PATH, block=False)

@@ -8,8 +8,6 @@ import { sendPacket } from "../connection";
 
 import { GlobalContext } from "./GlobalContext";
 
-import "./HeaderRoomButtons.css";
-
 function HeaderRoomButtons() {
   const { roomData, roomList } = useContext(GlobalContext);
 
@@ -25,7 +23,7 @@ function HeaderRoomButtons() {
 
   return (
     <div className="room-buttons-container">
-      {roomData ? (
+      {roomData && (
         <Button
           variant="outlined"
           color="secondary"
@@ -34,23 +32,22 @@ function HeaderRoomButtons() {
         >
           Leave {roomData.name}
         </Button>
-      ) : (
-        roomList.map((room, i) => {
-          return (
-            <div className="room-button" key={i}>
-              <Button
-                variant="contained"
-                startIcon={<PlayArrowIcon />}
-                onClick={() => {
-                  onClickJoinRoom(room.name);
-                }}
-              >
-                {room.name} ({room.user_count} / {room.max_user_count})
-              </Button>
-            </div>
-          );
-        })
       )}
+      {roomList.map((room, i) => {
+        return (
+          <div className="room-button" key={i}>
+            <Button
+              variant="contained"
+              startIcon={<PlayArrowIcon />}
+              onClick={() => {
+                onClickJoinRoom(room.name);
+              }}
+            >
+              {room.name} ({room.user_count} / {room.max_user_count})
+            </Button>
+          </div>
+        );
+      })}
     </div>
   );
 }

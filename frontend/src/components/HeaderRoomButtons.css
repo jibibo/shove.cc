@@ -1,8 +1,0 @@
-.room-buttons-container > div + div {
-  margin-left: 8px;
-}
-
-.room-button {
-  display: inline-flex;
-  justify-content: space-between;
-}

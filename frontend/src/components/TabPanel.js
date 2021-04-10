@@ -1,20 +1,15 @@
 import Box from "@material-ui/core/Box";
-import Typography from "@material-ui/core/Typography";
 
-import React, { useEffect } from 'react'
+import React from "react";
 
-export default function TabPanel(props) {
-    const { children, value, index, ...other } = props;
+function TabPanel(props) {
+  const { children, value, index } = props;
 
-    return (
-        <div
-            hidden={value !== index}
-        >
-            {value === index && (
-                <Box p={3}>
-                    <Typography>{children}</Typography>
-                </Box>
-            )}
-        </div>
-    );
+  return (
+    <div hidden={value !== index}>
+      <Box p={3}>{children}</Box>
+    </div>
+  );
 }
+
+export default TabPanel;

@@ -10,19 +10,18 @@ from user_pinger import ping_users_loop
 
 set_greenthread_name("Main")
 
-# eventlet usage consequences:
-# time.sleep() should become eventlet.sleep()
-# instead of creating a threading.Thread, call eventlet.spawn(func, *args) etc
-# these greenthreads should be named, like above
-
 sio = socketio.Server(
     logger=LOG_SOCKETIO,
     async_mode="eventlet",
     cors_allowed_origins="*",
     engineio_logger=LOG_ENGINEIO
 )
-wsgi_app = socketio.WSGIApp(sio)
 shove: Union[Shove, None] = None  # Union -> for editor (pycharm) type hint detection
+
+# eventlet usage consequences:
+# time.sleep() should become eventlet.sleep()
+# instead of creating a threading.Thread, call eventlet.spawn(func, *args) etc
+# these greenthreads should be named, like above
 
 
 # SocketIO events
@@ -90,12 +89,12 @@ def main():
     # wrap_ssl https://stackoverflow.com/a/39420484/13216113
     listen_socket_ssl = eventlet.wrap_ssl(
         listen_socket,
-        certfile=f"backend/cert.pem",
-        keyfile=f"backend/key.pem",
+        certfile=f"cert.pem",
+        keyfile=f"key.pem",
         server_side=True
     )
-    # this is blocking, and reading console input is not compatible with greenthreads
-    eventlet.wsgi.server(listen_socket_ssl, wsgi_app, log_output=LOG_WSGI)
+    wsgi_app = socketio.WSGIApp(sio)
+    eventlet.wsgi.server(listen_socket_ssl, wsgi_app, log_output=LOG_WSGI)  # blocking
 
 
 if __name__ == "__main__":

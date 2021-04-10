@@ -4,11 +4,11 @@ __pycache__/
 cert.pem
 key.pem
 
-/backend/data/
-/backend/logs/
-/backend/test/
+backend/data/
+backend/logs/
+backend/test/
 private.py
 
-/frontend/node_modules/
-/frontend/public/cache/
-/frontend/build
+frontend/node_modules/
+frontend/public/cache/
+frontend/build/
