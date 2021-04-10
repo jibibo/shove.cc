@@ -88,13 +88,14 @@ def main():
     Log.info(f"Starting SocketIO WSGI on port {PORT}")
     listen_socket = eventlet.listen((HOST, PORT))
     # wrap_ssl https://stackoverflow.com/a/39420484/13216113
-    # listen_socket_ssl = eventlet.wrap_ssl(
-    #     listen_socket,
-    #     certfile=f"{CWD_PATH}/cert.pem",
-    #     keyfile=f"{CWD_PATH}/key.pem",
-    #     server_side=True
-    # )
-    eventlet.wsgi.server(listen_socket, wsgi_app, log_output=LOG_WSGI)  # blocking - reading console input is not compatible with greenthreads
+    listen_socket_ssl = eventlet.wrap_ssl(
+        listen_socket,
+        certfile=f"backend/cert.pem",
+        keyfile=f"backend/key.pem",
+        server_side=True
+    )
+    # this is blocking, and reading console input is not compatible with greenthreads
+    eventlet.wsgi.server(listen_socket_ssl, wsgi_app, log_output=LOG_WSGI)
 
 
 if __name__ == "__main__":

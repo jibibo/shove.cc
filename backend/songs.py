@@ -58,8 +58,8 @@ class Song(AbstractDatabaseEntry):
     def copy_to_frontend_if_absent(self):
         """Copy the song file to frontend cache if it is absent"""
 
-        backend_file = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3"
-        frontend_file = f"{CWD_PATH}/{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3"
+        backend_file = f"{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3"
+        frontend_file = f"{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3"
 
         if os.path.exists(frontend_file):
             Log.trace("Frontend cache already has song file")

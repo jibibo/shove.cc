@@ -5,7 +5,7 @@ import { sendPacket } from "../connection";
 
 import { GlobalContext } from "./GlobalContext";
 
-import "./LoginForm.css";
+import "./LogInForm.css";
 
 const LogInForm = () => {
   const { accountList } = useContext(GlobalContext);

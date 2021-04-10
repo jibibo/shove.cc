@@ -35,12 +35,8 @@ import trello
 import youtube_dl  # possibly not greenlet friendly
 
 
-# these need to be defined before importing local modules
-
-CWD_PATH = os.path.abspath(os.getcwd()).replace("\\", "/")  # prettified cwd path on windows
-
-
-def set_greenthread_name(name: str):  # log.Log uses this function, causes NameError if defined later
+# log.Log uses this function, causes NameError if defined later
+def set_greenthread_name(name: str):
     """Set the name of the greenthread that called this (for logging)"""
 
     greenthread = eventlet.getcurrent()
@@ -68,9 +64,9 @@ def cleanup_backend_songs_folder():
     """Remove non-mp3 files from backend songs folder"""
 
     count = 0
-    for filename in os.listdir(f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}"):
+    for filename in os.listdir(f"{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}"):
         if not filename.endswith(".mp3"):
-            os.remove(f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{filename}")
+            os.remove(f"{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{filename}")
             count += 1
 
     Log.trace(f"Removed {count} file(s) that weren't .mp3 from songs folder")
@@ -80,8 +76,8 @@ def empty_frontend_cache():
     """Empty contents of the frontend audio cache folder"""
 
     count = 0
-    for filename in os.listdir(f"{CWD_PATH}/{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}"):
-        os.remove(f"{CWD_PATH}/{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}/{filename}")
+    for filename in os.listdir(f"{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}"):
+        os.remove(f"{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}/{filename}")
         count += 1
 
     Log.trace(f"Removed {count} file(s) from frontend cache")

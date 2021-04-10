@@ -64,7 +64,7 @@ def process_song_task(shove, youtube_id: str, user):
             return
 
         # double check if backend has the song mp3 file
-        backend_audio_file = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{youtube_id}.mp3"
+        backend_audio_file = f"{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{youtube_id}.mp3"
         if not os.path.exists(backend_audio_file):
             raise RuntimeError("Song file missing from backend songs folder")
 
@@ -119,7 +119,7 @@ def download_youtube_audio(youtube_id) -> float:
     """Downloads the youtube song and returns the time it took to download"""
 
     Log.trace(f"Downloading song")
-    backend_cache = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}"
+    backend_cache = f"{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}"
 
     for file in os.listdir(backend_cache):
         if file.startswith(youtube_id):  # already downloaded a file (not necessarily mp3) for the given song id
@@ -151,7 +151,7 @@ def convert_youtube_audio(youtube_id) -> float:
     """Converts the file in the backend to .mp3 (compatible with HTML <audio>)"""
 
     Log.trace(f"Converting file to mp3")
-    backend_cache = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}"
+    backend_cache = f"{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}"
 
     filename = None
     for file in os.listdir(backend_cache):

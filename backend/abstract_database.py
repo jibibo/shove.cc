@@ -7,7 +7,7 @@ class AbstractDatabase(ABC):
 
         self._entry_class = entry_class
         self._filename: str = filename
-        self._file_abs: str = f"{CWD_PATH}/{BACKEND_DATA_FOLDER}/{filename}"
+        self._file_abs: str = f"{BACKEND_DATA_FOLDER}/{filename}"
         self._last_entry_id: int = 0
         self._entries: Set[AbstractDatabaseEntry] = set()
 

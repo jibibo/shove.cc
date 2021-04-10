@@ -8,7 +8,7 @@ function initSocket() {
   }
 
   console.debug("Initializing socket");
-  socket = io("http://shove.cc:777", {
+  socket = io("https://shove.cc:777", {
     timeout: 1000,
   });
 }

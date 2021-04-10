@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
 function UserAvatar({ username, money }) {
   const classes = useStyles();
 
-  return money ? (
+  return money !== undefined ? (
     <Tooltip title={`$${thousandsSeperatorFull(money)}`} arrow>
       <Avatar className={classes.root} src={`cache/avatars/${username}.png`} />
     </Tooltip>

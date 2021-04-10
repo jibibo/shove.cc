@@ -3,8 +3,6 @@ from convenience import *
 
 colorama.init(autoreset=False)
 
-ERROR_SOUND_ABS = f"{CWD_PATH}/{ERROR_SOUND_FILE_PATH}"
-
 
 class LogLevel:
     TRACE = 0, "TRACE", ""
@@ -90,7 +88,7 @@ class Log:
         if level[0] >= LogLevel.get_level_int(ERROR_SOUND_NOTIFICATION_LEVEL) \
                 and level[1] not in ERROR_SOUND_IGNORE_LEVELS:
             try:
-                playsound.playsound(sound=ERROR_SOUND_ABS, block=False)
+                playsound.playsound(sound=ERROR_SOUND_FILE_PATH, block=False)
             except playsound.PlaysoundException as ex:
                 Log.trace(f"Sound exception caught: {ex}")
 
@@ -102,16 +100,15 @@ class Log:
         """Blocking loop to write messages and exceptions to file (from the queue)"""
 
         set_greenthread_name("LogFileWriter")
-        logs_folder_abs = f"{CWD_PATH}/{LOGS_FOLDER}"
-        latest_log_abs = f"{logs_folder_abs}/{LATEST_LOG_FILENAME}"
+        latest_log_abs = f"{LOGS_FOLDER}/{LATEST_LOG_FILENAME}"
 
         try:
             open(latest_log_abs, "w").close()
             print(f"Emptied {LATEST_LOG_FILENAME}")
 
         except FileNotFoundError:
-            os.mkdir(logs_folder_abs)
-            print(f"Created {logs_folder_abs}")
+            os.mkdir(LOGS_FOLDER)
+            print(f"Created {LOGS_FOLDER}")
             open(latest_log_abs, "w").close()
             print(f"Created {LATEST_LOG_FILENAME}")
 
@@ -120,7 +117,7 @@ class Log:
         while True:
             now_str, level, thread_name, message, exception = Log.FILE_WRITING_QUEUE.get()
 
-            with open(latest_log_abs, "a", encoding="utf-8") as f:
+            with open(latest_log_abs, "a") as f:
                 f.write(f"[{now_str}][{level[1]}][{thread_name}] {message}\n")
                 if exception:
                     traceback.print_exception(type(exception), exception, exception.__traceback__, file=f)
