@@ -74,9 +74,8 @@ const LogInForm = () => {
               return (
                 <div className="account-list-entry" key={i}>
                   <Button
-                    style={{ display: "flex", justifyContent: "space-between", width: 150 }}
-                    color="secondary"
-                    variant="outlined"
+                    style={{ display: "flex", justifyContent: "space-between", width: 150, color: "white", backgroundColor: "rgb(7, 7, 31)" }}
+                    variant="contained"
                     onClick={() => {
                       onClickAccount(account.username);
                     }}
