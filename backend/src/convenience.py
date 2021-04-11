@@ -28,8 +28,7 @@ import eventlet
 from eventlet.green import subprocess  # greenlet-friendly versions of builtin modules
 from eventlet.green.Queue import Queue
 import eventlet.wsgi
-import flask
-from flask_socketio import SocketIO
+import socketio
 import isodate
 import playsound
 import trello

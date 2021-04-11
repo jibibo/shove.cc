@@ -192,5 +192,5 @@ def abbreviate(number: int) -> str:
     abbreviation = abbreviations[abbreviation_index]
     abbreviated_number = str(new_number) + abbreviation
 
-    Log.test(f"Abbreviated {number} to {abbreviated_number}")
+    # Log.test(f"Abbreviated {number} to {abbreviated_number}")
     return f"<{abbreviated_number}>"

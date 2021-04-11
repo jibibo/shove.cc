@@ -107,7 +107,7 @@ class Song(AbstractDatabaseEntry):
             "url": self.get_url(),
             "name": self["name"],
             "plays": self["plays"],
-            "bytes": open(f"{STATIC_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3", "rb").read()
+            "song_bytes": open(f"{STATIC_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3", "rb").read()
         })
 
         self.broadcast_rating(shove)
