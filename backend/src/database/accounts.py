@@ -1,4 +1,4 @@
-from src.convenience import *
+from convenience import *
 
 from .abstract_database import AbstractDatabase, AbstractDatabaseEntry
 

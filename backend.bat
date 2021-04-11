@@ -1,3 +1,3 @@
 @echo off
 title BACKEND
-python backend/main.py
+python backend/src/main.py

@@ -73,15 +73,15 @@ function App() {
     // socket events
 
     socket.on("connect", () => {
-      console.debug("> connect event");
+      console.info("> connect event");
     });
 
     socket.on("connect_error", () => {
-      console.warn("> connect_error event");
+      console.error("> connect_error event");
     });
 
     socket.on("disconnect", (reason) => {
-      console.warn("> disconnect event", reason);
+      console.error("> disconnect event", reason);
       setAccountData();
       setRoomData();
       setGameData();
