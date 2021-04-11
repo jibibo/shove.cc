@@ -61,7 +61,7 @@ function App() {
           text,
         },
       ];
-    })
+    });
   }
 
   if (deaf) {
@@ -93,12 +93,18 @@ function App() {
     socket.on("account_data", (packet) => {
       console.debug("> account_data", packet);
       // if receiving other user's account data, do not call setAccountData!
+
       setAccountData(packet);
     });
 
-    socket.on("account_list", (packet) => {
-      console.debug("> account_list", packet);
-      setAccountList(packet);
+    socket.on("account_list", (list) => {
+      console.debug("> account_list", list);
+      const newList = list.map((account) => {
+        // change .avatar from ArrayBuffer to a url for each account
+        account.avatar = URL.createObjectURL(new Blob([account.avatar]));
+        return account;
+      });
+      setAccountList(newList);
     });
 
     socket.on("command_success", (packet) => {
