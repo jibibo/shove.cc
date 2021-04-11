@@ -9,27 +9,8 @@ import Typography from "@material-ui/core/Typography";
 
 let deaf = true;
 
-// const useAudio = (url) => {
-//     const [audio] = useState(new Audio(url));
-//     const [playing, setPlaying] = useState(false);
-
-//     const toggle = () => setPlaying(!playing);
-
-//     useEffect(() => {
-//         playing ? audio.play() : audio.pause();
-//     }, [playing, audio]);
-
-//     useEffect(() => {
-//         audio.addEventListener("ended", () => setPlaying(false));
-//         return () => {
-//             audio.removeEventListener("ended", () => setPlaying(false));
-//         };
-//     }, [audio]);
-
-//     return [playing, toggle];
-// };
-
 function AudioPlayer() {
+  // todo reduce the amount of states, make compact
   const [source, setSource] = useState();
   const [volume, setVolume] = useState(0.1);
   const [playing, setPlaying] = useState(false);
@@ -49,7 +30,7 @@ function AudioPlayer() {
 
     socket.on("play_song", (packet) => {
       console.debug("> play_song", packet);
-      loadNewAudio(packet.url);
+      loadNewAudio(packet.bytes);
       setCurrentSong(packet);
     });
 
@@ -74,11 +55,13 @@ function AudioPlayer() {
     // socket.on audio_data, loop enable/disable, play/pause, new url (with author)
   }
 
-  const loadNewAudio = (url) => {
-    console.log("Load new audio:", url);
+  const loadNewAudio = (bytes) => {
+    // blobs are amazing https://stackoverflow.com/a/60215835/13216113
+    const blob = new Blob([bytes], { type: "audio/mpeg" });
+    console.log("Loading new audio blob", blob);
     // audioRef.current.pause();
     // console.log("Paused:", audioRef.current.paused);
-    setSource(url);
+    setSource(URL.createObjectURL(blob));
     audioRef.current.load(); // tell element to load new source
     // audioRef.current.play();
   };
