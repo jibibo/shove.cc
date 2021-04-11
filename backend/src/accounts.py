@@ -36,6 +36,8 @@ class Accounts(AbstractDatabase):
 
 
 class Account(AbstractDatabaseEntry):
+    """An instance containing a users' data, assigned if they log in"""
+
     def __init__(self, database, **kwargs):
         super().__init__(database, **kwargs)
 
@@ -60,5 +62,5 @@ class Account(AbstractDatabaseEntry):
             "password"
         ]
 
-    def get_json_serializable(self, filter_data=True) -> dict:
+    def get_jsonable(self, filter_data=True) -> dict:
         return self.get_data_copy(filter_data)

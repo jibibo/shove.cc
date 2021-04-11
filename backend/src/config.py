@@ -1,17 +1,20 @@
+# Time is in seconds not ms
+
 # SocketIO settings
 HOST = "0.0.0.0"
 PORT = 777
+STATIC_FILES_WEBSITE = f"https://shove.cc:{PORT}"
 
 
 # Startup
 STARTUP_EMPTY_FRONTEND_CACHE = False
 STARTUP_CLEANUP_BACKEND_CACHE = True
-DELAY_BEFORE_RESTART = 60  # seconds
+DELAY_BEFORE_RESTART = 60
 
 
 # User pinging
 PING_USERS_ENABLED = False
-PING_USERS_INTERVAL = 5  # seconds
+PING_USERS_INTERVAL = 5
 PONG_DELAY_BEFORE_TIMEOUT = 5  # todo fix: timeout < interval should be possible
 
 
@@ -21,7 +24,8 @@ LOG_ENGINEIO = False
 LOG_WSGI = False
 LOG_YOUTUBE_DL_VERBOSE = False
 LOG_YOUTUBE_DL_WARNINGS = False
-FFMPEG_LOGGING_LEVEL = "warning"  # https://ffmpeg.org/ffmpeg.html CTRL+F "loglevel"
+# [quiet, panic, fatal, error, warning, info, verbose, debug, trace]
+FFMPEG_LOGGING_LEVEL = "warning"
 
 
 # Console logging
@@ -30,8 +34,8 @@ CONSOLE_LOGGING_LENGTH_CUTOFF = 800
 
 
 # Data storage
-BACKEND_DATA_FOLDER = "backend/data"
-FRONTEND_CACHE_FOLDER = "frontend/public/cache"
+STATIC_FOLDER = "backend/public_static"
+DATABASES_FOLDER = "backend/databases"
 SONGS_FOLDER = "songs"
 AVATARS_FOLDER = "avatars"
 
@@ -40,19 +44,19 @@ AVATARS_FOLDER = "avatars"
 LOGS_FOLDER = "backend/logs"
 LATEST_LOG_FILENAME = ".latest.txt"
 ENABLE_FILE_LOGGING = True
-FILE_LOGGING_LEVEL = "WARN"
+FILE_LOGGING_LEVEL = "INFO"
 
 
 # Sound notifications
 ERROR_SOUND_ENABLED = True
 ERROR_SOUND_FILE_PATH = "backend/error.mp3"
-ERROR_SOUND_NOTIFICATION_LEVEL = "WARN"
+ERROR_SOUND_NOTIFICATION_LEVEL = "ERROR"
 ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
 
 
 # Songs
 POPULAR_SONGS_RATIO_MIN = 0.5
-SONG_MAX_DURATION = 1200  # seconds
+SONG_MAX_DURATION = 1200
 LOG_IN_TO_REQUEST_SONG = True  # todo impl check
 YOUTUBE_ID_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
 YOUTUBE_ID_LENGTH = 11

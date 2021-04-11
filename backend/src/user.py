@@ -4,6 +4,8 @@ from accounts import Account
 
 
 class User:
+    """Someone who is connected to shove.cc, but not necessarily logged in"""
+
     def __init__(self, sid: str):
         self.sid = sid
         self._account: Union[Account, None] = None  # Union for editor type hints
@@ -23,11 +25,11 @@ class User:
     def get_account(self):
         return self._account
 
-    def get_account_data_copy(self, filter_keys=True) -> dict:
+    def get_account_jsonable(self, filter_data=True) -> dict:
         if self._account:
-            return self._account.get_data_copy(filter_keys)
+            return self._account.get_jsonable(filter_data=filter_data)
 
-    def get_game_data_copy(self, filter_keys=True) -> dict:
+    def get_game_data_copy(self, filter_keys=True) -> dict:  # todo should be DB entry-like
         if self._game_data:
             game_data = self._game_data.copy()
             if filter_keys:

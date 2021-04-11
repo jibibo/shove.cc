@@ -1,4 +1,4 @@
-DEFAULT_DESCRIPTION = "No further information"
+DEFAULT_DESCRIPTION = "No information provided (not good)"
 
 
 # packet handling errors
@@ -28,7 +28,7 @@ class ModelInvalid(PacketHandlingFailed):
 
 
 class NoPrivateAccess(PacketHandlingFailed):
-    description = "Backend host has no access to private information (not good)"
+    description = "Backend host has no access to private information"
 
 
 class NoSongPlaying(PacketHandlingFailed):

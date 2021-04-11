@@ -93,7 +93,9 @@ const LogInForm = () => {
                         onClickAccount(account.username);
                       }}
                     >
-                      <Avatar src={`cache/avatars/${account.username}.png`} />
+                      <Avatar
+                        src={`https://shove.cc:777/avatars/${account.username}.png`}
+                      />
                       {account.username}
                     </Button>
                   </div>

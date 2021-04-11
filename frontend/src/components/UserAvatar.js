@@ -7,7 +7,7 @@ import { thousandsSeperatorFull } from "../formatting";
 const useStyles = makeStyles((theme) => ({
   root: {
     cursor: "pointer",
-    border: "solid 2px #f50057"
+    border: "solid 2px #f50057",
   },
 }));
 
@@ -16,10 +16,16 @@ function UserAvatar({ username, money }) {
 
   return money !== undefined ? (
     <Tooltip title={`$${thousandsSeperatorFull(money)}`} arrow>
-      <Avatar className={classes.root} src={`avatars/${username}.png`} />
+      <Avatar
+        className={classes.root}
+        src={`https://shove.cc:777/avatars/${username}.png`}
+      />
     </Tooltip>
   ) : (
-    <Avatar className={classes.root} src={`avatars/${username}.png`} />
+    <Avatar
+      className={classes.root}
+      src={`https://shove.cc:777/avatars/${username}.png`}
+    />
   );
 }
 

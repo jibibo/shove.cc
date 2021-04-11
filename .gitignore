@@ -3,11 +3,12 @@ __pycache__/
 
 cert.pem
 key.pem
+backend/src/top_secret_dangerous_keys.py
 
-backend/data/
+backend/databases/
 backend/logs/
-backend/test/
-backend/src/private.py
+backend/public_static/
+backend/src/test/
 
 frontend/node_modules/
 frontend/public/cache/

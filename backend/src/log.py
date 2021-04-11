@@ -63,11 +63,11 @@ class Log:
         raw_message = str(raw_message)
 
         try:
-            # dirty way of setting/getting Greenthread names, as threading.current_thread().getName() doesn't works for Greenthreads
-            thread_name = eventlet.getcurrent().__dict__["greenthread_name"]
+            # dirty way of setting/getting GreenThread names, as threading.current_thread().getName() doesn't works for greenlets
+            greenlet_name = eventlet.getcurrent().__dict__["custom_greenlet_name"]
         except KeyError:
-            # in case the greenthread doesn't have a name set, always provides a value
-            thread_name = "unknown?"
+            # in case the greenlet doesn't have a name set, always provides a value
+            greenlet_name = "UNNAMED GREENLET"
 
         now_console = datetime.now().strftime("%H:%M:%S")
         now_file = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -81,7 +81,7 @@ class Log:
 
         if level[0] >= LogLevel.get_level_int(CONSOLE_LOGGING_LEVEL):  # check log level for console logging
             # Greenthreads don't require locks, so this is fine (https://stackoverflow.com/a/2854703/13216113)
-            print(f"{level[2]}[{now_console}][{level[1]}][{thread_name}]{Style.RESET_ALL} {message}")
+            print(f"{level[2]}[{now_console}][{level[1]}][{greenlet_name}]{Style.RESET_ALL} {message}")
             if exception:
                 traceback.print_exception(type(exception), exception, exception.__traceback__, file=sys.stdout)
 
@@ -94,13 +94,13 @@ class Log:
                 Log.trace(f"Sound exception caught: {ex}")
 
         if ENABLE_FILE_LOGGING and level[0] >= LogLevel.get_level_int(FILE_LOGGING_LEVEL):  # write raw message (and exception) to file if enabled
-            Log.FILE_WRITING_QUEUE.put((now_file, level, thread_name, raw_message, exception))
+            Log.FILE_WRITING_QUEUE.put((now_file, level, greenlet_name, raw_message, exception))
 
     @staticmethod
     def write_file_loop():
         """Blocking loop to write messages and exceptions to file (from the queue)"""
 
-        set_greenthread_name("LogFileWriter")
+        set_greenlet_name("LogFileWriter")
         latest_log_abs = f"{LOGS_FOLDER}/{LATEST_LOG_FILENAME}"
 
         try:
