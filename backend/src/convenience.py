@@ -18,6 +18,7 @@ import time
 import traceback
 from typing import Dict, Iterable, List, Union, Optional, Tuple, Set
 import urllib.parse as urlparse
+import uuid
 
 
 # 3rd-party modules
@@ -64,9 +65,9 @@ def cleanup_backend_songs_folder():
     """Remove non-mp3 files from backend songs folder"""
 
     count = 0
-    for filename in os.listdir(f"{STATIC_FOLDER}/{SONGS_FOLDER}"):
+    for filename in os.listdir(f"{FILES_FOLDER}/{SONGS_FOLDER}"):
         if not filename.endswith(".mp3"):
-            os.remove(f"{STATIC_FOLDER}/{SONGS_FOLDER}/{filename}")
+            os.remove(f"{FILES_FOLDER}/{SONGS_FOLDER}/{filename}")
             count += 1
 
     Log.trace(f"Removed {count} file(s) that weren't .mp3 from songs folder")

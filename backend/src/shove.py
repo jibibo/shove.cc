@@ -1,17 +1,17 @@
 from convenience import *
 
-from accounts import Accounts
-from songs import Song, Songs
+from database import Accounts
+from database import Song, Songs
 from room import Room
 from user import User
 
-from src.games.coinflip import Coinflip
+from games.coinflip import Coinflip
 
 
 class Shove:
     def __init__(self, sio):
         Log.trace("Initializing Shove")
-        self.sio: SocketIO = sio
+        self.sio: socketio.Server = sio
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
         self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, packet_number)
 

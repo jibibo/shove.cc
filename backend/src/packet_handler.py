@@ -2,7 +2,7 @@ from convenience import *
 
 from shove import Shove
 from user import User
-from commands import handle_command
+from command_handler import handle_command
 
 
 def handle_packets_loop(shove):

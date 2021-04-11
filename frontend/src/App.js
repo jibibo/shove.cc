@@ -103,7 +103,7 @@ function App() {
         if (account.avatar_bytes) {
           // for each account, set .avatar property to a URL containing the avatar blob, if avatar is set
           account.avatar = URL.createObjectURL(
-            new Blob([account.avatar_bytes])
+            new Blob([account.avatar_bytes], { type: account.avatar_type })
           );
         }
         return account;

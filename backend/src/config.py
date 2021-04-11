@@ -38,10 +38,14 @@ CONSOLE_LOGGING_LENGTH_CUTOFF = 800
 
 
 # Data storage
-STATIC_FOLDER = "backend/public_static"
+FILES_FOLDER = "backend/files"
 DATABASES_FOLDER = "backend/databases"
 SONGS_FOLDER = "songs"
 AVATARS_FOLDER = "avatars"
+AVATAR_MIME_EXTENSIONS = {
+    "image/jpeg": "jpg",
+    "image/png": "png"
+}
 
 
 # File logging

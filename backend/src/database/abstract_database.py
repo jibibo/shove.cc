@@ -1,4 +1,4 @@
-from convenience import *
+from src.convenience import *
 
 
 class AbstractDatabase(ABC):
@@ -138,10 +138,13 @@ class AbstractDatabase(ABC):
             return [entry.get_jsonable(filter_data) for entry in self._entries]
 
     def remove_entry(self, entry):
-        Log.trace(f"Removing DB entry {self}")
-        self._entries.remove(entry)
-        self.write_to_disk()
-        Log.trace(f"Removed DB entry {self}")
+        # Log.trace(f"Removing DB entry {entry}")
+        # self._entries.remove(entry)
+        # self.write_to_disk()
+        # Log.trace(f"Removed DB entry {entry}")
+
+        Log.trace(f"Remove of {entry} not implemented")
+        raise NotImplementedError
 
     def write_to_disk(self):
         """Write the DB's entries to disk, taking into account non-JSON variable types.

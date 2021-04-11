@@ -1,6 +1,6 @@
-from convenience import *
+from src.convenience import *
 
-from abstract_database import AbstractDatabase, AbstractDatabaseEntry
+from .abstract_database import AbstractDatabase, AbstractDatabaseEntry
 
 
 class Accounts(AbstractDatabase):
@@ -52,6 +52,7 @@ class Account(AbstractDatabaseEntry):
     def get_default_data() -> dict:
         return {
             "avatar_filename": None,
+            "avatar_type": None,
             "money": 0,
             "password": None,
             "username": None,
@@ -72,7 +73,7 @@ class Account(AbstractDatabaseEntry):
     def get_avatar_bytes(self) -> bytes:
         if self["avatar_filename"]:
             try:
-                with open(f"{STATIC_FOLDER}/{AVATARS_FOLDER}/{self['avatar_filename']}", "rb") as f:
+                with open(f"{FILES_FOLDER}/{AVATARS_FOLDER}/{self['avatar_filename']}", "rb") as f:
                     return f.read()
             except FileNotFoundError:
                 Log.warn(f"Could not find avatar file {self['avatar_filename']}")

@@ -1,7 +1,6 @@
-from convenience import *
+from src.convenience import *
 
-from abstract_database import AbstractDatabase, AbstractDatabaseEntry
-from user import User
+from .abstract_database import AbstractDatabase, AbstractDatabaseEntry
 
 
 class Songs(AbstractDatabase):
@@ -71,7 +70,7 @@ class Song(AbstractDatabaseEntry):
         except ZeroDivisionError:  # if there are no likes or dislikes, it is considered 0.5
             return 0.5
 
-    def get_rating_of(self, user: User) -> dict:
+    def get_rating_of(self, user) -> dict:
         """The packet containing the current song's ratings,
         unique for each user as they might have liked/disliked the song"""
 
@@ -107,7 +106,7 @@ class Song(AbstractDatabaseEntry):
             "url": self.get_url(),
             "name": self["name"],
             "plays": self["plays"],
-            "song_bytes": open(f"{STATIC_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3", "rb").read()
+            "song_bytes": open(f"{FILES_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3", "rb").read()
         })
 
         self.broadcast_rating(shove)
