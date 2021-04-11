@@ -41,27 +41,18 @@ function App() {
 
   function addMessage(type, author, text) {
     setMessages((currentMessages) => {
-      // todo broken
-      // const maxMessages = 5;
-      // if (currentMessages.length > maxMessages) {
-      //     let splicedMessages = [...currentMessages];
-      //     splicedMessages.splice(0, currentMessages.length - maxMessages);
-      //     return [
-      //         ...splicedMessages,
-      //         {
-      //             author,
-      //             text,
-      //         },
-      //     ];
-      // } else {
-      //     return [
-      //         ...currentMessages,
-      //         {
-      //             author,
-      //             text,
-      //         },
-      //     ];
-      // }
+      const maxMessages = 20;
+      if (currentMessages.length > maxMessages) {
+        let slicedMessages = [...currentMessages].slice(-maxMessages); // this will start at -5 index to the latest message of the array
+        return [
+          ...slicedMessages,
+          {
+            type,
+            author,
+            text,
+          },
+        ];
+      }
       return [
         ...currentMessages,
         {
@@ -70,7 +61,7 @@ function App() {
           text,
         },
       ];
-    });
+    })
   }
 
   if (deaf) {
