@@ -35,7 +35,7 @@ def process_song_task(shove, youtube_id: str, user):
             shove.send_packet_to(user, "error", error_packet(str(ex)))
             return
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on extract_and_check_song_info", ex)
+            Log.fatal(f"Unhandled exception on extract_and_check_song_info", ex=ex)
             shove.send_packet_to(user, "error", error_packet("Song info extraction failed"))
             return
 
@@ -43,11 +43,11 @@ def process_song_task(shove, youtube_id: str, user):
             # download with YTDL
             download_time = download_youtube_audio(youtube_id)
         except SubprocessFailed as ex:
-            Log.error(f"Song download failed, update youtube-dl?: {ex}", ex)
+            Log.error(f"Song download failed, update youtube-dl?", ex=ex)
             shove.send_packet_to(user, "error", error_packet("Song download failed"))
             return
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on download_youtube_audio", ex)
+            Log.fatal(f"Unhandled exception on download_youtube_audio", ex=ex)
             shove.send_packet_to(user, "error", error_packet("Song download failed"))
             return
 
@@ -55,11 +55,11 @@ def process_song_task(shove, youtube_id: str, user):
             # convert to mp3
             convert_time = convert_youtube_audio(youtube_id)
         except SubprocessFailed as ex:
-            Log.error(f"File conversion failed, update youtube-dl?: {ex}", ex)
+            Log.error(f"File conversion failed, update youtube-dl?", ex=ex)
             shove.send_packet_to(user, "error", error_packet("File conversion failed"))
             return
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on convert_youtube_audio", ex)
+            Log.fatal(f"Unhandled exception on convert_youtube_audio", ex=ex)
             shove.send_packet_to(user, "error", error_packet("File conversion failed"))
             return
 

@@ -25,7 +25,7 @@ shove: Union[Shove, None] = None  # Union -> for editor (pycharm) type hint dete
 # -> https://stackoverflow.com/a/25315314/13216113
 
 
-# Flask handlers
+# Flask handlers TODO DELETE THIS TRASH
 
 @flask_app.route("/")
 def index():
@@ -55,7 +55,7 @@ def flask_get(path):
 @flask_app.errorhandler(Exception)
 def flask_error(ex):
     set_greenlet_name("Flask/error")
-    Log.fatal(f"UNHANDLED {type(ex).__name__}", ex)
+    Log.fatal(f"Unhandled exception caught by Flask", ex=ex)
     return "Error not good"
 
 
@@ -88,7 +88,7 @@ def on_disconnect():
 @sio.on_error_default
 def on_error_default(ex):
     set_greenlet_name("SIO/error")
-    Log.warn(f"SocketIO got an error: {ex}", ex)
+    Log.fatal(f"Unhandled exception caught by SocketIO", ex=ex)
 
 
 # todo on connect, receive session cookie from user, check if session token valid, log in as that _account
@@ -147,7 +147,7 @@ if __name__ == "__main__":
             main()
 
         except Exception as _ex:
-            Log.fatal(f"UNHANDLED {type(_ex).__name__} on main", _ex)
+            Log.fatal(f"Unhandled exception on main", ex=_ex)
 
         Log.trace(f"Restarting in {DELAY_BEFORE_RESTART} s")
         time.sleep(DELAY_BEFORE_RESTART)

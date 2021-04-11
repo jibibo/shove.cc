@@ -49,7 +49,7 @@ def set_greenlet_name(name: str):
 from config import *
 from exceptions import *
 # import formatting  # unused as of now
-from log import Log  # shouldn't be a circular import; from x import y shouldn't execute module x
+from log import Log, abbreviate  # shouldn't be a circular import; from x import y shouldn't execute module x
 
 
 # access private.py (contains sensitive data)

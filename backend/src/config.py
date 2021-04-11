@@ -4,6 +4,8 @@
 HOST = "0.0.0.0"
 PORT = 777
 STATIC_FILES_WEBSITE = f"https://shove.cc:{PORT}"
+MAX_MODEL_SIZE = 1e3  # kB for model, MB for packet
+MAX_PACKET_SIZE = 1e6  # todo implement these max sizes checks
 
 
 # Startup
@@ -26,6 +28,8 @@ LOG_YOUTUBE_DL_VERBOSE = False
 LOG_YOUTUBE_DL_WARNINGS = False
 # [quiet, panic, fatal, error, warning, info, verbose, debug, trace]
 FFMPEG_LOGGING_LEVEL = "warning"
+HIDE_PACKET_KEYS = ["avatar_bytes", "song_bytes"]
+ABBREVIATE_NUMBER_KEYS = ["money"]
 
 
 # Console logging

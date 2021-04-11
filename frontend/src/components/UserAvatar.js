@@ -19,11 +19,7 @@ function UserAvatar({ username, money }) {
   const { accountList } = useContext(GlobalContext);
   const classes = useStyles();
 
-  // URL.createObjectURL(
-  //   new Blob([account.avatar], { type: "image/png" })
-  // );
-
-  const account = accountList.find((account) => {
+  const selectedAccount = accountList.find((account) => {
     if (account.username === username) {
       return account;
     }
@@ -32,10 +28,10 @@ function UserAvatar({ username, money }) {
 
   return money !== undefined ? (
     <Tooltip title={`$${thousandsSeperatorFull(money)}`} arrow>
-      <Avatar className={classes.root} src={account.avatar} />
+      <Avatar className={classes.root} src={selectedAccount.avatar} />
     </Tooltip>
   ) : (
-    <Avatar className={classes.root} src={account.avatar} />
+    <Avatar className={classes.root} src={selectedAccount.avatar} />
   );
 }
 

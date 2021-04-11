@@ -100,8 +100,12 @@ function App() {
     socket.on("account_list", (list) => {
       console.debug("> account_list", list);
       const newList = list.map((account) => {
-        // change .avatar from ArrayBuffer to a url for each account
-        account.avatar = URL.createObjectURL(new Blob([account.avatar]));
+        if (account.avatar_bytes) {
+          // for each account, set .avatar property to a URL containing the avatar blob, if avatar is set
+          account.avatar = URL.createObjectURL(
+            new Blob([account.avatar_bytes])
+          );
+        }
         return account;
       });
       setAccountList(newList);
@@ -151,6 +155,7 @@ function App() {
       setAccountData();
       setRoomData();
       setGameData();
+      setTabIndex(0);
     });
 
     socket.on("message", (packet) => {

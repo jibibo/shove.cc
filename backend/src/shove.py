@@ -112,7 +112,7 @@ class Shove:
             if user.sid == sid:
                 return user
 
-        Log.warn(f"No user matched with SID: {sid}")
+        raise ValueError(f"No user matched with SID: {sid}")
 
     def get_user_count(self) -> int:
         return len(self._users)
@@ -141,7 +141,12 @@ class Shove:
             "user_count": self.get_user_count()
         })
 
-        self.send_packet_to(user, "account_list", self.accounts.get_entries_jsonable(key=lambda e: e["username"]))
+        account_list = []
+        for account in self.accounts.get_entries_sorted(key=lambda e: e["username"]):
+            jsonable = account.get_jsonable()
+            jsonable["avatar_bytes"] = account.get_avatar_bytes()  # bytes are not actually jsonable
+            account_list.append(jsonable)
+        self.send_packet_to(user, "account_list", account_list)
         self.send_packet_to(user, "room_list", [room.get_data() for room in self.get_rooms()])
 
         self.send_packet_to_everyone("user_connected", {

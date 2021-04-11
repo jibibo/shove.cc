@@ -12,13 +12,13 @@ def send_packets_loop(shove, sio: SocketIO):
     while True:
         users, model, packet, skip, packet_id = shove.outgoing_packets_queue.get()
         set_greenlet_name(f"PacketSender/#{packet_id}")
-        Log.debug(f"Sending packet #{packet_id}: '{model}'\n packet: {packet}")
+        Log.debug(f"Sending packet #{packet_id}: '{model}'", packet=packet)
 
         try:
             sent_to = send_packet(sio, users, model, packet, skip)
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on send_packet", ex)
+            Log.fatal(f"Unhandled exception on send_packet", ex=ex)
 
         else:
             if sent_to:

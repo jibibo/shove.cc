@@ -71,6 +71,22 @@ class Song(AbstractDatabaseEntry):
         except ZeroDivisionError:  # if there are no likes or dislikes, it is considered 0.5
             return 0.5
 
+    def get_rating_of(self, user: User) -> dict:
+        """The packet containing the current song's ratings,
+        unique for each user as they might have liked/disliked the song"""
+
+        dislike_count = self.get_dislike_count()
+        like_count = self.get_like_count()
+
+        return {
+            "dislikes": dislike_count,
+            "likes": like_count,
+            "you": {
+                "disliked": user.get_username() in self["dislikes"] if user and user.is_logged_in() else False,
+                "liked": user.get_username() in self["likes"] if user and user.is_logged_in() else False
+            }
+        }
+
     def get_url(self):
         return f"{STATIC_FILES_WEBSITE}/songs/{self['song_id']}.mp3"
 
@@ -91,25 +107,10 @@ class Song(AbstractDatabaseEntry):
             "url": self.get_url(),
             "name": self["name"],
             "plays": self["plays"],
+            "bytes": open(f"{STATIC_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3", "rb").read()
         })
 
         self.broadcast_rating(shove)
-
-    def get_rating_of(self, user: User) -> dict:
-        """The packet containing the current song's ratings,
-        unique for each user as they might have liked/disliked the song"""
-
-        dislike_count = self.get_dislike_count()
-        like_count = self.get_like_count()
-
-        return {
-            "dislikes": dislike_count,
-            "likes": like_count,
-            "you": {
-                "disliked": user.get_username() in self["dislikes"] if user and user.is_logged_in() else False,
-                "liked": user.get_username() in self["likes"] if user and user.is_logged_in() else False
-            }
-        }
 
     def toggle_dislike(self, username):
         if username in self["likes"]:  # remove the user's like in any case

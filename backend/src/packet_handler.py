@@ -14,7 +14,7 @@ def handle_packets_loop(shove):
     while True:
         user, model, packet, packet_id = shove.incoming_packets_queue.get()
         set_greenlet_name(f"PacketHandler/#{packet_id}")
-        Log.debug(f"Handling packet #{packet_id}: '{model}'\n packet: {packet}")
+        Log.debug(f"Handling packet #{packet_id}: '{model}'", packet=packet)
 
         try:
             direct_response = handle_packet(shove, user, model, packet)
@@ -24,16 +24,16 @@ def handle_packets_loop(shove):
             direct_response = "error", error_packet(ex.description)
 
         except PacketHandlingFailed as ex:
-            Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")  # ex.__name__ as PacketHandlingFailed has children
+            Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")
             direct_response = "error", error_packet(ex.description)
 
         except NotImplementedError as ex:
-            Log.error("Not implemented", ex)
+            Log.error("Not implemented", ex=ex)
             direct_response = "error", error_packet("Not implemented (yet)!")
 
         except Exception as ex:
             # note: if user purposely sends broken packets, KeyErrors will end up here aswell
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_packet", ex)
+            Log.fatal(f"Unhandled exception on handle_packet", ex=ex)
             direct_response = "error", error_packet("Internal error on handling packet (shouldn't happen)")
 
         if direct_response:
@@ -94,7 +94,13 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         return "account_data", account.get_jsonable()
 
     if model == "get_account_list":
-        return "account_list", shove.accounts.get_entries_jsonable(key=lambda e: e["username"])
+        raise NotImplementedError
+        # account_list = []
+        # for entry in shove.accounts.get_entries(key=lambda e: e["username"]):
+        #     jsonable = entry.get_jsonable()
+        #     jsonable["avatar"] = entry.get_avatar_bytes()
+        #     account_list.append(jsonable)
+        # return "account_list", account_list
 
     if model == "get_game_data":
         room = shove.get_room_of_user(user)
