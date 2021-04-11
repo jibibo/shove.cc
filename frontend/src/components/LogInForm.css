@@ -36,15 +36,16 @@
   margin: 10px 10px;
   background-color: rgb(7, 7, 33);
   border: 1px solid rgb(7, 7, 33);
-  border: none;
   padding: 20px 30px;
   border-radius: 10px;
-  outline: transparent;
-  transition: outline 0.50s ease-out;
+  box-shadow: 0 0 0 transparent;
+  outline: none;
+  transition: box-shadow 0.10s ease-out, border-radius 0.10s ease-out;
 }
 
 :is(#log-in-username, #log-in-password):focus {
-  outline: solid 1px #f50057;
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0px 2px 0px #f50057;
 }
 
 .log-in-button {
