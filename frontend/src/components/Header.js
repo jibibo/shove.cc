@@ -17,7 +17,8 @@ function Header() {
     <header>
       <Container className="header-container">
         <div className="header-child">
-          <Typography variant="h5">🎲 Shove</Typography>
+          <span className="dice">🎲</span>
+          <Typography variant="h5">{" "}Shove</Typography>
         </div>
 
         <div className="header-child">

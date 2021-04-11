@@ -13,6 +13,24 @@ header {
   align-items: center;
 }
 
+.dice {
+  font-size: 2rem;
+  animation: dice 1s ease-in forwards;
+}
+
+@keyframes dice {
+  from,
+  0% {
+    transform: translateY(-40px) translateX(-100px) rotateZ(-360deg);
+  } 25% {
+    transform: translateY(0px) translateX(-50px) rotateZ(-160deg);
+  } 50% {
+    transform: translateY(-40px) translateX(-20px) rotateZ(-90deg);
+  } 100% {
+    transform: translateY(-5px) translateX(0px) rotateZ(0deg) rotateZ(0deg);
+  }
+}
+
 /* 
 .header-child > div {
   display: inline-flex;
