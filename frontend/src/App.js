@@ -184,7 +184,7 @@ function App() {
     socket.on("user_connected", (packet) => {
       console.debug("> user_connected", packet);
       setOnlineUsers({
-        users: packet.users,
+        users_logged_in: packet.users_logged_in,
         user_count: packet.user_count,
       });
 
