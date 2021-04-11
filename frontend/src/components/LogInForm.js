@@ -1,5 +1,6 @@
 import { useState, useContext } from "react";
 import Button from "@material-ui/core/Button";
+import Avatar from "@material-ui/core/Avatar";
 
 import { sendPacket } from "../connection";
 
@@ -63,19 +64,20 @@ const LogInForm = () => {
       <div className="account-list">
         {accountList
           ? accountList.map((account, i) => {
-              return (
-                <div className="account-list-entry" key={i}>
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      onClickAccount(account.username);
-                    }}
-                  >
-                    {account.username}
-                  </Button>
-                </div>
-              );
-            })
+            return (
+              <div className="account-list-entry" key={i}>
+                <Avatar src={`cache/avatars/${account.username}.png`} />
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    onClickAccount(account.username);
+                  }}
+                >
+                  {account.username}
+                </Button>
+              </div>
+            );
+          })
           : "No accounts!"}
       </div>
     </>
