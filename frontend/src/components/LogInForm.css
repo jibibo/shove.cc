@@ -13,11 +13,9 @@
   border-radius: 0 0 10px 10px;
 }
 
-.log-in-form-container h1 {
+.log-in-form-container h3 {
   margin-top: 0;
   padding: 10px 0;
-  font-size: 3rem;
-  font-weight: 500;
   text-indent: 50px;
   background-color: rgb(7, 7, 31);
 }
