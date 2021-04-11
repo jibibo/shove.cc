@@ -48,8 +48,7 @@
 }
 
 .log-in-button {
-  margin-top: 10px;
-  margin-left: 13px;
+  margin: 10px 12px !important;
 }
 
 .log-in-form,
@@ -80,6 +79,7 @@
 }
 
 @media (max-width: 650px) {
+
   .log-in-form-container h1 {
     text-indent: 0;
     text-align: center;
