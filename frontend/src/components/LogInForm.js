@@ -33,10 +33,11 @@ const LogInForm = () => {
   return (
     <div className="login-container">
       <div className="log-in-form-container">
-        <h3>🚪 LOGIN</h3>
+        <h3>LOGIN</h3>
         <div className="form">
           <form onSubmit={onSubmit}>
-            <label className="log-in-username-label">Username</label><br />
+            <label className="log-in-username-label">Username</label>
+            <br />
             <input
               autoFocus
               type="text"
@@ -49,7 +50,8 @@ const LogInForm = () => {
               }}
             />
             <br />
-            <label className="log-in-password-label">Password</label><br />
+            <label className="log-in-password-label">Password</label>
+            <br />
             <input
               type="password"
               id="log-in-password"
@@ -60,7 +62,12 @@ const LogInForm = () => {
               }}
             />
             <br />
-            <Button className="log-in-button" color="secondary" variant="outlined" type="submit">
+            <Button
+              className="log-in-button"
+              color="secondary"
+              variant="outlined"
+              type="submit"
+            >
               Log in
             </Button>
           </form>
@@ -71,21 +78,27 @@ const LogInForm = () => {
         <div className="account-list">
           {accountList
             ? accountList.map((account, i) => {
-              return (
-                <div className="account-list-entry" key={i}>
-                  <Button
-                    style={{ display: "flex", justifyContent: "space-between", width: 150, color: "white", backgroundColor: "rgb(7, 7, 31)" }}
-                    variant="contained"
-                    onClick={() => {
-                      onClickAccount(account.username);
-                    }}
-                  >
-                    <Avatar src={`cache/avatars/${account.username}.png`} />
-                    {account.username}
-                  </Button>
-                </div>
-              );
-            })
+                return (
+                  <div className="account-list-entry" key={i}>
+                    <Button
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        width: 150,
+                        color: "white",
+                        backgroundColor: "rgb(7, 7, 31)",
+                      }}
+                      variant="contained"
+                      onClick={() => {
+                        onClickAccount(account.username);
+                      }}
+                    >
+                      <Avatar src={`cache/avatars/${account.username}.png`} />
+                      {account.username}
+                    </Button>
+                  </div>
+                );
+              })
             : "No accounts!"}
         </div>
       </div>
