@@ -1,3 +1,14 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  flex-direction: row-reverse;
+}
+
+.log-in-form {
+  visibility: hidden;
+  width: 70%;
+}
+
 .log-in-form form {
     display: flex;
     flex-direction: column;
@@ -22,9 +33,24 @@
 
 .log-in-form,
 .account-list {
-  max-width: 200px;
   display: flex;
   flex-direction: column;
+}
+
+.accounts-container {
+  width: 400px;
+  background-color: rgb(23, 23, 41);
+  border-radius: 0 0 10px 10px;
+  padding-bottom: 25px;
+}
+
+.accounts-container h3 {
+  margin: 0;
+  margin-bottom: 10px;
+  text-indent: 10px;
+  padding: 10px 0;
+  border-radius: 0 0 10px 10px;
+  background-color: rgb(7, 7, 31);
 }
 
 .account-list-entry {

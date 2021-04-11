@@ -31,7 +31,7 @@ const LogInForm = () => {
   }
 
   return (
-    <>
+    <div className="login-container">
       <div className="log-in-form">
         <form onSubmit={onSubmit}>
           <input
@@ -60,27 +60,31 @@ const LogInForm = () => {
           </Button>
         </form>
       </div>
-      Quick log in:
-      <div className="account-list">
-        {accountList
-          ? accountList.map((account, i) => {
-            return (
-              <div className="account-list-entry" key={i}>
-                <Avatar src={`cache/avatars/${account.username}.png`} />
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    onClickAccount(account.username);
-                  }}
-                >
-                  {account.username}
-                </Button>
-              </div>
-            );
-          })
-          : "No accounts!"}
+      <div class="accounts-container">
+        <h3>Quick log in:</h3>
+        <div className="account-list">
+          {accountList
+            ? accountList.map((account, i) => {
+              return (
+                <div className="account-list-entry" key={i}>
+                  <Button
+                    style={{ display: "flex", justifyContent: "space-between", width: 150 }}
+                    color="secondary"
+                    variant="outlined"
+                    onClick={() => {
+                      onClickAccount(account.username);
+                    }}
+                  >
+                    <Avatar src={`cache/avatars/${account.username}.png`} />
+                    {account.username}
+                  </Button>
+                </div>
+              );
+            })
+            : "No accounts!"}
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 
