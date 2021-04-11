@@ -42,6 +42,7 @@ const LogInForm = () => {
               type="text"
               id="log-in-username"
               autoComplete="off"
+              spellCheck={false}
               value={usernameInput}
               onChange={(ev) => {
                 setUsernameInput(ev.target.value);
