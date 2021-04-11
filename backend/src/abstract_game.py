@@ -9,7 +9,7 @@ class GameState:
 
 
 def game_event_loop(game):
-    set_greenthread_name(f"GameLoop/{game.room.name}")
+    set_greenlet_name(f"GameLoop/{game.room.name}")
     Log.trace(f"Game event loop ready of room {game.room}")
 
     while True:

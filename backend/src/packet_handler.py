@@ -8,12 +8,12 @@ from commands import handle_command
 def handle_packets_loop(shove):
     """Blocking loop for handling packets (that were added to the queue)"""
 
-    set_greenthread_name("PacketHandler")
+    set_greenlet_name("PacketHandler")
     Log.trace("Handle packets loop ready")
 
     while True:
         user, model, packet, packet_id = shove.incoming_packets_queue.get()
-        set_greenthread_name(f"PacketHandler/#{packet_id}")
+        set_greenlet_name(f"PacketHandler/#{packet_id}")
         Log.debug(f"Handling packet #{packet_id}: '{model}'\n packet: {packet}")
 
         try:
@@ -21,26 +21,20 @@ def handle_packets_loop(shove):
 
         except CommandFailed as ex:
             Log.trace(f"Command invalid: {ex.description}")
-            direct_response = "error", {
-                "description": ex.description
-            }
+            direct_response = "error", error_packet(ex.description)
 
         except PacketHandlingFailed as ex:
             Log.trace(f"Packet handling failed: {type(ex).__name__}: {ex.description}")  # ex.__name__ as PacketHandlingFailed has children
-            direct_response = "error", {
-                "description": ex.description
-            }
+            direct_response = "error", error_packet(ex.description)
 
         except NotImplementedError as ex:
             Log.error("Not implemented", ex)
-            direct_response = "error", {
-                "description": "Not implemented (yet)!"
-            }
+            direct_response = "error", error_packet("Not implemented (yet)!")
 
         except Exception as ex:
             # note: if user purposely sends broken packets, KeyErrors will end up here aswell
             Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_packet", ex)
-            direct_response = "error", error_packet(description="Unhandled exception on handling packet (shouldn't happen)")
+            direct_response = "error", error_packet("Internal error on handling packet (shouldn't happen)")
 
         if direct_response:
             response_model, response_packet = direct_response
@@ -66,8 +60,9 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         raise ValueError(f"Invalid packet type: {type(packet).__name__}")
 
     if model == "error":  # only errors that should NEVER happen are to be sent to backend (not errors like log in failure)
-        Log.error(f"User received a severe error: {packet['description']}")
-        return
+        Log.warn(f"User sent error: {packet['description']}")
+        # send the error back to the user so they can read the message themselves
+        return "error", error_packet(packet["description"])
 
     # special game packet, should be handled by game's packet handler
     if model == "game_action":  # currently the only model for game packets
@@ -96,10 +91,10 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         else:
             raise UserNotLoggedIn
 
-        return "account_data", account.get_json_serializable()
+        return "account_data", account.get_jsonable()
 
     if model == "get_account_list":
-        return "account_list", shove.accounts.get_entries_data_sorted(key=lambda e: e["username"])
+        return "account_list", shove.accounts.get_entries_jsonable(key=lambda e: e["username"])
 
     if model == "get_game_data":
         room = shove.get_room_of_user(user)
@@ -173,7 +168,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         user.log_in_as(account)
 
         return "log_in", {
-            "account_data": user.get_account_data_copy()
+            "account_data": user.get_account_jsonable()
         }
 
     if model == "log_out":

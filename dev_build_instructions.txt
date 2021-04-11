@@ -8,5 +8,6 @@
 6 - connection.js socketio URL shove.cc
 
 get certificate:
+https://dl.eff.org/certbot-beta-installer-win32.exe
 - certbot certonly --standalone
 - FQDN: shove.cc

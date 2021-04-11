@@ -72,7 +72,7 @@ class Coinflip(AbstractGame):
             if user in self.players:
                 raise ActionInvalid("Already placed a bet")
 
-            if not user.get_account_data_copy()["money"]:
+            if not user.get_account()["money"]:
                 raise ActionInvalid("You are broke!")
 
             bet = int(packet["bet"])
@@ -80,8 +80,8 @@ class Coinflip(AbstractGame):
             if bet <= 0:
                 raise ActionInvalid(f"Invalid bet amount: {bet}")
 
-            if user.get_account_data_copy()["money"] < bet:  # maybe returns True due to floating point error or something
-                raise ActionInvalid(f"Not enough money to bet {bet} (you have {user.get_account_data_copy()['money']})")
+            if user.get_account()["money"] < bet:  # maybe returns True due to floating point error or something
+                raise ActionInvalid(f"Not enough money to bet {bet} (you have {user.get_account()['money']})")
 
             user.get_account()["money"] -= bet
             choice = packet["choice"]
@@ -96,7 +96,7 @@ class Coinflip(AbstractGame):
                 self.force_result = choice  # basically always win
                 Log.trace(f"Set force result to: {choice}")
 
-            self.room.shove.send_packet_to(user, "account_data", user.get_account_data_copy())
+            self.room.shove.send_packet_to(user, "account_data", user.get_account_jsonable())
 
             return "game_action_success", {
                 "action": "bet",
@@ -151,12 +151,12 @@ class Coinflip(AbstractGame):
             bet = player.get_game_data_copy()["bet"]
             if player_won:
                 player.get_account()["money"] += 2 * bet
-                self.room.shove.send_packet_to(player, "account_data", player.get_account_data_copy())
+                self.room.shove.send_packet_to(player, "account_data", player.get_account_jsonable())
 
             # todo should store user data in cache or something, else info is outdated
             # todo bug: if username changes of player, big problemo
             self.gains[player.get_username()] = {  # todo should make use of player.get_game_data() and self.players
-                "account_data": player.get_account_data_copy(),
+                "account_data": player.get_account_jsonable(),
                 "bet": bet,
                 "won": player_won
             }

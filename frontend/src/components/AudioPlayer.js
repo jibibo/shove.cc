@@ -34,7 +34,7 @@ function AudioPlayer() {
   const [volume, setVolume] = useState(0.1);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0.1); // prevent ZeroDivision in the future (x% done ratios)
+  const [duration, setDuration] = useState(0.1); // prevents dividing by zero
   const [loop, setLoop] = useState(false);
   const [currentSong, setCurrentSong] = useState();
   const [likes, setLikes] = useState(0);

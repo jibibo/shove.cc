@@ -4,7 +4,7 @@ from convenience import *
 def ping_users_loop(shove):
     """Blocking loop to ping all connected users periodically"""
 
-    set_greenthread_name("UserPinger")
+    set_greenlet_name("UserPinger")
     Log.trace("Ping users loop ready")
     time_since_last_ping = 0
 
@@ -27,5 +27,5 @@ def ping_users_loop(shove):
             shove.send_packet_to_everyone("ping", {})
             time_since_last_ping = 0
 
-        eventlet.sleep(1)
+        time.sleep(1)
         time_since_last_ping += 1

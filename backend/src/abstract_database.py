@@ -7,7 +7,7 @@ class AbstractDatabase(ABC):
 
         self._entry_class = entry_class
         self._filename: str = filename
-        self._file_abs: str = f"{BACKEND_DATA_FOLDER}/{filename}"
+        self._file_path: str = f"{DATABASES_FOLDER}/{filename}"
         self._last_entry_id: int = 0
         self._entries: Set[AbstractDatabaseEntry] = set()
 
@@ -34,7 +34,7 @@ class AbstractDatabase(ABC):
             Log.warn(f"{self} already read from disk! Ignoring call")
             return
 
-        with open(self._file_abs, "r") as f:
+        with open(self._file_path, "r") as f:
             data = json.load(f)
 
         try:
@@ -117,20 +117,25 @@ class AbstractDatabase(ABC):
         else:
             Log.trace(f"No DB entry found")
 
-    def get_entries(self) -> set:
-        return self._entries
+    def get_entries(self, key=None, reverse=False) -> set:
+        """Get this DB's entries OBJECTS as-is, optional sorting with key and reverse"""
+
+        if key:
+            return set(sorted(self._entries, key=key, reverse=reverse))
+        else:
+            return self._entries
 
     def get_entries_count(self) -> int:
         return len(self._entries)
 
-    def get_entries_json_serializable(self, filter_data=True, key=None, reverse=False) -> list:
+    def get_entries_jsonable(self, filter_data=True, key=None, reverse=False) -> list:
         """Get this DB's entries' data as a JSON serializable list.
         Optional key and reverse arguments for sorting."""
 
         if key:
-            return [entry.get_json_serializable(filter_data) for entry in sorted(self._entries, key=key, reverse=reverse)]
+            return [entry.get_jsonable(filter_data) for entry in sorted(self._entries, key=key, reverse=reverse)]
         else:
-            return [entry.get_json_serializable(filter_data) for entry in self._entries]
+            return [entry.get_jsonable(filter_data) for entry in self._entries]
 
     def remove_entry(self, entry):
         Log.trace(f"Removing DB entry {self}")
@@ -145,9 +150,9 @@ class AbstractDatabase(ABC):
         # Log.trace(f"{self} writing to DB file")
 
         # sort by entry id in the database
-        entries_json_serializable_sorted = self.get_entries_json_serializable(filter_data=False, key=lambda e: e["entry_id"])
+        entries_json_serializable_sorted = self.get_entries_jsonable(filter_data=False, key=lambda e: e["entry_id"])
 
-        with open(self._file_abs, "w") as f:
+        with open(self._file_path, "w") as f:
             json.dump({
                 "last_entry_id": self._last_entry_id,
                 "entries": entries_json_serializable_sorted
@@ -230,7 +235,7 @@ class AbstractDatabaseEntry(ABC):
         pass
 
     @abstractmethod
-    def get_json_serializable(self, filter_data=True) -> dict:
+    def get_jsonable(self, filter_data=True) -> dict:
         """Get this entry's data but JSON serializable for file writing or sending as a packet."""
         pass
 

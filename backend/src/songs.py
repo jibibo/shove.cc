@@ -41,7 +41,7 @@ class Song(AbstractDatabaseEntry):
     def get_filter_keys() -> List[str]:
         pass  # nothing to filter, all data of a song is public
 
-    def get_json_serializable(self, filter_data=True) -> dict:
+    def get_jsonable(self, filter_data=True) -> dict:
         data_copy = self.get_data_copy(filter_data=filter_data)
 
         for k in ["dislikes", "likes"]:  # convert these data types from set to list
@@ -54,18 +54,6 @@ class Song(AbstractDatabaseEntry):
 
         for user in shove.get_all_users():
             shove.send_packet_to(user, "song_rating", self.get_rating_of(user))
-
-    def copy_to_frontend_if_absent(self):
-        """Copy the song file to frontend cache if it is absent"""
-
-        backend_file = f"{BACKEND_DATA_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3"
-        frontend_file = f"{FRONTEND_CACHE_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3"
-
-        if os.path.exists(frontend_file):
-            Log.trace("Frontend cache already has song file")
-        else:
-            Log.trace("Copying song file from backend to frontend")
-            shutil.copyfile(backend_file, frontend_file)
 
     def get_dislike_count(self) -> int:
         return len(self["dislikes"])
@@ -84,7 +72,7 @@ class Song(AbstractDatabaseEntry):
             return 0.5
 
     def get_url(self):
-        return f"cache/songs/{self['song_id']}.mp3"
+        return f"{STATIC_FILES_WEBSITE}/songs/{self['song_id']}.mp3"
 
     def increment_plays(self, amount=1):
         self["plays"] += amount  # triggers db write as it assigns with "="
@@ -94,7 +82,6 @@ class Song(AbstractDatabaseEntry):
 
     def play(self, shove, author):
         Log.trace(f"Playing {self}")
-        self.copy_to_frontend_if_absent()
         self.increment_plays(shove.get_user_count())
         shove.latest_song = self
         shove.latest_song_author = author

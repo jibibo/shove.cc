@@ -11,7 +11,7 @@ from src.games.coinflip import Coinflip
 class Shove:
     def __init__(self, sio):
         Log.trace("Initializing Shove")
-        self.sio: socketio.Server = sio
+        self.sio: SocketIO = sio
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
         self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, packet_number)
 
@@ -136,18 +136,18 @@ class Shove:
 
         self.send_packet_to(user, "user_connected", {
             "you": True,
-            "users": [user.get_account_data_copy()
-                      for user in self.get_all_users() if user.is_logged_in()],
+            "users_logged_in": [user.get_account_jsonable()
+                                for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         })
 
-        self.send_packet_to(user, "account_list", self.accounts.get_entries_json_serializable(key=lambda e: e["username"]))
+        self.send_packet_to(user, "account_list", self.accounts.get_entries_jsonable(key=lambda e: e["username"]))
         self.send_packet_to(user, "room_list", [room.get_data() for room in self.get_rooms()])
 
         self.send_packet_to_everyone("user_connected", {
             "you": False,
-            "users": [user.get_account_data_copy()
-                      for user in self.get_all_users() if user.is_logged_in()],
+            "users_logged_in": [user.get_account_jsonable()
+                                for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         }, skip=user)
 
@@ -160,8 +160,8 @@ class Shove:
 
         self.send_packet_to_everyone("user_disconnected", {
             "username": user.get_username(),
-            "users": [user.get_account_data_copy()
-                      for user in self.get_all_users() if user.is_logged_in()],
+            "users_logged_in": [user.get_account_jsonable()
+                                for user in self.get_all_users() if user.is_logged_in()],
             "user_count": self.get_user_count()
         })
 

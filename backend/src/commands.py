@@ -68,7 +68,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
             username = shove.accounts.create_random_account(preferred_username)["username"]
 
-            shove.send_packet_to_everyone("account_list", shove.accounts.get_entries_data_sorted(lambda e: e["username"]))
+            shove.send_packet_to_everyone("account_list", shove.accounts.get_entries_jsonable(key=lambda e: e["username"]))
 
             return f"Created account {username}"
 
@@ -95,7 +95,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
                     shove.log_out_user(user)
 
             found_account.delete()
-            shove.send_packet_to_everyone("account_list", shove.accounts.get_entries_data_sorted(key=lambda e: e["username"]))
+            shove.send_packet_to_everyone("account_list", shove.accounts.get_entries_jsonable(key=lambda e: e["username"]))
 
             return f"Deleted account {delete_username}"
 
@@ -109,7 +109,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
             raise UserNotLoggedIn
 
         user.get_account()["money"] += 9e15
-        shove.send_packet_to(user, "account_data", user.get_account_data_copy())
+        shove.send_packet_to(user, "account_data", user.get_account_jsonable())
         return "Money added"
 
     if is_command(command, "trello"):

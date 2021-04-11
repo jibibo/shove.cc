@@ -3,15 +3,15 @@ from convenience import *
 from user import User
 
 
-def send_packets_loop(shove, sio: socketio.Server):
+def send_packets_loop(shove, sio: SocketIO):
     """Blocking loop for sending packets (that were added to the queue)"""
 
-    set_greenthread_name("PacketSender")
+    set_greenlet_name("PacketSender")
     Log.trace("Send packets loop ready")
 
     while True:
         users, model, packet, skip, packet_id = shove.outgoing_packets_queue.get()
-        set_greenthread_name(f"PacketSender/#{packet_id}")
+        set_greenlet_name(f"PacketSender/#{packet_id}")
         Log.debug(f"Sending packet #{packet_id}: '{model}'\n packet: {packet}")
 
         try:
@@ -27,7 +27,7 @@ def send_packets_loop(shove, sio: socketio.Server):
                 Log.trace(f"No recipients for '{model}'")
 
 
-def send_packet(sio: socketio.Server, users: Union[User, Set[User]], model: str,
+def send_packet(sio: SocketIO, users: Union[User, Set[User]], model: str,
                 packet: Union[dict, list], skip: Union[User, Set[User]]) -> set:
     """Actually sends the packet through SocketIO.
     Returns the amount of users the packet was sent to"""
