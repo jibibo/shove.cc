@@ -32,36 +32,41 @@ const LogInForm = () => {
 
   return (
     <div className="login-container">
-      <div className="log-in-form">
-        <form onSubmit={onSubmit}>
-          <input
-            autoFocus
-            type="text"
-            id="log-in-username"
-            placeholder="Username"
-            autoComplete="off"
-            value={usernameInput}
-            onChange={(ev) => {
-              setUsernameInput(ev.target.value);
-            }}
-          />
-          <input
-            type="password"
-            id="log-in-password"
-            placeholder="Password"
-            autoComplete="off"
-            value={passwordInput}
-            onChange={(ev) => {
-              setPasswordInput(ev.target.value);
-            }}
-          />
-          <Button variant="contained" type="submit">
-            Log in
-          </Button>
-        </form>
+      <div className="log-in-form-container">
+        <h1>🚪 Login</h1>
+        <div className="form">
+          <form onSubmit={onSubmit}>
+            <label className="log-in-username-label">Username</label><br />
+            <input
+              autoFocus
+              type="text"
+              id="log-in-username"
+              autoComplete="off"
+              value={usernameInput}
+              onChange={(ev) => {
+                setUsernameInput(ev.target.value);
+              }}
+            />
+            <br />
+            <label className="log-in-password-label">Password</label><br />
+            <input
+              type="password"
+              id="log-in-password"
+              autoComplete="off"
+              value={passwordInput}
+              onChange={(ev) => {
+                setPasswordInput(ev.target.value);
+              }}
+            />
+            <br />
+            <Button className="log-in-button" color="secondary" variant="outlined" type="submit">
+              Log in
+            </Button>
+          </form>
+        </div>
       </div>
-      <div class="accounts-container">
-        <h3>Quick log in:</h3>
+      <div className="accounts-container">
+        <h3>QUICK LOG IN</h3>
         <div className="account-list">
           {accountList
             ? accountList.map((account, i) => {
