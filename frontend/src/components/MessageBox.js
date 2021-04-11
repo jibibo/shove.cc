@@ -13,6 +13,8 @@ function MessageBox() {
 
   const [messageInput, setMessageInput] = useState("");
 
+  const [showMessageBox, setShowMessageBox] = useState(false);
+
   const messageBox = useRef(null);
 
   function sendMessage(message) {
@@ -32,36 +34,42 @@ function MessageBox() {
 
   return show ? (
     <>
-      <div ref={messageBox} className="messages-container">
-        {messages.map((message, i) => (
-          <div key={i} className="message-container">
-            {message.type === "message" ? (
-              <UserAvatar username={message.author} />
-            ) : null}
+      <button onClick={
+        () => setShowMessageBox((previousState) => !previousState)
+      }
+        className={`message-minimize ${showMessageBox ? "minimized" : null}`}>{showMessageBox ? '^' : '-'}</button>
+      <div hidden={showMessageBox}>
+        <div ref={messageBox} className="messages-container">
+          {messages.map((message, i) => (
+            <div key={i} className="message-container">
+              {message.type === "message" ? (
+                <UserAvatar username={message.author} />
+              ) : null}
 
-            <div className="message-content">
-              <span className="message-author">{message.author}</span>
-              <br />
-              <span className="message-text">{message.text}</span>
+              <div className="message-content">
+                <span className="message-author">{message.author}</span>
+                <br />
+                <span className="message-text">{message.text}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
+        <form
+          className="message-input"
+          onSubmit={(e) => {
+            e.preventDefault();
+            sendMessage(messageInput);
+            setMessageInput("");
+          }}
+        >
+          <input
+            type="textarea"
+            onChange={(event) => setMessageInput(event.target.value)}
+            value={messageInput}
+            placeholder="Type Here..."
+          />
+        </form>
       </div>
-      <form
-        className="message-input"
-        onSubmit={(e) => {
-          e.preventDefault();
-          sendMessage(messageInput);
-          setMessageInput("");
-        }}
-      >
-        <input
-          type="textarea"
-          onChange={(event) => setMessageInput(event.target.value)}
-          value={messageInput}
-          placeholder="Type Here..."
-        />
-      </form>
     </>
   ) : null;
 }

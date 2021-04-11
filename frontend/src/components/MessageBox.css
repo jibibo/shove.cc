@@ -1,3 +1,38 @@
+.message-minimize {
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  position: absolute;
+  right: -20px;
+  top: -40px;
+  z-index: 1;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  border: none;
+  outline: none;
+  background-color: rgb(23, 23, 41);
+  border: solid 2px rgb(7, 7, 33);
+  cursor: pointer;
+  transition:
+    top 0.15s cubic-bezier(0.165, 0.84, 0.44, 1),
+    left 0.15s cubic-bezier(0.165, 0.84, 0.44, 1),
+    width 0.15s cubic-bezier(0.165, 0.84, 0.44, 1), 
+    height 0.15s cubic-bezier(0.165, 0.84, 0.44, 1),
+    border 0.15s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.message-minimize:hover {
+  width: 60px;
+  height: 60px;
+  border: solid 5px #f50057;
+}
+
+.minimized {
+  top: -60px;
+  left: 0;
+}
+
 .messages-container {
   height: 200px;
   border-radius: 10px;
@@ -8,6 +43,7 @@
     0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),
     0 22.3px 17.9px rgba(0, 0, 0, 0.072), 0 41.8px 33.4px rgba(0, 0, 0, 0.086),
     0 100px 80px rgba(0, 0, 0, 0.12);
+  z-index: 0;
 }
 
 .messages-container > div + div {
