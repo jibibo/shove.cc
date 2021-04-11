@@ -73,7 +73,7 @@ function App() {
     // socket events
 
     socket.on("connect", () => {
-      console.info("> connect event");
+      console.debug("> connect event");
     });
 
     socket.on("connect_error", () => {
