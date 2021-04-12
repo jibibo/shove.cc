@@ -35,7 +35,7 @@ def process_song_task(shove, youtube_id: str, user):
             shove.send_packet_to(user, "error", error_packet(str(ex)))
             return
         except Exception as ex:
-            Log.fatal(f"Unhandled exception on extract_and_check_song_info", ex=ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on extract_and_check_song_info", ex)
             shove.send_packet_to(user, "error", error_packet("Song info extraction failed"))
             return
 
@@ -43,11 +43,11 @@ def process_song_task(shove, youtube_id: str, user):
             # download with YTDL
             download_time = download_youtube_audio(youtube_id)
         except SubprocessFailed as ex:
-            Log.error(f"Song download failed, update youtube-dl?", ex=ex)
+            Log.error(f"Song download failed, update youtube-dl?: {ex}", ex)
             shove.send_packet_to(user, "error", error_packet("Song download failed"))
             return
         except Exception as ex:
-            Log.fatal(f"Unhandled exception on download_youtube_audio", ex=ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on download_youtube_audio", ex)
             shove.send_packet_to(user, "error", error_packet("Song download failed"))
             return
 
@@ -55,16 +55,16 @@ def process_song_task(shove, youtube_id: str, user):
             # convert to mp3
             convert_time = convert_youtube_audio(youtube_id)
         except SubprocessFailed as ex:
-            Log.error(f"File conversion failed, update youtube-dl?", ex=ex)
+            Log.error(f"File conversion failed, update youtube-dl?: {ex}", ex)
             shove.send_packet_to(user, "error", error_packet("File conversion failed"))
             return
         except Exception as ex:
-            Log.fatal(f"Unhandled exception on convert_youtube_audio", ex=ex)
+            Log.fatal(f"UNHANDLED {type(ex).__name__} on convert_youtube_audio", ex)
             shove.send_packet_to(user, "error", error_packet("File conversion failed"))
             return
 
         # double check if backend has the song mp3 file
-        backend_audio_file = f"{FILES_FOLDER}/{SONGS_FOLDER}/{youtube_id}.mp3"
+        backend_audio_file = f"{STATIC_FOLDER}/{SONGS_FOLDER}/{youtube_id}.mp3"
         if not os.path.exists(backend_audio_file):
             raise RuntimeError("Song file missing from backend songs folder")
 
@@ -119,7 +119,7 @@ def download_youtube_audio(youtube_id) -> float:
     """Downloads the youtube song and returns the time it took to download"""
 
     Log.trace(f"Downloading song")
-    backend_cache = f"{FILES_FOLDER}/{SONGS_FOLDER}"
+    backend_cache = f"{STATIC_FOLDER}/{SONGS_FOLDER}"
 
     for file in os.listdir(backend_cache):
         if file.startswith(youtube_id):  # already downloaded a file (not necessarily mp3) for the given song id
@@ -151,7 +151,7 @@ def convert_youtube_audio(youtube_id) -> float:
     """Converts the file in the backend to .mp3 (compatible with HTML <audio>)"""
 
     Log.trace(f"Converting file to mp3")
-    backend_cache = f"{FILES_FOLDER}/{SONGS_FOLDER}"
+    backend_cache = f"{STATIC_FOLDER}/{SONGS_FOLDER}"
 
     filename = None
     for file in os.listdir(backend_cache):

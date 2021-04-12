@@ -1,6 +1,6 @@
-from convenience import *
-from abstract_game import AbstractGame, GameState
-from user import User
+from src.convenience import *
+from src.abstract_game import AbstractGame, GameState
+from src.user import User
 
 from .flip_timer import flip_timer
 

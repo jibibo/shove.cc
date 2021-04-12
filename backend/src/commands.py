@@ -3,11 +3,13 @@ from convenience import *
 from shove import Shove
 from user import User
 from process_song import process_song_task
+from songs import Song
+
 
 COMMANDS = {
     "account": {
         "aliases": ["a"],
-        "usage": "/account <avatar> <url> OR /account <create/delete> <username>"
+        "usage": "/account <create/delete> <username>"
     },
     "error": {
         "aliases": [],
@@ -39,71 +41,27 @@ def is_command(command, match_with):
 
 def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
     Log.trace(f"Handling command message: '{message}'")
-    _message_full_casing = message[1:].strip()  # [1:] -> ignore the leading "/"
-    _message_full = _message_full_casing.lower()
-    _message_split_casing = _message_full_casing.split()
+    _message_full_real = message[1:].strip()  # [1:] -> ignore the leading "/"
+    _message_full = _message_full_real.lower()
+    _message_split_real = _message_full_real.split()
     _message_split = _message_full.split()
     command = _message_split[0] if _message_split else None
     command_args = _message_split[1:] if len(_message_split) > 1 else []  # /command [arg0, arg1, ...]
-    command_args_casing = _message_split_casing[1:] if len(_message_split) > 1 else []
+    command_args_real = _message_split_real[1:] if len(_message_split) > 1 else []
 
     if not command or is_command(command, "help"):
         return f"{[c for c in COMMANDS.keys()]}"
 
     if is_command(command, "account"):
+        if len(command_args_real) == 0:
+            raise CommandFailed(COMMANDS["account"]["usage"])
 
-        if command_args[0] == "avatar":
-            if not user.is_logged_in():
-                raise UserNotLoggedIn
-
-            if len(command_args) == 1:
-                url = None
-            else:
-                url = command_args_casing[1]
-
-            if url:
-                # todo check file size of the image (>1MB is error)
-
-                Log.trace(f"Sending GET request")
-                # https://stackoverflow.com/a/13137873/13216113
-                response = requests.get(url, stream=True, timeout=3)
-                Log.trace(f"GET response: {response.status_code}")
-
-                if response.status_code != 200:
-                    raise CommandFailed(f"Could not access URL, code {response.status_code}")
-
-                valid_mime_types = list(AVATAR_MIME_EXTENSIONS.keys())
-                content_type = response.headers["content-type"]
-                if content_type not in valid_mime_types:
-                    raise CommandFailed(f"Invalid file type, must be one of {valid_mime_types}")
-
-                extension = AVATAR_MIME_EXTENSIONS[content_type]
-                # https://stackoverflow.com/a/534847/13216113
-                filename = f"{uuid.uuid4().hex}.{extension}"  # create the filename
-                file_path = f"{FILES_FOLDER}/{AVATARS_FOLDER}/{filename}"
-
-                with open(file_path, "wb") as f:
-                    response.raw.decode_content = True
-                    shutil.copyfileobj(response.raw, f)
-
-                user.get_account()["avatar_type"] = content_type
-                user.get_account()["avatar_filename"] = filename
-                Log.trace(f"Stored avatar of {user} as {filename}")
-                return "Success"
-
-            else:
-                Log.trace("Removing avatar")
-                # doesn't actually delete the image from disk (yet)
-                user.get_account()["avatar_filename"] = None
-                user.get_account()["avatar_type"] = None
-                return "Unlisted your avatar (not removed from disk)"
-
-        if command_args[0] == "create":
-            if len(command_args) == 1:
+        if command_args_real[0] == "create":
+            if len(command_args_real) == 1:
                 preferred_username = None
 
-            elif len(command_args) == 2:
-                preferred_username = command_args_casing[1]
+            elif len(command_args_real) == 2:
+                preferred_username = command_args_real[1]
 
             else:
                 raise CommandFailed(COMMANDS["account"]["usage"])
@@ -114,15 +72,15 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
 
             return f"Created account {username}"
 
-        if command_args[0] == "delete":
-            if len(command_args) == 1:  # /command delete
+        if command_args_real[0] == "delete":
+            if len(command_args_real) == 1:  # /command delete
                 if not user.is_logged_in():
                     raise UserNotLoggedIn
 
                 delete_username = user.get_username()
 
-            elif len(command_args) == 2:  # /command delete x
-                delete_username = command_args_casing[1]
+            elif len(command_args_real) == 2:  # /command delete x
+                delete_username = command_args_real[1]
 
             else:
                 raise CommandFailed(COMMANDS["account"]["usage"])
@@ -136,7 +94,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
                 if user.get_username() == delete_username:
                     shove.log_out_user(user)
 
-            shove.accounts.remove_entry(found_account)
+            found_account.delete()
             shove.send_packet_to_everyone("account_list", shove.accounts.get_entries_jsonable(key=lambda e: e["username"]))
 
             return f"Deleted account {delete_username}"
@@ -158,7 +116,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         if not PRIVATE_ACCESS:  # if backend host doesn't have access to the Shove Trello account
             raise NoPrivateAccess
 
-        trello_args = " ".join(command_args_casing).split(COMMANDS["trello"]["splitter"])
+        trello_args = " ".join(command_args_real).split(COMMANDS["trello"]["splitter"])
         if len(trello_args) == 1:
             name, description = trello_args[0], None
 
@@ -178,7 +136,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         if not command_args:
             raise CommandFailed(f"No link provided, usage: {COMMANDS['play']['usage']}")
 
-        check_for_id_string = command_args_casing[0]
+        check_for_id_string = command_args_real[0]
 
         # check if user dropped a plain YT id
         if len(check_for_id_string) == YOUTUBE_ID_LENGTH:

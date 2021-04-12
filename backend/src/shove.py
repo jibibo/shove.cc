@@ -1,17 +1,17 @@
 from convenience import *
 
-from database import Accounts
-from database import Song, Songs
+from accounts import Accounts
+from songs import Song, Songs
 from room import Room
 from user import User
 
-from games.coinflip import Coinflip
+from src.games.coinflip import Coinflip
 
 
 class Shove:
     def __init__(self, sio):
         Log.trace("Initializing Shove")
-        self.sio: socketio.Server = sio
+        self.sio: SocketIO = sio
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
         self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, packet_number)
 
@@ -112,7 +112,7 @@ class Shove:
             if user.sid == sid:
                 return user
 
-        raise ValueError(f"No user matched with SID: {sid}")
+        Log.warn(f"No user matched with SID: {sid}")
 
     def get_user_count(self) -> int:
         return len(self._users)
@@ -141,12 +141,7 @@ class Shove:
             "user_count": self.get_user_count()
         })
 
-        account_list = []
-        for account in self.accounts.get_entries_sorted(key=lambda e: e["username"]):
-            jsonable = account.get_jsonable()
-            jsonable["avatar_bytes"] = account.get_avatar_bytes()  # bytes are not actually jsonable
-            account_list.append(jsonable)
-        self.send_packet_to(user, "account_list", account_list)
+        self.send_packet_to(user, "account_list", self.accounts.get_entries_jsonable(key=lambda e: e["username"]))
         self.send_packet_to(user, "room_list", [room.get_data() for room in self.get_rooms()])
 
         self.send_packet_to_everyone("user_connected", {

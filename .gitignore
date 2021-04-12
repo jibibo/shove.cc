@@ -6,9 +6,10 @@ key.pem
 backend/src/top_secret_dangerous_keys.py
 
 backend/databases/
-backend/files/
 backend/logs/
+backend/public_static/
 backend/src/test/
 
 frontend/node_modules/
+frontend/public/cache/
 frontend/build/

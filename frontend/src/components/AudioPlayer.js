@@ -30,7 +30,7 @@ function AudioPlayer() {
 
     socket.on("play_song", (packet) => {
       console.debug("> play_song", packet);
-      loadNewAudio(packet.song_bytes);
+      loadNewAudio(packet.bytes);
       setCurrentSong(packet);
     });
 

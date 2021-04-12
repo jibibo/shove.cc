@@ -66,7 +66,7 @@ function App() {
           text,
         },
       ];
-    });
+    })
   }
 
   if (deaf) {
@@ -82,11 +82,11 @@ function App() {
     });
 
     socket.on("connect_error", () => {
-      console.error("> connect_error event");
+      console.warn("> connect_error event");
     });
 
     socket.on("disconnect", (reason) => {
-      console.error("> disconnect event", reason);
+      console.warn("> disconnect event", reason);
       setAccountData();
       setRoomData();
       setGameData();
@@ -98,22 +98,12 @@ function App() {
     socket.on("account_data", (packet) => {
       console.debug("> account_data", packet);
       // if receiving other user's account data, do not call setAccountData!
-
       setAccountData(packet);
     });
 
-    socket.on("account_list", (list) => {
-      console.debug("> account_list", list);
-      const newList = list.map((account) => {
-        if (account.avatar_bytes) {
-          // for each account, set .avatar property to a URL containing the avatar blob, if avatar is set
-          account.avatar = URL.createObjectURL(
-            new Blob([account.avatar_bytes], { type: account.avatar_type })
-          );
-        }
-        return account;
-      });
-      setAccountList(newList);
+    socket.on("account_list", (packet) => {
+      console.debug("> account_list", packet);
+      setAccountList(packet);
     });
 
     socket.on("command_success", (packet) => {
@@ -160,7 +150,6 @@ function App() {
       setAccountData();
       setRoomData();
       setGameData();
-      setTabIndex(0);
     });
 
     socket.on("message", (packet) => {

@@ -18,7 +18,6 @@ import time
 import traceback
 from typing import Dict, Iterable, List, Union, Optional, Tuple, Set
 import urllib.parse as urlparse
-import uuid
 
 
 # 3rd-party modules
@@ -29,7 +28,8 @@ import eventlet
 from eventlet.green import subprocess  # greenlet-friendly versions of builtin modules
 from eventlet.green.Queue import Queue
 import eventlet.wsgi
-import socketio
+import flask
+from flask_socketio import SocketIO
 import isodate
 import playsound
 import trello
@@ -49,7 +49,7 @@ def set_greenlet_name(name: str):
 from config import *
 from exceptions import *
 # import formatting  # unused as of now
-from log import Log, abbreviate  # shouldn't be a circular import; from x import y shouldn't execute module x
+from log import Log  # shouldn't be a circular import; from x import y shouldn't execute module x
 
 
 # access private.py (contains sensitive data)
@@ -65,9 +65,9 @@ def cleanup_backend_songs_folder():
     """Remove non-mp3 files from backend songs folder"""
 
     count = 0
-    for filename in os.listdir(f"{FILES_FOLDER}/{SONGS_FOLDER}"):
+    for filename in os.listdir(f"{STATIC_FOLDER}/{SONGS_FOLDER}"):
         if not filename.endswith(".mp3"):
-            os.remove(f"{FILES_FOLDER}/{SONGS_FOLDER}/{filename}")
+            os.remove(f"{STATIC_FOLDER}/{SONGS_FOLDER}/{filename}")
             count += 1
 
     Log.trace(f"Removed {count} file(s) that weren't .mp3 from songs folder")
