@@ -8,12 +8,16 @@ import "./MessageBox.css";
 
 const show = true; // for debugging
 
+
 function MessageBox() {
-  const { messages } = useContext(GlobalContext);
+  const {
+    messages,
+    messageBoxMinimized,
+    setMessageBoxMinimized,
+    notifications,
+    setNotifications, } = useContext(GlobalContext);
 
   const [messageInput, setMessageInput] = useState("");
-
-  const [showMessageBox, setShowMessageBox] = useState(false);
 
   const messageBox = useRef(null);
 
@@ -32,13 +36,32 @@ function MessageBox() {
     }
   }, [messages]);
 
+  function handleMinimization() {
+    console.log(notifications);
+    setMessageBoxMinimized((previousMinimizedValue) => !previousMinimizedValue);
+    if (messageBoxMinimized) {
+      setNotifications(0);
+    }
+  }
+
+  const minimizeStyle = {
+    filter: "invert(15%) sepia(88%) saturate(7485%) hue-rotate(332deg) brightness(93%) contrast(107%)",
+    width: "20px",
+  };
+
   return show ? (
     <>
-      <button onClick={
-        () => setShowMessageBox((previousState) => !previousState)
-      }
-        className={`message-minimize ${showMessageBox ? "minimized" : null}`}>{showMessageBox ? '^' : '-'}</button>
-      <div hidden={showMessageBox}>
+      {notifications}
+      <button onClick={handleMinimization}
+        className={`message-minimize ${messageBoxMinimized ? "minimized" : null}`}>
+        {messageBoxMinimized ?
+          <img style={Object.assign(minimizeStyle, { transform: "rotateZ(180deg)" })} src="https://www.svgrepo.com/show/12644/arrow-down-angle.svg" />
+          // ^ workaround for array of styles. refer to https://github.com/necolas/react-native-web/issues/954, applies for react and chrome
+          :
+          <img style={minimizeStyle} src="https://www.svgrepo.com/show/12644/arrow-down-angle.svg" />
+        }
+      </button>
+      <div hidden={messageBoxMinimized}>
         <div ref={messageBox} className="messages-container">
           {messages.map((message, i) => (
             <div key={i} className="message-container">
