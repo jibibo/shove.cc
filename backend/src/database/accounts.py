@@ -20,7 +20,7 @@ class Accounts(AbstractDatabase):
             username_attempts = 0
             max_attempts = 1
             while username_attempts < max_attempts:  # prevent hardcoding "while True" for infinite loops
-                username = "".join(random.choices(USERNAME_VALID_CHARACTERS, k=USERNAME_MAX_LENGTH))
+                username = "".join(random.choices(USERNAME_VALID_CHARACTERS, k=USERNAME_MAX_LENGTH)).lower()
                 if self.find_single(raise_if_missing=False, username=username):  # username exists (chance of 1 in >1e24)
                     username_attempts += 1
                     if username_attempts == max_attempts:
