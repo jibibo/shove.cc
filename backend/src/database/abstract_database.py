@@ -70,7 +70,7 @@ class AbstractDatabase(ABC):
             if not read_from_file:
                 raise ValueError("Key 'entry_id' not allowed in kwargs if not reading from file")
         else:
-            # if entry_id not set in kwargs, assign a new one
+            # if created during runtime, assign an entry id
             kwargs["entry_id"] = self._get_next_entry_id()
 
         new_entry = self._entry_class(self, **kwargs)
@@ -117,13 +117,13 @@ class AbstractDatabase(ABC):
         else:
             Log.trace(f"No DB entry found")
 
-    def get_entries(self, key=None, reverse=False) -> set:
-        """Get this DB's entries OBJECTS as-is, optional sorting with key and reverse"""
+    def get_entries(self) -> set:
+        """Get this DB's entries OBJECTS as-is"""
+        return self._entries
 
-        if key:
-            return set(sorted(self._entries, key=key, reverse=reverse))
-        else:
-            return self._entries
+    def get_entries_sorted(self, key, reverse=False) -> list:
+        """Get this DB's entries OBJECTS as-is, sorted"""
+        return sorted(self._entries, key=key, reverse=reverse)
 
     def get_entries_count(self) -> int:
         return len(self._entries)
@@ -138,10 +138,13 @@ class AbstractDatabase(ABC):
             return [entry.get_jsonable(filter_data) for entry in self._entries]
 
     def remove_entry(self, entry):
-        Log.trace(f"Removing DB entry {self}")
-        self._entries.remove(entry)
-        self.write_to_disk()
-        Log.trace(f"Removed DB entry {self}")
+        # Log.trace(f"Removing DB entry {entry}")
+        # self._entries.remove(entry)
+        # self.write_to_disk()
+        # Log.trace(f"Removed DB entry {entry}")
+
+        Log.trace(f"Remove of {entry} not implemented")
+        raise NotImplementedError
 
     def write_to_disk(self):
         """Write the DB's entries to disk, taking into account non-JSON variable types.
@@ -185,7 +188,9 @@ class AbstractDatabaseEntry(ABC):
         self._database: AbstractDatabase = database
 
         self._data = default_data
+        Log.test(f"data default: {self._data}")
         self._data.update(kwargs)  # kwargs contains the "entry_id" key
+        Log.test(f"data updated: {self._data}")
 
         Log.trace(f"Created DB entry: {self}")
 
@@ -194,14 +199,14 @@ class AbstractDatabaseEntry(ABC):
             return self._data[key]
 
         except KeyError as ex:
-            Log.error(f"Invalid key '{key}' for: {self}", ex)
+            Log.error(f"Invalid key '{key}' for: {self}", ex=ex)
 
     def __setitem__(self, key, value):
         try:
             self._data[key] = value
 
         except KeyError as ex:
-            Log.error(f"Invalid key '{key}' for: {self}", ex)
+            Log.error(f"Invalid key '{key}' for: {self}", ex=ex)
 
         self._database.write_to_disk()  # as the entry's data was changed, write database to disk
 

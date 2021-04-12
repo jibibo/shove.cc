@@ -1,5 +1,5 @@
-from src.convenience import *
-from src.abstract_game import AbstractGame
+from convenience import *
+from abstract_game import AbstractGame
 
 from .player import Player
 from .deuces_custom import Card, Deck, Evaluator

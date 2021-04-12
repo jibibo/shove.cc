@@ -20,13 +20,13 @@ def game_event_loop(game):
             game.handle_event(event)
 
         except GameEventInvalid as ex:
-            Log.error(f"Event invalid: {ex}")
+            Log.error(f"Event invalid: {ex}", ex=ex)
 
         except NotImplementedError as ex:
-            Log.error("Not implemented", ex)
+            Log.error("Not implemented", ex=ex)
 
         except Exception as ex:
-            Log.fatal(f"UNHANDLED {type(ex).__name__} on handle_event", ex)
+            Log.fatal(f"Unhandled exception on handle_event", ex=ex)
 
         else:
             Log.trace(f"Handled event: '{event}'")

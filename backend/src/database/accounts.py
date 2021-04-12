@@ -1,6 +1,6 @@
 from convenience import *
 
-from abstract_database import AbstractDatabase, AbstractDatabaseEntry
+from .abstract_database import AbstractDatabase, AbstractDatabaseEntry
 
 
 class Accounts(AbstractDatabase):
@@ -51,16 +51,29 @@ class Account(AbstractDatabaseEntry):
     @staticmethod
     def get_default_data() -> dict:
         return {
-            "username": None,
+            "avatar_filename": None,
+            "avatar_type": None,
+            "money": 0,
             "password": None,
-            "money": 0
+            "username": None,
         }
 
     @staticmethod
     def get_filter_keys() -> List[str]:
         return [
-            "password"
+            "password",
+            "avatar_filename"
         ]
 
     def get_jsonable(self, filter_data=True) -> dict:
-        return self.get_data_copy(filter_data)
+        data_copy = self.get_data_copy(filter_data=filter_data)
+
+        return data_copy
+
+    def get_avatar_bytes(self) -> bytes:
+        if self["avatar_filename"]:
+            try:
+                with open(f"{FILES_FOLDER}/{AVATARS_FOLDER}/{self['avatar_filename']}", "rb") as f:
+                    return f.read()
+            except FileNotFoundError:
+                Log.warn(f"Could not find avatar file {self['avatar_filename']}")

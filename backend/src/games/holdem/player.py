@@ -1,4 +1,4 @@
-from src.convenience import *
+from convenience import *
 
 
 ACTION_BET = "BET"
