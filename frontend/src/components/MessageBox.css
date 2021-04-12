@@ -33,6 +33,16 @@
   left: 0;
 }
 
+.notification {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #f50057;
+}
+
 .messages-container {
   height: 200px;
   border-radius: 10px;
