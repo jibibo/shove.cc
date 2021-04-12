@@ -7,7 +7,7 @@ gamba
 ### Setup
 
 - root: cert.pem, key.pem
-- /backend: (as admin) pip install -r requirements.txt
+- /backend: pip install -r requirements.txt
 - /frontend - npm install
 
 Hand evaluation based on deuces by Will Drevo: https://github.com/worldveil/deuces
