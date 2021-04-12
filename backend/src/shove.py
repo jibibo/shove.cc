@@ -29,7 +29,7 @@ class Shove:
         # for i in range(1):
         #     self.get_rooms()[0].try_to_start_game()
 
-        if PRIVATE_ACCESS:
+        if PRIVATE_KEYS_IMPORTED:
             Log.trace("Initializing Trello client, fetching card list")
             client = trello.TrelloClient(
                 api_key=TRELLO_API_KEY,

@@ -27,8 +27,8 @@ class ModelInvalid(PacketHandlingFailed):
     description = "Invalid model"
 
 
-class NoPrivateAccess(PacketHandlingFailed):
-    description = "Backend host has no access to private information"
+class NoPrivateKeys(PacketHandlingFailed):
+    description = "Backend host has no access to private keys"
 
 
 class NoSongPlaying(PacketHandlingFailed):

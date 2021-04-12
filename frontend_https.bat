@@ -1,3 +1,4 @@
+set REACT_APP_BACKEND_URL=https://shove.cc:777
 set BROWSER=none
 set HTTPS=true
 set PORT=443

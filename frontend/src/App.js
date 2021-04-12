@@ -33,7 +33,7 @@ function App() {
     setGameData,
     setMessages,
     messageBoxMinimized,
-    notifications,
+    // notifications,
     setNotifications,
     setLatency,
     setOnlineUsers,
@@ -43,7 +43,10 @@ function App() {
   } = useContext(GlobalContext);
 
   function addMessage(type, author, text) {
-    if (messageBoxMinimized) setNotifications((previousNotificationsValue) => ++previousNotificationsValue)
+    if (messageBoxMinimized)
+      setNotifications(
+        (previousNotificationsValue) => ++previousNotificationsValue
+      );
     setMessages((currentMessages) => {
       const maxMessages = 20;
       if (currentMessages.length > maxMessages) {

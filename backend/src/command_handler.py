@@ -155,8 +155,8 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         return "Money added"
 
     if is_command(command, "trello"):
-        if not PRIVATE_ACCESS:  # if backend host doesn't have access to the Shove Trello account
-            raise NoPrivateAccess
+        if not PRIVATE_KEYS_IMPORTED:  # backend host has no access to private keys
+            raise NoPrivateKeys
 
         trello_args = " ".join(command_args_casing).split(COMMANDS["trello"]["splitter"])
         if len(trello_args) == 1:
@@ -175,6 +175,9 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         return "Card added"
 
     if is_command(command, "play"):
+        if not PRIVATE_KEYS_IMPORTED:  # backend host has no access to private keys
+            raise NoPrivateKeys
+
         if not command_args:
             raise CommandFailed(f"No link provided, usage: {COMMANDS['play']['usage']}")
 

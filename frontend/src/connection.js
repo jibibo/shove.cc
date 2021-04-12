@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 
+const { REACT_APP_BACKEND_URL } = process.env;
 let socket = undefined;
 
 function initSocket() {
@@ -7,8 +8,10 @@ function initSocket() {
     return;
   }
 
+  console.log("backend:", REACT_APP_BACKEND_URL);
+
   console.debug("Initializing socket");
-  socket = io("https://shove.cc:777", {
+  socket = io(REACT_APP_BACKEND_URL, {
     timeout: 1000,
   });
 }

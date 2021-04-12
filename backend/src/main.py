@@ -78,17 +78,25 @@ def main():
     if STARTUP_CLEANUP_BACKEND_CACHE:
         cleanup_backend_songs_folder()
 
-    Log.info(f"Starting SocketIO WSGI on port {PORT}")
-    listen_socket = eventlet.listen((HOST, PORT))
-    # wrap_ssl https://stackoverflow.com/a/39420484/13216113
-    listen_socket_ssl = eventlet.wrap_ssl(
-        listen_socket,
-        certfile="cert.pem",
-        keyfile="key.pem",
-        server_side=True
-    )
+    https = "https" in sys.argv
+    if not https:
+        Log.warn("HTTPS DISABLED! Add 'https' to sys.argv to enable!")
+
+    Log.info(f"Starting SocketIO WSGI, port={PORT}, https={https}")
     wsgi_app = socketio.WSGIApp(sio)
-    eventlet.wsgi.server(listen_socket_ssl, wsgi_app, log_output=LOG_WSGI)  # blocking
+    http_socket = eventlet.listen((HOST, PORT))
+
+    if https:
+        # wrap_ssl https://stackoverflow.com/a/39420484/13216113
+        https_socket = eventlet.wrap_ssl(
+            http_socket,
+            certfile="cert.pem",
+            keyfile="key.pem",
+            server_side=True
+        )
+        eventlet.wsgi.server(https_socket, wsgi_app, log_output=LOG_WSGI)
+    else:
+        eventlet.wsgi.server(http_socket, wsgi_app, log_output=LOG_WSGI)
 
     print("\n\n\t\"And as always, thanks for watching.\" - Michael Stevens\n\n")
 

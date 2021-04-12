@@ -54,11 +54,11 @@ from log import Log, abbreviate  # shouldn't be a circular import; from x import
 
 # access private.py (contains sensitive data)
 try:
-    from top_secret_dangerous_keys import *
-    PRIVATE_ACCESS = True
+    from top_secret_private_keys import *
+    PRIVATE_KEYS_IMPORTED = True
 except ImportError:
-    Log.warn("Could not import 'top_secret_dangerous_keys.py', functions using secret keys won't work")
-    PRIVATE_ACCESS = False
+    Log.warn("Could not import 'top_secret_private_keys.py', functions using private keys won't work!")
+    PRIVATE_KEYS_IMPORTED = False
 
 
 def cleanup_backend_songs_folder():

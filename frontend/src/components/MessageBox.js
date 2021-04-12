@@ -8,14 +8,14 @@ import "./MessageBox.css";
 
 const show = true; // for debugging
 
-
 function MessageBox() {
   const {
     messages,
     messageBoxMinimized,
     setMessageBoxMinimized,
     notifications,
-    setNotifications, } = useContext(GlobalContext);
+    setNotifications,
+  } = useContext(GlobalContext);
 
   const [messageInput, setMessageInput] = useState("");
 
@@ -38,25 +38,51 @@ function MessageBox() {
 
   function handleMinimization() {
     setNotifications(0);
-    setMessageBoxMinimized((previousMinimizedValue) => !previousMinimizedValue, console.log(messageBoxMinimized));
+    setMessageBoxMinimized(
+      (previousMinimizedValue) => !previousMinimizedValue,
+      console.log(messageBoxMinimized)
+    );
   }
 
   const minimizeStyle = {
-    filter: "invert(15%) sepia(88%) saturate(7485%) hue-rotate(332deg) brightness(93%) contrast(107%)",
+    filter:
+      "invert(15%) sepia(88%) saturate(7485%) hue-rotate(332deg) brightness(93%) contrast(107%)", // what in the
     width: "20px",
   };
 
   return show ? (
     <>
-      <button onClick={handleMinimization}
-        className={`message-minimize ${messageBoxMinimized ? "minimized" : null}`}>
-        <div key={notifications} style={{ display: notifications && messageBoxMinimized ? "block" : "none" }} className="notification">{notifications > 9 ? "9+" : notifications}</div>
-        {messageBoxMinimized ?
-          <img style={Object.assign(minimizeStyle, { transform: "rotateZ(180deg)" })} src="https://www.svgrepo.com/show/12644/arrow-down-angle.svg" />
-          // ^ workaround for array of styles. refer to https://github.com/necolas/react-native-web/issues/954, applies for react and chrome
-          :
-          <img style={minimizeStyle} src="https://www.svgrepo.com/show/12644/arrow-down-angle.svg" />
-        }
+      <button
+        onClick={handleMinimization}
+        className={`message-minimize ${
+          messageBoxMinimized ? "minimized" : null
+        }`}
+      >
+        <div
+          key={notifications}
+          style={{
+            display: notifications && messageBoxMinimized ? "block" : "none",
+          }}
+          className="notification"
+        >
+          {notifications >= 9 ? "9+" : notifications}
+        </div>
+        {messageBoxMinimized ? (
+          // workaround for array of styles. refer to https://github.com/necolas/react-native-web/issues/954, applies for react and chrome
+          <img
+            style={Object.assign(minimizeStyle, {
+              transform: "rotateZ(180deg)",
+            })}
+            src="https://www.svgrepo.com/show/12644/arrow-down-angle.svg"
+            alt="arrow up"
+          />
+        ) : (
+          <img
+            style={minimizeStyle}
+            src="https://www.svgrepo.com/show/12644/arrow-down-angle.svg"
+            alt="arrow down"
+          />
+        )}
       </button>
       <div hidden={messageBoxMinimized}>
         <div ref={messageBox} className="messages-container">

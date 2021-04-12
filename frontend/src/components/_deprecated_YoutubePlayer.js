@@ -1,5 +1,5 @@
 import { useState } from "react";
-import YouTube from "react-youtube";
+// import YouTube from "react-youtube";
 
 import Button from "@material-ui/core/Button";
 import Slider from "@material-ui/core/Slider";
@@ -151,13 +151,13 @@ function YoutubePlayer() {
         onChange={onChangeVolumeSlider}
         valueLabelDisplay="auto"
       />
-      <YouTube
-        id="yt"
-        videoId={youtubeId}
-        opts={opts}
-        onError={onError}
-        onReady={onReady}
-      />
+      {/* <YouTube */}
+      {/* id="yt" */}
+      {/* videoId={youtubeId} */}
+      {/* opts={opts} */}
+      {/* onError={onError} */}
+      {/* onReady={onReady} */}
+      {/* /> */}
     </>
   );
 }

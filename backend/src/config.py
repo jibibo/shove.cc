@@ -3,7 +3,6 @@
 # SocketIO settings
 HOST = "0.0.0.0"
 PORT = 777
-STATIC_FILES_WEBSITE = f"https://shove.cc:{PORT}"
 MAX_MODEL_SIZE = 1e3  # kB for model, MB for packet
 MAX_PACKET_SIZE = 1e6  # todo implement these max sizes checks
 
@@ -38,10 +37,10 @@ CONSOLE_LOGGING_LENGTH_CUTOFF = 800
 
 
 # Data storage
-FILES_FOLDER = "backend/files"
-DATABASES_FOLDER = "backend/databases"
-SONGS_FOLDER = "songs"
-AVATARS_FOLDER = "avatars"
+FILES_FOLDER = "backend/files"  # todo add exception handlers if folder missing
+DATABASES_FOLDER = "backend/databases"  # todo ex hndl missing
+SONGS_FOLDER = "songs"  # todo ex hand miss
+AVATARS_FOLDER = "avatars"  # todo ex hand miss
 AVATAR_MIME_EXTENSIONS = {
     "image/jpeg": "jpg",
     "image/png": "png"
@@ -56,7 +55,7 @@ FILE_LOGGING_LEVEL = "INFO"
 
 
 # Sound notifications
-ERROR_SOUND_ENABLED = True
+ERROR_SOUND_ENABLED = False  # you do not want this
 ERROR_SOUND_FILE_PATH = "backend/error.mp3"
 ERROR_SOUND_NOTIFICATION_LEVEL = "ERROR"
 ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
