@@ -7,6 +7,8 @@ function GlobalContextProvider({ children }) {
   const [accountList, setAccountList] = useState([]);
   const [gameData, setGameData] = useState();
   const [messages, setMessages] = useState([]);
+  const [notifications, setNotifications] = useState(0);
+  const [messageBoxMinimized, setMessageBoxMinimized] = useState(true);
   const [latency, setLatency] = useState(0);
   const [onlineUsers, setOnlineUsers] = useState({});
   const [roomData, setRoomData] = useState();
@@ -23,6 +25,10 @@ function GlobalContextProvider({ children }) {
         setGameData,
         messages,
         setMessages,
+        messageBoxMinimized,
+        setMessageBoxMinimized,
+        notifications,
+        setNotifications,
         latency,
         setLatency,
         onlineUsers,
