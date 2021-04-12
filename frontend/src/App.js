@@ -43,13 +43,11 @@ function App() {
   } = useContext(GlobalContext);
 
   function addMessage(type, author, text) {
+    if (messageBoxMinimized) setNotifications((previousNotificationsValue) => ++previousNotificationsValue)
     setMessages((currentMessages) => {
-      if (messageBoxMinimized) setNotifications((previousNotificationsValue) => ++previousNotificationsValue)
-
       const maxMessages = 20;
       if (currentMessages.length > maxMessages) {
         let slicedMessages = [...currentMessages].slice(-maxMessages); // this will start at -5 index to the latest message of the array
-        console.log(notifications)
         return [
           ...slicedMessages,
           {

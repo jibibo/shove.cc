@@ -37,11 +37,8 @@ function MessageBox() {
   }, [messages]);
 
   function handleMinimization() {
-    console.log(notifications);
-    setMessageBoxMinimized((previousMinimizedValue) => !previousMinimizedValue);
-    if (messageBoxMinimized) {
-      setNotifications(0);
-    }
+    setNotifications(0);
+    setMessageBoxMinimized((previousMinimizedValue) => !previousMinimizedValue, console.log(messageBoxMinimized));
   }
 
   const minimizeStyle = {
