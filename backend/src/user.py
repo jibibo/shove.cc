@@ -1,6 +1,6 @@
 from convenience import *
 
-from accounts import Account
+from database import Account
 
 
 class User:
@@ -13,7 +13,7 @@ class User:
         self.pinged_timestamp = 0
         self.last_pong_received = 0
         self.latency = 0
-        Log.trace(f"Created new User object for SID '{sid}'")
+        Log.trace(f"User created: {self}")
 
     def __repr__(self):
         return f"<User name: {self.get_username()}, SID: {self.sid[:5]}>"

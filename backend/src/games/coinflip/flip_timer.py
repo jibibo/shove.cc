@@ -1,4 +1,4 @@
-from src.convenience import *
+from convenience import *
 
 
 # todo could be an abstract timer (many games use timers, more organized)
