@@ -1,8 +1,10 @@
 # Shove
 
 gamba
-- [requirements.txt](/backend/requirements.txt)
-- [package.json](/frontend/package.json)
+
+[requirements.txt](/backend/requirements.txt)
+
+[package.json](/frontend/package.json)
 
 ### Setup
 
