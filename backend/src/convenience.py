@@ -52,7 +52,7 @@ from exceptions import *
 from log import Log, abbreviate  # shouldn't be a circular import; from x import y shouldn't execute module x
 
 
-# access private.py (contains sensitive data)
+# access private keys (contains sensitive data)
 try:
     from top_secret_private_keys import *
     PRIVATE_KEYS_IMPORTED = True

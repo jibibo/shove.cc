@@ -34,7 +34,7 @@ COMMANDS = {
 
 
 def is_command(command, match_with):
-    return command == match_with or command in COMMANDS[match_with]["aliases"]
+    return command and (command == match_with or command in COMMANDS[match_with]["aliases"])
 
 
 def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
@@ -47,7 +47,7 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
     command_args = _message_split[1:] if len(_message_split) > 1 else []  # /command [arg0, arg1, ...]
     command_args_casing = _message_split_casing[1:] if len(_message_split) > 1 else []
 
-    if not command or is_command(command, "help"):
+    if is_command(command, "help") or not command:
         return f"{[c for c in COMMANDS.keys()]}"
 
     if is_command(command, "account"):

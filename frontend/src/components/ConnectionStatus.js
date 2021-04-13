@@ -4,6 +4,8 @@ import { makeStyles } from "@material-ui/core/styles";
 
 import { socket } from "../connection";
 
+const { REACT_APP_BACKEND_URL } = process.env;
+
 const useStyles = makeStyles((theme) => ({
   status: {
     padding: "10px",
@@ -33,32 +35,32 @@ function ConnectionStatus() {
       text,
       color,
     });
-    removeTimer = setTimeout(removeStatus, 3000);
+    removeTimer = setTimeout(removeStatus, 5000);
   }
 
   if (deaf) {
     deaf = false;
 
     socket.on("connect", () => {
-      popup("connected", "green");
+      popup("Connected!", "green");
     });
 
     socket.on("connect_error", () => {
-      popup("websocket offline", "darkred");
+      popup(`Could not connect to '${REACT_APP_BACKEND_URL}'`, "darkred");
     });
 
     socket.on("disconnect", (reason) => {
-      popup("disconnected: " + reason, "darkred");
+      popup("Disconnected: " + reason, "darkred");
     });
   }
 
-  return status ? (
+  return status ? ( // if no status is set, hide the div
     <div
       onClick={removeStatus}
       style={{ backgroundColor: status.color }}
       className={classes.status}
     >
-      Connection status: {status.text}
+      {status.text}
     </div>
   ) : null;
 }

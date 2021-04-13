@@ -8,9 +8,7 @@ function initSocket() {
     return;
   }
 
-  console.log("backend:", REACT_APP_BACKEND_URL);
-
-  console.debug("Initializing socket");
+  console.debug(`Initializing socket, backend url: ${REACT_APP_BACKEND_URL}`);
   socket = io(REACT_APP_BACKEND_URL, {
     timeout: 1000,
   });

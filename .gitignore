@@ -3,7 +3,7 @@ __pycache__/
 
 cert.pem
 key.pem
-backend/src/top_secret_dangerous_keys.py
+backend/src/top_secret_private_keys.py
 
 backend/databases/
 backend/files/

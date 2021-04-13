@@ -86,9 +86,6 @@ class Song(AbstractDatabaseEntry):
             }
         }
 
-    def get_url(self):
-        return f"{STATIC_FILES_WEBSITE}/songs/{self['song_id']}.mp3"
-
     def increment_plays(self, amount=1):
         self["plays"] += amount  # triggers db write as it assigns with "="
 
@@ -103,7 +100,6 @@ class Song(AbstractDatabaseEntry):
 
         shove.send_packet_to_everyone("play_song", {
             "author": shove.latest_song_author.get_username(),
-            "url": self.get_url(),
             "name": self["name"],
             "plays": self["plays"],
             "song_bytes": open(f"{FILES_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3", "rb").read()

@@ -78,23 +78,23 @@ def main():
     if STARTUP_CLEANUP_BACKEND_CACHE:
         cleanup_backend_songs_folder()
 
-    https = "https" in sys.argv
-    if not https:
-        Log.warn("HTTPS DISABLED! Add 'https' to sys.argv to enable!")
+    use_ssl = "-no-ssl" not in sys.argv
+    if not use_ssl:
+        Log.warn("SSL DISABLED! Remove '-no-ssl' from sys.argv to enable")
 
-    Log.info(f"Starting SocketIO WSGI, port={PORT}, https={https}")
+    Log.info(f"Starting SocketIO WSGI on port 777! use_ssl={use_ssl}, private keys: {PRIVATE_KEYS_IMPORTED}")
     wsgi_app = socketio.WSGIApp(sio)
     http_socket = eventlet.listen((HOST, PORT))
 
-    if https:
+    if use_ssl:
         # wrap_ssl https://stackoverflow.com/a/39420484/13216113
-        https_socket = eventlet.wrap_ssl(
+        ssl_socket = eventlet.wrap_ssl(
             http_socket,
             certfile="cert.pem",
             keyfile="key.pem",
             server_side=True
         )
-        eventlet.wsgi.server(https_socket, wsgi_app, log_output=LOG_WSGI)
+        eventlet.wsgi.server(ssl_socket, wsgi_app, log_output=LOG_WSGI)
     else:
         eventlet.wsgi.server(http_socket, wsgi_app, log_output=LOG_WSGI)
 

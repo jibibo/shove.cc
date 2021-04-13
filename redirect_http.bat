@@ -1,3 +1,2 @@
-@echo off
-title Redirect HTTP
+title REDIRECT HTTP
 python redirect_http/src/main.py
