@@ -1,11 +1,13 @@
 # Shove
 
 gamba
+- [requirements.txt](/backend/requirements.txt)
+- [package.json](/frontend/package.json)
 
 ### Setup
 
-- cert.pem & key.pem in root (this folder)
-- Backend - [requirements.txt](/backend/requirements.txt)
-- Frontend - [package.json](/frontend/package.json)
+- root: cert.pem, key.pem
+- /backend: pip install -r requirements.txt
+- /frontend: npm install
 
 Hand evaluation based on deuces by Will Drevo: https://github.com/worldveil/deuces
