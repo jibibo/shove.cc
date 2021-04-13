@@ -45,7 +45,7 @@ class Player:  # todo this is a Holdem player, so move it to holdem game package
             return self.data[key]
 
         except KeyError as ex:
-            Log.error(f"No such key in player data: {key}", ex)
+            Log.error(f"No such key in player data: {key}", ex=ex)
 
     def __repr__(self):
         return f"<Player '{self['username']}', seat {self['seat']}, stack: {self['chips']} chips>"
@@ -57,7 +57,7 @@ class Player:  # todo this is a Holdem player, so move it to holdem game package
             return old
 
         except KeyError as ex:
-            Log.error(f"No such key in player data: {key}", ex)
+            Log.error(f"No such key in player data: {key}", ex=ex)
 
     def __str__(self):
         return f"'{self['username']}'"

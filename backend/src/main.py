@@ -27,7 +27,7 @@ shove: Union[Shove, None] = None  # Union -> for editor (pycharm) type hint dete
 @sio.on("connect")
 def on_connect(sid: str, environ: dict):
     set_greenlet_name("SIO/connect")
-    Log.trace(f"Handling connect of SID '{sid}', environ: {environ}", cutoff=True)
+    Log.trace(f"Handling connect of SID '{sid}', environ: {environ}")
     user = shove.on_connect(sid)
     Log.info(f"{user} connected from {environ['REMOTE_ADDR']}")
 
@@ -107,7 +107,7 @@ if __name__ == "__main__":
             main()
 
         except Exception as _ex:
-            Log.fatal(f"Unhandled exception on main", ex=_ex)
+            Log.fatal("Unhandled exception on main", ex=_ex)
 
         Log.trace(f"Restarting in {DELAY_BEFORE_RESTART} s")
         time.sleep(DELAY_BEFORE_RESTART)

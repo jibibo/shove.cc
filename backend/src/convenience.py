@@ -19,6 +19,7 @@ import traceback
 from typing import Dict, Iterable, List, Union, Optional, Tuple, Set
 import urllib.parse as urlparse
 import uuid
+import winsound
 
 
 # 3rd-party modules
@@ -31,7 +32,6 @@ from eventlet.green.Queue import Queue
 import eventlet.wsgi
 import socketio
 import isodate
-import playsound
 import trello
 import youtube_dl  # possibly not greenlet friendly
 

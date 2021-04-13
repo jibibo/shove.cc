@@ -121,13 +121,15 @@ class Coinflip(AbstractGame):
         Log.info("Game started")
         self.broadcast_data(event="started")
 
-    def user_leaves_room(self, user: User):
+    def user_leaves_room(self, user: User, skip_event=False):
         if user in self.players:
             self.players.remove(user)
             Log.trace(f"Removed {user} from game.players")
         else:
             Log.trace("User was not playing")
-        self.events.put("user_left")
+
+        if not skip_event:
+            self.events.put("user_left")
 
     def user_tries_to_join_room(self, user: User):
         self.events.put("user_joined")

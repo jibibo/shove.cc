@@ -33,7 +33,7 @@ def handle_packets_loop(shove):
 
         except Exception as ex:
             # note: if user purposely sends broken packets, KeyErrors will end up here aswell
-            Log.fatal(f"Unhandled exception on handle_packet", ex=ex)
+            Log.fatal("Unhandled exception on handle_packet", ex=ex)
             direct_response = "error", error_packet("Internal error on handling packet (shouldn't happen)")
 
         if direct_response:

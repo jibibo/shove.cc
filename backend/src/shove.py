@@ -18,6 +18,7 @@ class Shove:
         self._default_game = Coinflip
         self._last_bot_id = 0
         self._last_packet_id = 0
+        self._last_room_id = 0
         self._users: Set[User] = set()  # todo implement as DB with DB entries?
         self._rooms: Set[Room] = set()  # todo implement as DB with DB entries?
 
@@ -84,6 +85,10 @@ class Shove:
         self._last_packet_id += 1
         return self._last_packet_id
 
+    def get_next_room_id(self) -> int:
+        self._last_room_id += 1
+        return self._last_room_id
+
     def get_room(self, room_name: str) -> Room:
         Log.trace(f"Getting room with name: '{room_name}'")
         room_name_formatted = room_name.lower().strip()
@@ -129,7 +134,7 @@ class Shove:
         if not disconnected:
             self.send_packet_to(user, "log_out", {})
 
-    def on_connect(self, sid: str) -> User:  # todo on connect send room list etc packets!
+    def on_connect(self, sid: str) -> User:
         user = self.create_new_user_from_sid(sid)
         if not user:
             raise ValueError("No User object provided")
@@ -172,9 +177,21 @@ class Shove:
 
     def reset_rooms(self, n_rooms=5):
         Log.info("Resetting rooms")
-        self._rooms = []  # todo handle removing users from room
+        for room in self._rooms:
+            Log.trace(f"Dropping users out of room {room}")
+            for user in room.get_users():
+                room.user_leave(user, skip_list_packet=True, skip_game_event=True)
+                self.send_packet_to(user, "leave_room", {
+                    "room_name": room.name
+                })
+
+        self.send_packet_to_everyone("room_list", [])
+
+        self._rooms = []
         for _ in range(n_rooms):
             self._rooms.append(Room(self))
+
+        self.send_packet_to_everyone("room_list", [room.get_data() for room in self.get_rooms()])
 
     def send_packet_to(self, users: Union[User, Set[User]], model: str, packet: Union[dict, list], skip: Union[User, Set[User]] = None):
         self.outgoing_packets_queue.put((users, model, packet, skip, self.get_next_packet_id()))

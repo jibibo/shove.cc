@@ -59,10 +59,11 @@ class Log:
         Log._log(message, LogLevel.TEST, **kwargs)
 
     @staticmethod
-    def _log(raw_message, level, **kwargs):  # todo filter packet content like bytes
-        ex: Exception = kwargs.pop("ex", None)
-        cutoff: bool = kwargs.pop("cutoff", True)
-        packet = hide_packet_values_for_logging(kwargs.pop("packet", None))
+    def _log(raw_message, level, **kwargs):
+        ex: Exception = kwargs.pop("ex", None)  # print an exception and traceback
+        packet = hide_packet_values_for_logging(kwargs.pop("packet", None))  # pretty print a packet
+        skip_cutoff: bool = kwargs.pop("cutoff", False)  # skip cutting off the message if its too long
+        skip_sound: bool = kwargs.pop("skip_sound", False)  # skip making a sound
         raw_message = str(raw_message)
 
         try:
@@ -77,7 +78,7 @@ class Log:
 
         excess_message_size = len(raw_message) - CONSOLE_LOGGING_LENGTH_CUTOFF
 
-        if cutoff and excess_message_size > 0:
+        if excess_message_size > 0 and not skip_cutoff:
             message = raw_message[:CONSOLE_LOGGING_LENGTH_CUTOFF] + f"... (+ {excess_message_size})"
         else:
             message = raw_message
@@ -90,13 +91,11 @@ class Log:
             if ex:
                 traceback.print_exception(type(ex), ex, ex.__traceback__, file=sys.stdout)
 
-        if ERROR_SOUND_ENABLED \
-                and level[0] >= LogLevel.get_level_int(ERROR_SOUND_NOTIFICATION_LEVEL) \
-                and level[1] not in ERROR_SOUND_IGNORE_LEVELS:
+        if "-sounds" in sys.argv and level[1] in SOUND_NOTIFICATION_LOG_LEVELS and not skip_sound:
             try:
-                playsound.playsound(sound=ERROR_SOUND_FILE_PATH, block=False)
-            except playsound.PlaysoundException as ex:
-                Log.trace(f"Exception on playsound", ex=ex)
+                winsound.MessageBeep(-1)
+            except Exception as ex:
+                Log.trace("Unhandled exception on winsound", ex=ex, skip_sound=True)
 
         if ENABLE_FILE_LOGGING and level[0] >= LogLevel.get_level_int(FILE_LOGGING_LEVEL):  # write raw message (and exception) to file if enabled
             Log.FILE_WRITING_QUEUE.put((now_file, level, greenlet_name, raw_message, ex, packet))

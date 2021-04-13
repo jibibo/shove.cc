@@ -26,7 +26,7 @@ def game_event_loop(game):
             Log.error("Not implemented", ex=ex)
 
         except Exception as ex:
-            Log.fatal(f"Unhandled exception on handle_event", ex=ex)
+            Log.fatal("Unhandled exception on handle_event", ex=ex)
 
         else:
             Log.trace(f"Handled event: '{event}'")
@@ -67,7 +67,7 @@ class AbstractGame(ABC):
         pass
 
     @abstractmethod
-    def user_leaves_room(self, user: User):
+    def user_leaves_room(self, user: User, skip_event=False):
         """Called when user leaves a room (can't be prevented)"""
         pass
 

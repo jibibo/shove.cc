@@ -8,15 +8,8 @@ MAX_PACKET_SIZE = 1e6  # todo implement these max sizes checks
 
 
 # Startup
-STARTUP_EMPTY_FRONTEND_CACHE = False
 STARTUP_CLEANUP_BACKEND_CACHE = True
 DELAY_BEFORE_RESTART = 60
-
-
-# User pinging
-PING_USERS_ENABLED = False
-PING_USERS_INTERVAL = 5
-PONG_DELAY_BEFORE_TIMEOUT = 5  # todo fix: timeout < interval should be possible
 
 
 # What to log
@@ -27,24 +20,13 @@ LOG_YOUTUBE_DL_VERBOSE = False
 LOG_YOUTUBE_DL_WARNINGS = False
 # [quiet, panic, fatal, error, warning, info, verbose, debug, trace]
 FFMPEG_LOGGING_LEVEL = "warning"
-HIDE_PACKET_KEYS = ["avatar_bytes", "song_bytes"]
-ABBREVIATE_NUMBER_KEYS = ["money"]
+HIDE_PACKET_KEYS: list = ["avatar_bytes", "song_bytes"]
+ABBREVIATE_NUMBER_KEYS: list = ["money"]
 
 
 # Console logging
 CONSOLE_LOGGING_LEVEL = "TRACE"
-CONSOLE_LOGGING_LENGTH_CUTOFF = 800
-
-
-# Data storage
-FILES_FOLDER = "backend/files"  # todo add exception handlers if folder missing
-DATABASES_FOLDER = "backend/databases"  # todo ex hndl missing
-SONGS_FOLDER = "songs"  # todo ex hand miss
-AVATARS_FOLDER = "avatars"  # todo ex hand miss
-AVATAR_MIME_EXTENSIONS = {
-    "image/jpeg": "jpg",
-    "image/png": "png"
-}
+CONSOLE_LOGGING_LENGTH_CUTOFF = 400
 
 
 # File logging
@@ -54,11 +36,19 @@ ENABLE_FILE_LOGGING = True
 FILE_LOGGING_LEVEL = "INFO"
 
 
-# Sound notifications
-ERROR_SOUND_ENABLED = False  # you do not want this
-ERROR_SOUND_FILE_PATH = "backend/error.mp3"
-ERROR_SOUND_NOTIFICATION_LEVEL = "ERROR"
-ERROR_SOUND_IGNORE_LEVELS: list = ["TEST"]
+# Sound notifications, enable with -sounds
+SOUND_NOTIFICATION_LOG_LEVELS: list = ["WARN", "ERROR", "FATAL"]
+
+
+# Data storage
+FILES_FOLDER = "backend/files"  # todo add exception handlers if folder missing
+DATABASES_FOLDER = "backend/databases"  # todo ex hndl missing
+SONGS_FOLDER = "songs"  # todo ex hand miss
+AVATARS_FOLDER = "avatars"  # todo ex hand miss
+AVATAR_MIME_EXTENSIONS: dict = {
+    "image/jpeg": "jpg",
+    "image/png": "png"
+}
 
 
 # Songs
@@ -75,8 +65,14 @@ TRELLO_BOARD_ID = "603c469a39b5466c51c3a176"
 TRELLO_LIST_ID = "60587b1f02721f0c7b547f5b"
 
 
-# Account creation
+# Accounst
 USERNAME_VALID_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 USERNAME_MAX_LENGTH = 16
 RANDOM_MONEY_MIN = 1e3
 RANDOM_MONEY_MAX = 1e6
+
+
+# User pinging
+PING_USERS_ENABLED = False
+PING_USERS_INTERVAL = 5
+PONG_DELAY_BEFORE_TIMEOUT = 5  # todo fix: timeout < interval should be possible
