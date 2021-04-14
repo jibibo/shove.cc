@@ -8,7 +8,7 @@ gamba
 
 ### Setup
 
-- root: cert.pem, key.pem
+- cert files in both backend and frontend
 - /backend: pip install -r requirements.txt
 - /frontend: npm install
 
