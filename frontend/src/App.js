@@ -1,5 +1,7 @@
 import { useState, useContext } from "react";
 
+import { makeStyles } from "@material-ui/core/styles";
+
 import Container from "@material-ui/core/Container";
 import AppBar from "@material-ui/core/AppBar";
 import Tabs from "@material-ui/core/Tabs";
@@ -22,6 +24,14 @@ import AudioPlayer from "./components/AudioPlayer";
 import { abbreviate } from "./formatting";
 
 let deaf = true;
+
+const useStyles = makeStyles((theme) => ({
+  appBar: {
+    boxShadow:
+      // removes the shadow on between tab bar and header
+      "0px 4px 4px 0px rgb(0 0 0 / 12%), 0px 5px 5px 0px rgb(0 0 0 / 9%), 0px 10px 5px 0px rgb(0 0 0 / 10%)",
+  },
+}));
 
 function App() {
   const [tabIndex, setTabIndex] = useState(0);
@@ -177,11 +187,11 @@ function App() {
     });
 
     socket.on("register", (packet) => {
-      console.gdebug("> register", packet)
+      console.gdebug("> register", packet);
       addMessage(null, "Registered as " + packet.username, null);
       setAccountData(packet);
       setTabIndex(1);
-    })
+    });
 
     socket.on("room_list", (packet) => {
       console.debug("> room_list", packet);
@@ -229,13 +239,19 @@ function App() {
 
   const handleChange = (event, newValue) => setTabIndex(newValue);
 
+  const classes = useStyles();
+
   return (
     <>
       <Header />
 
-      <AppBar style={{ backgroundColor: "rgb(23, 23, 41)" }} position="static">
+      <AppBar
+        className={classes.appBar}
+        style={{ backgroundColor: "rgb(23, 23, 41)" }}
+        position="static"
+      >
         <Container>
-          <Tabs value={tabIndex} onChange={handleChange}>
+          <Tabs centered value={tabIndex} onChange={handleChange}>
             <Tab label="Account" />
             <Tab label="Room List" />
             <Tab label="Room" />
