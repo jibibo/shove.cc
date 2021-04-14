@@ -8,9 +8,10 @@ class Room:
         self.shove = shove
         self.id = shove.get_next_room_id()
         self.name = f"Room#{self.id}"
-        self.game: AbstractGame = shove.get_default_game()(self)
         self._users: Set[User] = set()
         self.max_user_count: int = 0
+
+        self.game: AbstractGame = shove.get_default_game()(self)
 
         Log.info(f"Created room {self}")
 
@@ -51,7 +52,7 @@ class Room:
             Log.trace(f"Game start failed: {ex.description}")
 
         except Exception as ex:
-            Log.fatal("Unhandled exception on try_to_start", ex=ex)
+            Log.critical("Unhandled exception on try_to_start", ex=ex)
 
         else:
             Log.info(f"Game started in room {self}")
@@ -88,7 +89,7 @@ class Room:
                 self.game.user_leaves_room(user, skip_event=skip_game_event)
 
             except Exception as ex:
-                Log.fatal("Unhandled exception on user_left_room", ex=ex)
+                Log.critical("Unhandled exception on user_left_room", ex=ex)
 
             user.clear_game_data()
 

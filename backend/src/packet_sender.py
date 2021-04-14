@@ -20,7 +20,7 @@ def send_packets_loop(shove, sio: socketio.Server):
             sent_to = send_packet(sio, users, model, packet, skip)
 
         except Exception as ex:
-            Log.fatal("Unhandled exception on send_packet", ex=ex)
+            Log.critical("Unhandled exception on send_packet", ex=ex)
 
         else:
             if sent_to:

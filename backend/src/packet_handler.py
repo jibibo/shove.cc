@@ -33,7 +33,7 @@ def handle_packets_loop(shove):
 
         except Exception as ex:
             # note: if user purposely sends broken packets, KeyErrors will end up here aswell
-            Log.fatal("Unhandled exception on handle_packet", ex=ex)
+            Log.critical("Unhandled exception on handle_packet", ex=ex)
             direct_response = "error", error_packet("Internal error on handling packet (shouldn't happen)")
 
         if direct_response:
@@ -60,7 +60,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         raise ValueError(f"Invalid packet type: {type(packet).__name__}")
 
     if model == "error":  # only errors that should NEVER happen are to be sent to backend (not errors like log in failure)
-        Log.warn(f"User sent error: {packet['description']}")
+        Log.warning(f"User sent error: {packet['description']}")
         # send the error back to the user so they can read the message themselves
         return "error", error_packet(packet["description"])
 

@@ -18,7 +18,7 @@ class AbstractDatabase(ABC):
         self._has_read_from_file: bool = False
         self._read_from_disk()
 
-        Log.trace(f"Created DB: {self}")
+        Log.trace(f"Created DB: {self}, memory: {self.get_entries_size()} bytes")
 
     def __repr__(self):
         return f"<DB '{type(self).__name__}', entries: {self.get_entries_count()}>"
@@ -28,12 +28,19 @@ class AbstractDatabase(ABC):
         Log.trace(f"Got next DB entry ID: {self._last_entry_id}")
         return self._last_entry_id
 
+    def get_entries_size(self) -> int:
+        size = 0
+        for entry in self._entries:
+            size += getsizeof_recursive(entry.get_data_copy(filter_data=False))
+
+        return size
+
     def _read_from_disk(self):
         """Read and load the DB's entries from disk.
         Called ONCE: on DB creation."""
 
         if self._has_read_from_file:
-            Log.warn(f"{self} already read from disk! Ignoring call")
+            Log.warning(f"{self} already read from disk! Ignoring call")
             return
 
         with open(self._file_path, "r") as f:

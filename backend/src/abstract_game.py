@@ -26,7 +26,7 @@ def game_event_loop(game):
             Log.error("Not implemented", ex=ex)
 
         except Exception as ex:
-            Log.fatal("Unhandled exception on handle_event", ex=ex)
+            Log.critical("Unhandled exception on handle_event", ex=ex)
 
         else:
             Log.trace(f"Handled event: '{event}'")

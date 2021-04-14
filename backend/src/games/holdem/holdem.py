@@ -170,7 +170,7 @@ class Holdem(AbstractGame):
             if player["seat"] == seat:
                 return player
 
-        Log.warn(f"No player in seat: {seat}")
+        Log.warning(f"No player in seat: {seat}")
 
     def get_seats(self):  # always ordered, as self.players is ordered upon hand start
         return [player["seat"] for player in self.players]
@@ -332,7 +332,7 @@ class Holdem(AbstractGame):
                               reverse=False)
 
         if len(self.players) < 2:
-            Log.warn("Not enough players with chips to start")
+            Log.warning("Not enough players with chips to start")
             return
 
         self.running = True
@@ -416,7 +416,7 @@ class Holdem(AbstractGame):
 
     def update_buttons(self):
         if len(self.get_seats()) < 2:  # safety check
-            Log.warn(f"Ignoring update buttons call with < 2 players")
+            Log.warning(f"Ignoring update buttons call with < 2 players")
             return
 
         Log.debug(f"Updating dealer and blind buttons")
@@ -471,7 +471,7 @@ class Holdem(AbstractGame):
     #     """Sets and returns player's seat, 0 or AssertionError if fail"""
     #
     #     if self.game.running:
-    #         Log.warn("Can't add player: game running")  # todo add to a queue to join next round
+    #         Log.warning("Can't add player: game running")  # todo add to a queue to join next round
     #         return 0
     #
     #     assert client_or_bot, "no player given"
@@ -487,14 +487,14 @@ class Holdem(AbstractGame):
     # empty_seats = self.get_empty_seats()
     #
     # if not empty_seats:
-    #     Log.warn("No seats empty, ignoring call")
+    #     Log.warning("No seats empty, ignoring call")
     #     return 0
     #
     # if seat:
     #     if seat in empty_seats:
     #         Log.trace(f"Given seat {seat} is available")
     #     else:
-    #         Log.warn(f"Given seat {seat} is taken, choosing random seat")
+    #         Log.warning(f"Given seat {seat} is taken, choosing random seat")
     #         seat = random.choice(empty_seats)
     #
     # else:

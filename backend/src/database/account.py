@@ -19,11 +19,11 @@ class Account(AbstractDatabaseEntry):
     @staticmethod
     def get_default_data() -> dict:
         return {
-            "avatar_filename": None,
-            "avatar_type": None,
-            "money": 0,
-            "password": None,
-            "username": None,
+            "avatar_filename": str(),
+            "avatar_type": str(),
+            "money": int(),
+            "password": str(),
+            "username": str(),
         }
 
     @staticmethod
@@ -44,4 +44,4 @@ class Account(AbstractDatabaseEntry):
                 with open(f"{FILES_FOLDER}/{AVATARS_FOLDER}/{self['avatar_filename']}", "rb") as f:
                     return f.read()
             except FileNotFoundError:
-                Log.warn(f"Could not find avatar file {self['avatar_filename']}")
+                Log.warning(f"Could not find avatar file {self['avatar_filename']}")

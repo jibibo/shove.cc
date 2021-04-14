@@ -3,13 +3,17 @@
 # builtin modules
 
 from abc import ABC, abstractmethod
+import collections
 from datetime import datetime
+import hashlib
+import itertools
 import json
 import math
 import os
 import pathlib
 import random
 import re
+import reprlib
 import requests  # possibly not greenlet-friendly
 import secrets
 import shutil
@@ -57,20 +61,8 @@ try:
     from top_secret_private_keys import *
     PRIVATE_KEYS_IMPORTED = True
 except ImportError:
-    Log.warn("Could not import 'top_secret_private_keys.py', functions using private keys won't work!")
+    Log.warning("Could not import 'top_secret_private_keys.py', functions using private keys won't work!")
     PRIVATE_KEYS_IMPORTED = False
-
-
-def cleanup_backend_songs_folder():
-    """Remove non-mp3 files from backend songs folder"""
-
-    count = 0
-    for filename in os.listdir(f"{FILES_FOLDER}/{SONGS_FOLDER}"):
-        if not filename.endswith(".mp3"):
-            os.remove(f"{FILES_FOLDER}/{SONGS_FOLDER}/{filename}")
-            count += 1
-
-    Log.trace(f"Removed {count} file(s) that weren't .mp3 from songs folder")
 
 
 def simulate_intensive_function(seconds):
@@ -102,3 +94,50 @@ def shlex_quote_windows(s):
     # use DOUBLE quotes, and put DOUBLE quotes into SINGLE quotes
     # the string $'b is then quoted as "$"'"'"b"
     return "\"" + s.replace("\'", "\"\'\"\'\"") + "\""
+
+
+def getsizeof_recursive(o, custom_handlers=None):
+    """Returns the approximate memory footprint an object and all of its contents.
+
+    Automatically finds the contents of the following builtin containers and
+    their subclasses:  tuple, list, deque, dict, set and frozenset.
+    To search other containers, add handlers to iterate over their contents:
+
+        handlers = {SomeContainerClass: iter,
+                    OtherContainerClass: OtherContainerClass.get_elements}
+
+    From: https://github.com/ActiveState/recipe-577504-compute-mem-footprint/blob/master/recipe.py"""
+
+    def dict_handler(d):
+        return itertools.chain.from_iterable(d.items())
+
+    all_handlers = {
+        tuple: iter,
+        list: iter,
+        collections.deque: iter,
+        dict: dict_handler,
+        set: iter,
+        frozenset: iter
+    }
+
+    if custom_handlers:
+        all_handlers.update(custom_handlers)  # user handlers take precedence
+
+    seen = set()  # track which object id's have already been seen
+    default_size = sys.getsizeof(0)  # estimate sizeof object without __sizeof__
+
+    def sizeof(o_):
+        if id(o_) in seen:  # do not double count the same object
+            return 0
+
+        seen.add(id(o_))
+        size = sys.getsizeof(o_, default_size)
+
+        for typ, handler in all_handlers.items():
+            if isinstance(o_, typ):
+                size += sum(map(sizeof, handler(o_)))
+                break
+
+        return size
+
+    return sizeof(o)

@@ -8,13 +8,13 @@ def process_song_task(shove, youtube_id: str, user):
     # make sure the youtube_id is absolutely safe to prevent abuse of subprocess.Popen
 
     if len(youtube_id) != YOUTUBE_ID_LENGTH:
-        Log.warn(f"Invalid youtube id length: {len(youtube_id)}, ignoring call")
+        Log.warning(f"Invalid youtube id length: {len(youtube_id)}, ignoring call")
         shove.send_packet_to(user, "error", error_packet("Invalid ID length"))
         return
 
     for char in youtube_id:
         if char not in YOUTUBE_ID_CHARACTERS:
-            Log.warn(f"Invalid char in youtube id: {char}, ignoring call")
+            Log.warning(f"Invalid char in youtube id: {char}, ignoring call")
             shove.send_packet_to(user, "error", error_packet("Invalid character in ID"))
             return
 
@@ -35,7 +35,7 @@ def process_song_task(shove, youtube_id: str, user):
             shove.send_packet_to(user, "error", error_packet(str(ex)))
             return
         except Exception as ex:
-            Log.fatal("Unhandled exception on extract_and_check_song_info", ex=ex)
+            Log.critical("Unhandled exception on extract_and_check_song_info", ex=ex)
             shove.send_packet_to(user, "error", error_packet("Song info extraction failed"))
             return
 
@@ -47,7 +47,7 @@ def process_song_task(shove, youtube_id: str, user):
             shove.send_packet_to(user, "error", error_packet("Song download failed"))
             return
         except Exception as ex:
-            Log.fatal("Unhandled exception on download_youtube_audio", ex=ex)
+            Log.critical("Unhandled exception on download_youtube_audio", ex=ex)
             shove.send_packet_to(user, "error", error_packet("Song download failed"))
             return
 
@@ -59,7 +59,7 @@ def process_song_task(shove, youtube_id: str, user):
             shove.send_packet_to(user, "error", error_packet("File conversion failed"))
             return
         except Exception as ex:
-            Log.fatal("Unhandled exception on convert_youtube_audio", ex=ex)
+            Log.critical("Unhandled exception on convert_youtube_audio", ex=ex)
             shove.send_packet_to(user, "error", error_packet("File conversion failed"))
             return
 

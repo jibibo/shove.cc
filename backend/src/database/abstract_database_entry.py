@@ -25,9 +25,7 @@ class AbstractDatabaseEntry(ABC):
         self._database = database
 
         self._data = default_data
-        Log.test(f"data default: {self._data}")
         self._data.update(kwargs)  # kwargs contains the "entry_id" key
-        Log.test(f"data updated: {self._data}")
 
         Log.trace(f"Created DB entry: {self}")
 

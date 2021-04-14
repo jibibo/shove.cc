@@ -3,8 +3,8 @@
 # SocketIO settings
 HOST = "0.0.0.0"
 PORT = 777
-MAX_MODEL_SIZE = 1e3  # kB for model, MB for packet
-MAX_PACKET_SIZE = 1e6  # todo implement these max sizes checks
+MAX_MODEL_BYTES = 1e3
+MAX_PACKET_BYTES = 1e6
 
 
 # Startup
@@ -18,14 +18,15 @@ LOG_ENGINEIO = False
 LOG_WSGI = False
 LOG_YOUTUBE_DL_VERBOSE = False
 LOG_YOUTUBE_DL_WARNINGS = False
-# [quiet, panic, fatal, error, warning, info, verbose, debug, trace]
+# [quiet, panic, critical, error, warning, info, verbose, debug, trace]
 FFMPEG_LOGGING_LEVEL = "warning"
-HIDE_PACKET_KEYS: list = ["avatar_bytes", "song_bytes"]
+HIDE_PACKET_KEYS: list = ["avatar_bytes", "password", "song_bytes"]
 ABBREVIATE_NUMBER_KEYS: list = ["money"]
+TRACEBACK_LIMIT = 20
 
 
 # Console logging
-CONSOLE_LOGGING_LEVEL = "TRACE"
+CONSOLE_LOGGING_LEVEL = "trace"
 CONSOLE_LOGGING_LENGTH_CUTOFF = 400
 
 
@@ -33,11 +34,11 @@ CONSOLE_LOGGING_LENGTH_CUTOFF = 400
 LOGS_FOLDER = "backend/logs"
 LATEST_LOG_FILENAME = ".latest.txt"
 ENABLE_FILE_LOGGING = True
-FILE_LOGGING_LEVEL = "INFO"
+FILE_LOGGING_LEVEL = "info"
 
 
 # Sound notifications, enable with -sounds
-SOUND_NOTIFICATION_LOG_LEVELS: list = ["WARN", "ERROR", "FATAL"]
+SOUND_NOTIFICATION_LOG_LEVELS: list = ["warning", "error", "critical"]
 
 
 # Data storage

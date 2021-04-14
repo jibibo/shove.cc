@@ -5,26 +5,22 @@ colorama.init(autoreset=False)
 
 
 class LogLevel:
-    TRACE = 0, "TRACE", ""
-    DEBUG = 1, "DEBUG", Fore.CYAN
-    INFO = 2, "INFO", Fore.GREEN + Style.BRIGHT
-    TEST = 2, "TEST", Fore.MAGENTA
-    WARN = 3, "WARN", Fore.YELLOW
-    ERROR = 4, "ERROR", Fore.RED
-    FATAL = 5, "FATAL", Fore.RED + Style.BRIGHT
+    TRACE = 0, "trace", ""
+    DEBUG = 1, "debug", Fore.CYAN
+    INFO = 2, "info", Fore.GREEN + Style.BRIGHT
+    WARNING = 3, "warning", Fore.YELLOW
+    ERROR = 4, "error", Fore.RED
+    CRITICAL = 5, "critical", Fore.RED + Style.BRIGHT
+    TEST = 6, "test", Fore.MAGENTA
 
     @staticmethod
-    def get_level_int(level_str: str):
-        for level in LogLevel.get_all_levels():
+    def get_level_int_from_str(level_str: str):
+        for level in [LogLevel.TRACE, LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARNING,
+                      LogLevel.ERROR, LogLevel.CRITICAL, LogLevel.TEST]:
             if level[1] == level_str:
                 return level[0]
 
         raise ValueError(f"Unknown level string provided: {level_str}")
-
-    @staticmethod
-    def get_all_levels():
-        return [LogLevel.TRACE, LogLevel.DEBUG, LogLevel.INFO, LogLevel.WARN,
-                LogLevel.ERROR, LogLevel.FATAL, LogLevel.TEST]
 
 
 class Log:
@@ -43,16 +39,16 @@ class Log:
         Log._log(message, LogLevel.INFO, **kwargs)
 
     @staticmethod
-    def warn(message, **kwargs):
-        Log._log(message, LogLevel.WARN, **kwargs)
+    def warning(message, **kwargs):
+        Log._log(message, LogLevel.WARNING, **kwargs)
 
     @staticmethod
     def error(message, **kwargs):
         Log._log(message, LogLevel.ERROR, **kwargs)
 
     @staticmethod
-    def fatal(message, **kwargs):
-        Log._log(message, LogLevel.FATAL, **kwargs)
+    def critical(message, **kwargs):
+        Log._log(message, LogLevel.CRITICAL, **kwargs)
 
     @staticmethod
     def test(message, **kwargs):
@@ -66,30 +62,33 @@ class Log:
         skip_sound: bool = kwargs.pop("skip_sound", False)  # skip making a sound
         raw_message = str(raw_message)
 
+        if packet is not None:
+            raw_message += f"\n packet: {packet}"
+
         try:
             # dirty way of setting/getting GreenThread names, as threading.current_thread().getName() doesn't works for greenlets
             greenlet_name = eventlet.getcurrent().__dict__["custom_greenlet_name"]
         except KeyError:
             # in case the greenlet doesn't have a name set, always provides a value
-            greenlet_name = "UNNAMED GREENLET"
+            greenlet_name = "NAMELESS GREENLET"
 
-        now_console = datetime.now().strftime("%H:%M:%S")
-        now_file = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if level[0] >= LogLevel.get_level_int_from_str(CONSOLE_LOGGING_LEVEL):  # check log level for console logging
+            now_console = datetime.now().strftime("%H:%M:%S")
 
-        excess_message_size = len(raw_message) - CONSOLE_LOGGING_LENGTH_CUTOFF
+            excess_message_size = len(raw_message) - CONSOLE_LOGGING_LENGTH_CUTOFF
+            if excess_message_size > 0 and not skip_cutoff:
+                message = raw_message[:CONSOLE_LOGGING_LENGTH_CUTOFF] + f"... (+ {excess_message_size})"
+            else:
+                message = raw_message
 
-        if excess_message_size > 0 and not skip_cutoff:
-            message = raw_message[:CONSOLE_LOGGING_LENGTH_CUTOFF] + f"... (+ {excess_message_size})"
-        else:
-            message = raw_message
-
-        if level[0] >= LogLevel.get_level_int(CONSOLE_LOGGING_LEVEL):  # check log level for console logging
             # Greenthreads don't require locks, so this is fine (https://stackoverflow.com/a/2854703/13216113)
-            if packet:
-                message += f"\n packet: {packet}"
-            print(f"{level[2]}[{now_console}][{level[1]}][{greenlet_name}]{Style.RESET_ALL} {message}")
+            print(f"{level[2]}[{now_console}][{level[1].upper()}][{greenlet_name}]{Style.RESET_ALL} {message}")
             if ex:
-                traceback.print_exception(type(ex), ex, ex.__traceback__, file=sys.stdout)
+                traceback.print_exception(type(ex), ex, ex.__traceback__, file=sys.stdout, limit=TRACEBACK_LIMIT)
+
+        if ENABLE_FILE_LOGGING and level[0] >= LogLevel.get_level_int_from_str(FILE_LOGGING_LEVEL):  # write raw message (and exception) to file if enabled
+            now_file = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            Log.FILE_WRITING_QUEUE.put((now_file, level, greenlet_name, raw_message, ex, packet))
 
         if "-sounds" in sys.argv and level[1] in SOUND_NOTIFICATION_LOG_LEVELS and not skip_sound:
             try:
@@ -97,37 +96,24 @@ class Log:
             except Exception as ex:
                 Log.trace("Unhandled exception on winsound", ex=ex, skip_sound=True)
 
-        if ENABLE_FILE_LOGGING and level[0] >= LogLevel.get_level_int(FILE_LOGGING_LEVEL):  # write raw message (and exception) to file if enabled
-            Log.FILE_WRITING_QUEUE.put((now_file, level, greenlet_name, raw_message, ex, packet))
-
     @staticmethod
     def write_file_loop():
-        """Blocking loop to write messages and exceptions to file (from the queue)"""
+        """Blocking loop to write messages and exceptions to file from the queue"""
 
         set_greenlet_name("LogFileWriter")
         latest_log_abs = f"{LOGS_FOLDER}/{LATEST_LOG_FILENAME}"
-
-        try:
-            open(latest_log_abs, "w").close()
-            print(f"Emptied {LATEST_LOG_FILENAME}")
-
-        except FileNotFoundError:
-            os.mkdir(LOGS_FOLDER)
-            print(f"Created {LOGS_FOLDER}")
-            open(latest_log_abs, "w").close()
-            print(f"Created {LATEST_LOG_FILENAME}")
 
         Log.trace("Write log file loop ready")
 
         while True:
             now_str, level, thread_name, message, ex, packet = Log.FILE_WRITING_QUEUE.get()
-            if packet:
+            if packet is not None:
                 message += f"\n packet: {packet}"
 
             with open(latest_log_abs, "a") as f:
-                f.write(f"[{now_str}][{level[1]}][{thread_name}] {message}\n")
+                f.write(f"[{now_str}][{level[1].upper()}][{thread_name}] {message}\n")
                 if ex:
-                    traceback.print_exception(type(ex), ex, ex.__traceback__, file=f)
+                    traceback.print_exception(type(ex), ex, ex.__traceback__, file=f, limit=TRACEBACK_LIMIT)
 
 
 def hide_packet_values_for_logging(packet: Union[dict, list]) -> Optional[Union[dict, list]]:

@@ -37,7 +37,7 @@ def on_disconnect(sid: str):
     set_greenlet_name("SIO/disconnect")
     user = shove.get_user_by_sid(sid)
     if not user:
-        Log.warn(f"socketio.on('disconnect'): User object not found/already disconnected, ignoring call")
+        Log.warning(f"socketio.on('disconnect'): User object not found/already disconnected, ignoring call")
         return
 
     Log.trace(f"Handling disconnect of {user}")
@@ -51,11 +51,19 @@ def on_message(sid: str, model: str, packet: Optional[dict]):
     set_greenlet_name("SIO/message")
     user = shove.get_user_by_sid(sid)
     if not user:
-        Log.warn(f"socketio.on('message') (model '{model}'): User object not found/already disconnected, sending no_pong packet to SID {sid}")
+        Log.warning(f"User object not found/already disconnected, sending no_pong packet to SID {sid}")
         sio.emit("error", error_packet("You don't exist anymore (not good), refresh!"), to=sid)
         return
 
-    # todo check if packet is >1MB here!
+    # check if the packet doesn't exceed max size
+    if sys.getsizeof(model) > MAX_MODEL_BYTES:
+        Log.warning(f"Model from {user} exceeds max size, ignoring")
+        shove.send_packet_to(user, "error", error_packet("Model of sent packet exceeds maximum allowed size"))
+        return
+    if sys.getsizeof(packet) > MAX_PACKET_BYTES:
+        Log.warning(f"Packet from {user} exceeds max size, ignoring")
+        shove.send_packet_to(user, "error", error_packet(f"Content of sent packet '{model}' exceeds maximum allowed size"))
+        return
 
     packet_id = shove.get_next_packet_id()
     Log.trace(f"Received packet #{packet_id} from {user}")
@@ -67,6 +75,7 @@ def on_message(sid: str, model: str, packet: Optional[dict]):
 def main():
     print("\n\n\t\"Hey Vsauce, Michael here.\" - Michael Stevens\n\n")
 
+    setup_files_and_folders()
     eventlet.spawn(Log.write_file_loop)
     global shove
     shove = Shove(sio)
@@ -75,12 +84,10 @@ def main():
 
     if PING_USERS_ENABLED:
         eventlet.spawn(ping_users_loop, shove)
-    if STARTUP_CLEANUP_BACKEND_CACHE:
-        cleanup_backend_songs_folder()
 
     use_ssl = "-no-ssl" not in sys.argv
     if not use_ssl:
-        Log.warn("SSL DISABLED! Remove '-no-ssl' from sys.argv to enable")
+        Log.warning("SSL DISABLED! Remove '-no-ssl' from sys.argv to enable")
 
     Log.info(f"Starting SocketIO WSGI on port 777! use_ssl={use_ssl}, private keys: {PRIVATE_KEYS_IMPORTED}")
     wsgi_app = socketio.WSGIApp(sio)
@@ -101,13 +108,59 @@ def main():
     print("\n\n\t\"And as always, thanks for watching.\" - Michael Stevens\n\n")
 
 
+def setup_files_and_folders():
+    print("Setting up files and folders")
+
+    create_folders = [  # specific order!
+        DATABASES_FOLDER,
+        FILES_FOLDER,
+        f"{FILES_FOLDER}/{AVATARS_FOLDER}",
+        f"{FILES_FOLDER}/{SONGS_FOLDER}",
+        LOGS_FOLDER
+    ]
+    create_files = [  # create files AFTER folders!
+        f"{DATABASES_FOLDER}/accounts.json",
+        f"{DATABASES_FOLDER}/songs.json",
+        f"{LOGS_FOLDER}/{LATEST_LOG_FILENAME}"
+    ]
+
+    for folder in create_folders:
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+            print(f"Created folder: {folder}")
+
+    for file in create_files:
+        if not os.path.exists(file):
+            if file.endswith(".json"):
+                with open(file, "w") as f:
+                    f.write("{}")  # empty json file
+
+                print(f"Created JSON file: {file}")
+            else:
+                open(file, "w").close()
+                print(f"Created file: {file}")
+
+    if ENABLE_FILE_LOGGING:
+        open(f"{LOGS_FOLDER}/{LATEST_LOG_FILENAME}", "w").close()
+        print(f"Emptied {LATEST_LOG_FILENAME}")
+
+    if STARTUP_CLEANUP_BACKEND_CACHE:
+        count = 0
+        for filename in os.listdir(f"{FILES_FOLDER}/{SONGS_FOLDER}"):
+            if not filename.endswith(".mp3"):
+                os.remove(f"{FILES_FOLDER}/{SONGS_FOLDER}/{filename}")
+                count += 1
+
+        print(f"Removed {count} file(s) that weren't .mp3 from songs folder")
+
+
 if __name__ == "__main__":
     while True:
         try:
             main()
 
         except Exception as _ex:
-            Log.fatal("Unhandled exception on main", ex=_ex)
+            Log.critical("Unhandled exception on main", ex=_ex)
 
         Log.trace(f"Restarting in {DELAY_BEFORE_RESTART} s")
         time.sleep(DELAY_BEFORE_RESTART)

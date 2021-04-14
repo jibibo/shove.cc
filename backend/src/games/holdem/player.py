@@ -79,7 +79,7 @@ class Player:  # todo this is a Holdem player, so move it to holdem game package
 
         if requested_place_chips > self["chips"]:
             place_chips = self["chips"]
-            Log.warn(f"Reduced requested amount that exceeded player's chip count ({requested_place_chips} -> {place_chips})")
+            Log.warning(f"Reduced requested amount that exceeded player's chip count ({requested_place_chips} -> {place_chips})")
         else:
             place_chips = requested_place_chips
 

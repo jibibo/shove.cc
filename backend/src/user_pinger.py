@@ -9,7 +9,7 @@ def ping_users_loop(shove):
     time_since_last_ping = 0
 
     if not PING_USERS_ENABLED:  # extra check to not ping if not enabled
-        Log.warn(f"PING_USERS_ENABLED={PING_USERS_ENABLED}, cancelling")
+        Log.warning(f"PING_USERS_ENABLED={PING_USERS_ENABLED}, cancelling")
         return
 
     while True:
@@ -17,7 +17,7 @@ def ping_users_loop(shove):
         all_users = shove.get_all_users()
         for user in all_users:  # check who needs to get disconnected for ping timeout
             if user.last_pong_received + PONG_DELAY_BEFORE_TIMEOUT <= now:
-                Log.warn(f"Disconnecting user {user} (didn't pong)")
+                Log.warning(f"Disconnecting user {user} (didn't pong)")
                 shove.on_disconnect(user)
 
         if time_since_last_ping == PING_USERS_INTERVAL:
