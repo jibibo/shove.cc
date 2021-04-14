@@ -60,7 +60,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         raise ValueError(f"Invalid packet type: {type(packet).__name__}")
 
     if model == "error":  # only errors that should NEVER happen are to be sent to backend (not errors like log in failure)
-        Log.warning(f"User sent error: {packet['description']}")
+        Log.warning(f"User application sent error: {packet['description']}")
         # send the error back to the user so they can read the message themselves
         return "error", error_packet(packet["description"])
 
@@ -83,7 +83,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
     if model == "get_account_data":
         if "username" in packet:
             username = packet["username"].strip()
-            account = shove.accounts.find_single(match_casing=False, username=username)
+            account = shove.accounts.find_single(username=username)
 
         elif user.is_logged_in():
             account = user.get_account()
@@ -163,19 +163,19 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         }
 
     if model == "log_in":
-        username = packet["username"].strip().lower()
-        password = packet["password"]
+        username = packet["username"].strip()
+        raw_password = packet["password"]
+        hashed_password = hashlib.sha256(bytes(raw_password, "utf-8")).hexdigest()
         account = shove.accounts.find_single(username=username)
 
-        if account["password"] != password:
-            # raise PasswordInvalid  # comment out to disable password checking
+        if account["password"] != hashed_password:
+            # raise PasswordInvalid
+            Log.trace("Passwords do not match, but ignoring")
             pass
 
         user.log_in_as(account)
 
-        return "log_in", {
-            "account_data": user.get_account_jsonable()
-        }
+        return "log_in", account.get_jsonable()
 
     if model == "log_out":
         if not user.is_logged_in():
@@ -243,7 +243,22 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         return
 
     if model == "register":
-        raise NotImplementedError
+        username = str(packet["username"]).strip()
+        raw_password = str(packet["password"])
+        raw_repeat_password = str(packet["repeat_password"])
+
+        if len(username) > USERNAME_MAX_LENGTH or len(username) < USERNAME_MIN_LENGTH:
+            raise UsernameSizeInvalid
+
+        if raw_password != raw_repeat_password:
+            raise PasswordInvalid
+
+        hashed_password = hashlib.sha256(bytes(raw_password, "utf-8")).hexdigest()
+
+        account = shove.accounts.register_account(username=username, password=hashed_password)
+        user.log_in_as(account)
+
+        return "register", account.get_jsonable()
 
     if model == "send_message":
         message: str = packet["message"].strip()

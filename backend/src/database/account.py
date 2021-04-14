@@ -14,7 +14,7 @@ class Account(AbstractDatabaseEntry):
 
     @staticmethod
     def convert_parsed_json_data(parsed_json: dict) -> dict:
-        return parsed_json  # no need to change anything
+        return parsed_json  # no need to change anything; all types are json serializable
 
     @staticmethod
     def get_default_data() -> dict:

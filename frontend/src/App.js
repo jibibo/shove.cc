@@ -152,8 +152,8 @@ function App() {
 
     socket.on("log_in", (packet) => {
       console.debug("> log_in", packet);
-      addMessage(null, "Logged in as " + packet.account_data.username, null);
-      setAccountData(packet.account_data);
+      addMessage(null, "Logged in as " + packet.username, null);
+      setAccountData(packet);
       setTabIndex(1);
     });
 
@@ -175,6 +175,13 @@ function App() {
       console.debug("> ping", packet);
       sendPacket("pong");
     });
+
+    socket.on("register", (packet) => {
+      console.gdebug("> register", packet)
+      addMessage(null, "Registered as " + packet.username, null);
+      setAccountData(packet);
+      setTabIndex(1);
+    })
 
     socket.on("room_list", (packet) => {
       console.debug("> room_list", packet);

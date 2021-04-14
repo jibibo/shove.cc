@@ -8,14 +8,14 @@ class Accounts(AbstractDatabase):
     def __init__(self):
         super().__init__(Account, "accounts.json")
 
-    def create_random_account(self, username=None):
+    def create_random_account(self, username=None) -> Account:
         """Creates a random Account (with optional chosen name) instance and returns it"""
 
         Log.trace("Creating random account")
 
         if username:
             if self.find_single(raise_if_missing=False, username=username):
-                raise ValueError("Username is taken")
+                raise ValueError("Account already exists with provided username")
 
         else:
             username_attempts = 0
@@ -35,3 +35,14 @@ class Accounts(AbstractDatabase):
 
         return account
 
+    def register_account(self, username: str, password: str) -> Account:
+        Log.trace(f"Registering account: {username}")
+
+        if not username or not password:
+            raise ValueError("Missing username and/or password")
+
+        if self.find_single(raise_if_missing=False, username=username):
+            raise ValueError("Account already exists with provided username")
+
+        account = self.create_entry(username=username, password=password)
+        return account

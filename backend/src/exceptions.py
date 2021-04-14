@@ -1,3 +1,6 @@
+from config import USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH
+
+
 DEFAULT_DESCRIPTION = "No information provided (not good)"
 
 
@@ -47,6 +50,10 @@ class PasswordInvalid(PacketHandlingFailed):
     description = "Invalid password"
 
 
+class RepeatPasswordInvalid(PacketHandlingFailed):
+    description = "Repeated password does not match"
+
+
 class RoomFull(PacketHandlingFailed):
     description = "Room is full"
 
@@ -69,6 +76,14 @@ class UserNotLoggedIn(PacketHandlingFailed):
 
 class UserUnauthorized(PacketHandlingFailed):
     description = "User unauthorized"
+
+
+class UsernameSizeInvalid(PacketHandlingFailed):
+    description = f"Username must contain {USERNAME_MIN_LENGTH}-{USERNAME_MAX_LENGTH} alphanumeric characters"
+
+
+class UsernameTaken(PacketHandlingFailed):
+    description = "Username taken"
 
 
 # game start errors
