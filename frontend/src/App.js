@@ -21,6 +21,7 @@ import TabPanel from "./components/TabPanel";
 import "./App.css";
 import Room from "./components/CoinflipRoom";
 import AudioPlayer from "./components/AudioPlayer";
+import SearchMusic from "./components/SearchMusic";
 import { abbreviate } from "./formatting";
 
 let deaf = true;
@@ -282,6 +283,8 @@ function App() {
 
         <TabPanel value={tabIndex} index={3}>
           <AudioPlayer />
+          <br />
+          {/* <SearchMusic /> */}
         </TabPanel>
       </Container>
 

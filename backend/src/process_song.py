@@ -163,11 +163,11 @@ def convert_youtube_audio(youtube_id) -> float:
         raise RuntimeError("Song file missing from backend songs folder")
 
     if filename.endswith(".mp3"):  # no need to convert to mp3, done
-        Log.trace("Downloaded file in backend cache is already .mp3, not converting")
+        Log.trace("Downloaded file is already .mp3, not converting")
         return 0
 
     convert_time = call_subprocess(
-        "backend/ffmpeg",
+        "ffmpeg",
         f"-i {backend_cache}/{filename}",
         f"{backend_cache}/{youtube_id}.mp3",
         f"-loglevel {FFMPEG_LOGGING_LEVEL}"

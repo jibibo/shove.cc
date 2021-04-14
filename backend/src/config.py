@@ -31,7 +31,7 @@ CONSOLE_LOGGING_LENGTH_CUTOFF = 400
 
 
 # File logging
-LOGS_FOLDER = "backend/logs"
+LOGS_FOLDER = "logs"
 LATEST_LOG_FILENAME = ".latest.txt"
 ENABLE_FILE_LOGGING = True
 FILE_LOGGING_LEVEL = "info"
@@ -42,8 +42,8 @@ SOUND_NOTIFICATION_LOG_LEVELS: list = ["warning", "error", "critical"]
 
 
 # Data storage
-FILES_FOLDER = "backend/files"  # todo add exception handlers if folder missing
-DATABASES_FOLDER = "backend/databases"  # todo ex hndl missing
+FILES_FOLDER = "files"  # todo add exception handlers if folder missing
+DATABASES_FOLDER = "databases"  # todo ex hndl missing
 SONGS_FOLDER = "songs"  # todo ex hand miss
 AVATARS_FOLDER = "avatars"  # todo ex hand miss
 AVATAR_MIME_EXTENSIONS: dict = {
