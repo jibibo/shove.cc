@@ -18,7 +18,7 @@ class AbstractDatabase(ABC):
         self._has_read_from_file: bool = False
         self._read_from_disk()
 
-        Log.trace(f"Created DB: {self}, memory: {self.get_entries_size()} bytes")
+        Log.trace(f"Created DB: {self}, memory: {self.get_entries_memory_bytes()} bytes")
 
     def __repr__(self):
         return f"<DB '{type(self).__name__}', entries: {self.get_entries_count()}>"
@@ -27,13 +27,6 @@ class AbstractDatabase(ABC):
         self._last_entry_id += 1
         Log.trace(f"Got next DB entry ID: {self._last_entry_id}")
         return self._last_entry_id
-
-    def get_entries_size(self) -> int:
-        size = 0
-        for entry in self._entries:
-            size += getsizeof_recursive(entry.get_data_copy(filter_data=False))
-
-        return size
 
     def _read_from_disk(self):
         """Read and load the DB's entries from disk.
@@ -57,8 +50,15 @@ class AbstractDatabase(ABC):
             pass  # database is empty, keep entries as an empty set
         else:
             # database on disk is not empty, create DB entries
+            file_entries_missing_keys = 0
             for entry_as_json_dict in entries_as_json_list:
-                self.create_entry(read_from_file=True, **entry_as_json_dict)
+                entry = self.create_entry(read_from_file=True, **entry_as_json_dict)
+                if entry.file_was_missing_keys:
+                    file_entries_missing_keys += 1
+
+            if file_entries_missing_keys:
+                Log.trace(f"{file_entries_missing_keys} entry/entries on file had missing keys, writing to disk")
+                self.write_to_disk()
 
         self._has_read_from_file = True
         Log.debug(f"{self} read from file")
@@ -70,11 +70,6 @@ class AbstractDatabase(ABC):
         kwargs contains overriding key-values.
         Returns the newly created DB entry instance."""
 
-        if read_from_file:
-            # entry created because DB read from file, so convert JSON-serializable
-            # objects to their proper counterpart if required
-            kwargs = self._entry_class.convert_parsed_json_data(kwargs)
-
         if "entry_id" in kwargs:
             if not read_from_file:
                 raise ValueError("Key 'entry_id' not allowed in kwargs if not reading from file")
@@ -82,8 +77,22 @@ class AbstractDatabase(ABC):
             # if created during runtime, assign an entry id
             kwargs["entry_id"] = self._get_next_entry_id()
 
-        new_entry = self._entry_class(self, **kwargs)
+        file_was_missing_keys = False
+        if read_from_file:
+            # check if entry data in DB file is missing any keys
+            default_data = self._entry_class.get_default_data()
+            for key, value in default_data.items():
+                if key not in kwargs.keys():
+                    Log.trace(f"Stored data of entry #{kwargs['entry_id']} is missing key '{key}', setting default value")
+                    kwargs[key] = value
+                    file_was_missing_keys = True
 
+            # entry created because DB read from file, so convert JSON-serializable
+            # objects to their proper Python counterpart
+            kwargs = self._entry_class.convert_parsed_json_data(kwargs)
+
+        # initialize object
+        new_entry = self._entry_class(database=self, file_was_missing_keys=file_was_missing_keys, **kwargs)
         self._entries.add(new_entry)
 
         if not read_from_file:
@@ -129,6 +138,13 @@ class AbstractDatabase(ABC):
     def get_entries(self) -> set:
         """Get this DB's entries OBJECTS as-is"""
         return self._entries
+
+    def get_entries_memory_bytes(self) -> int:
+        size = 0
+        for entry in self._entries:
+            size += getsizeof_recursive(entry.get_data_copy(filter_data=False))
+
+        return size
 
     def get_entries_sorted(self, key, reverse=False) -> list:
         """Get this DB's entries OBJECTS as-is, sorted"""

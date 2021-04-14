@@ -2,7 +2,7 @@ from convenience import *
 
 
 class AbstractDatabaseEntry(ABC):
-    def __init__(self, database, **kwargs):
+    def __init__(self, database, file_was_missing_keys, **kwargs):
         """Creates a new instance of the DB's entry type.
         Instantiate objects through the DB object, not by initializing this directly.
         If called directly, shit probably goes down, best case scenario: the new entry
@@ -23,6 +23,7 @@ class AbstractDatabaseEntry(ABC):
         self._type_name = type(self).__name__
         # attach the containing DB as an easy way tell the DB to write to disk when this entry's data has been updated
         self._database = database
+        self.file_was_missing_keys = file_was_missing_keys
 
         self._data = default_data
         self._data.update(kwargs)  # kwargs contains the "entry_id" key

@@ -21,16 +21,19 @@ class Account(AbstractDatabaseEntry):
         return {
             "avatar_filename": str(),
             "avatar_type": str(),
+            "email": str(),
             "money": int(),
             "password": str(),
+            "register_time": int(),
             "username": str(),
         }
 
     @staticmethod
     def get_filter_keys() -> List[str]:
         return [
+            "avatar_filename",
+            "email",
             "password",
-            "avatar_filename"
         ]
 
     def get_jsonable(self, filter_data=True) -> dict:
