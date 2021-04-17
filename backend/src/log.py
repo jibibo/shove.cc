@@ -58,7 +58,7 @@ class Log:
     def _log(raw_message, level, **kwargs):
         ex: Exception = kwargs.pop("ex", None)  # print an exception and traceback
         packet = hide_packet_values_for_logging(kwargs.pop("packet", None))  # pretty print a packet
-        skip_cutoff: bool = kwargs.pop("cutoff", False)  # skip cutting off the message if its too long
+        cutoff: bool = kwargs.pop("cutoff", True)  # skip cutting off the message if its too long
         skip_sound: bool = kwargs.pop("skip_sound", False)  # skip making a sound
         raw_message = str(raw_message)
 
@@ -76,7 +76,7 @@ class Log:
             now_console = datetime.now().strftime("%H:%M:%S")
 
             excess_message_size = len(raw_message) - CONSOLE_LOGGING_LENGTH_CUTOFF
-            if excess_message_size > 0 and not skip_cutoff:
+            if excess_message_size > 0 and cutoff:
                 message = raw_message[:CONSOLE_LOGGING_LENGTH_CUTOFF] + f"... (+ {excess_message_size})"
             else:
                 message = raw_message
@@ -110,7 +110,7 @@ class Log:
             if packet is not None:
                 message += f"\n packet: {packet}"
 
-            with open(latest_log_abs, "a") as f:
+            with open(latest_log_abs, "a", encoding="utf-8") as f:
                 f.write(f"[{now_str}][{level[1].upper()}][{thread_name}] {message}\n")
                 if ex:
                     traceback.print_exception(type(ex), ex, ex.__traceback__, file=f, limit=TRACEBACK_LIMIT)

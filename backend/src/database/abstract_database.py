@@ -175,7 +175,7 @@ class AbstractDatabase(ABC):
         """Write the DB's entries to disk, taking into account non-JSON variable types.
         Called when creating new DB entries or modifying existing entries."""
 
-        # Log.trace(f"{self} writing to DB file")
+        # Log.trace(f"{self} writing to disk")
 
         # sort by entry id in the database
         entries_json_serializable_sorted = self.get_entries_jsonable(filter_data=False, key=lambda e: e["entry_id"])
@@ -185,5 +185,3 @@ class AbstractDatabase(ABC):
                 "last_entry_id": self._last_entry_id,
                 "entries": entries_json_serializable_sorted
             }, f, indent=2, sort_keys=True)
-
-        # Log.trace(f"{self} wrote to DB file")

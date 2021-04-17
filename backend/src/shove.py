@@ -23,7 +23,7 @@ class Shove:
         self._rooms: Set[Room] = set()  # todo implement as DB with DB entries?
 
         self.accounts = Accounts()
-        self.songs = Songs()
+        self.songs = Songs(self)
 
         self.reset_rooms(3)
         # self.rooms[0].add_bot(3)

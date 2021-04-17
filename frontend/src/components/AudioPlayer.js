@@ -42,6 +42,10 @@ function AudioPlayer() {
       setHasLiked(packet.you.liked);
     });
 
+    socket.on("toggle_shuffle", (packet) => {
+      console.error("implement") // todo impl
+    })
+
     socket.on("log_in", () => {
       sendPacket("get_song_rating");
     });
@@ -102,12 +106,12 @@ function AudioPlayer() {
   }
 
   function onCanPlayThrough() {
-    console.log("canplaythrough");
+    // console.log("canplaythrough");
     audioRef.current.play();
   }
 
   function onDurationChange(e) {
-    console.log("durationchange");
+    // console.log("durationchange");
     setDuration(Math.floor(e.target.duration));
   }
 
@@ -116,8 +120,8 @@ function AudioPlayer() {
   }
 
   function onEnded() {
-    console.log("ended");
-    sendPacket("play_song", { category: "popular" });
+    // console.log("ended");
+    // sendPacket("play_song", { category: "popular" }); // todo old, remove
   }
 
   function onError() {
@@ -202,7 +206,7 @@ function AudioPlayer() {
         color="secondary"
         onClick={() => sendPacket("play_song", { category: "random" })}
       >
-        Play random
+        Queue random
       </Button>
 
       <Button
@@ -210,7 +214,15 @@ function AudioPlayer() {
         color="secondary"
         onClick={() => sendPacket("play_song", { category: "popular" })}
       >
-        Play popular
+        Queue popular
+      </Button>
+
+      <Button
+        variant="outlined"
+        color="secondary"
+        onClick={() => sendPacket("skip_song")}
+      >
+        Skip current
       </Button>
 
       <Button

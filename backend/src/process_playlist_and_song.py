@@ -1,12 +1,63 @@
 from convenience import *
 
 
+def process_playlist_task(shove, playlist_id, user):
+    set_greenlet_name(f"ProcessPlaylist/{playlist_id}")
+    Log.trace(f"Processing playlist: {playlist_id}")
+
+    url = f"https://youtube.googleapis.com/youtube/v3/playlistItems"
+    params = {  # url request parameters
+        "key": YOUTUBE_API_KEY,
+        "part": "snippet",
+        "playlistId": playlist_id,
+        "maxResults": 50,  # YT API's limit per request
+    }
+    Log.trace(f"Sending YT API request")
+
+    # https://stackoverflow.com/a/21966169/13216113 timeout keyword fixes slow request
+    response = requests.get(url, params=params, timeout=1).json()
+    Log.trace(f"YT API response: {response}", cutoff=True)
+
+    if not response:
+        raise ExtractSongInformationFailed("No response from YT API")
+
+    if not response["items"]:
+        raise ExtractSongInformationFailed(f"No items in playlist {playlist_id}")
+
+    youtube_ids = []
+    for item in response["items"]:
+        youtube_id = item["snippet"]["resourceId"]["videoId"]
+        youtube_ids.append(youtube_id)
+
+    items_added = 50
+    total_items = response["pageInfo"]["totalResults"]
+    while items_added < total_items:
+        Log.trace("Getting next 50 items of playlist")
+        params = {  # url request parameters
+            "key": YOUTUBE_API_KEY,
+            "part": "snippet",
+            "playlistId": playlist_id,
+            "maxResults": 50,
+            "nextPageToken": response["nextPageToken"]
+        }
+        Log.trace(f"Sending YT API request")
+        response = requests.get(url, params=params, timeout=1).json()
+        Log.trace(f"YT API response: {response}", cutoff=True)
+        items_added += 50  # reduce the amount of items left by maximum amount of songs that were in response
+
+        for item in response["items"]:
+            youtube_id = item["snippet"]["resourceId"]["videoId"]
+            youtube_ids.append(youtube_id)
+
+    for youtube_id in youtube_ids:
+        process_song_task(shove, youtube_id, user)  # todo multiple workers for this, or too slow for big playlists
+
+
 def process_song_task(shove, youtube_id: str, user):
     set_greenlet_name(f"ProcessSong/{youtube_id}")
     Log.trace(f"Processing ID {youtube_id}")
 
     # make sure the youtube_id is absolutely safe to prevent abuse of subprocess.Popen
-
     if len(youtube_id) != YOUTUBE_ID_LENGTH:
         Log.warning(f"Invalid youtube id length: {len(youtube_id)}, ignoring call")
         shove.send_packet_to(user, "error", error_packet("Invalid ID length"))
@@ -80,7 +131,8 @@ def process_song_task(shove, youtube_id: str, user):
     else:
         Log.trace("DB entry found")
 
-    song.play(shove, user)
+    shove.songs.queue.put((song, user))
+    Log.trace(f"Added {song} to the queue")
 
 
 def extract_and_check_song_info(youtube_id) -> tuple:

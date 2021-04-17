@@ -3,6 +3,8 @@ from convenience import *
 from shove import Shove
 from user import User
 from command_handler import handle_command
+from search_song import search_song_task
+from process_playlist_and_song import process_song_task
 
 
 def handle_packets_loop(shove):
@@ -164,12 +166,12 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
     if model == "log_in":
         username = packet["username"].strip()
-        raw_password = packet["password"]
+        raw_password = str(packet["password"])  # can be None
         hashed_password = hashlib.sha256(bytes(raw_password, "utf-8")).hexdigest()
         account = shove.accounts.find_single(username=username)
 
         if account["password"] != hashed_password:
-            # raise PasswordInvalid
+            # todo raise PasswordInvalid
             Log.trace("Passwords do not match, but ignoring")
             pass
 
@@ -189,25 +191,19 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         category = packet["category"]
 
         if category == "popular":
-            eligible = set()
-            # if a song has a good enough likes/(likes+dislikes)) ratio, it is "popular"
-            for song in shove.songs.get_entries():
-                if song.is_popular():
-                    eligible.add(song)
+            song = shove.songs.get_random_popular()
 
         elif category == "random":
-            eligible = shove.songs.get_entries()
+            song = shove.songs.get_random()
 
         else:
             raise ActionInvalid(f"Invalid song category provided: {category}")
 
-        Log.trace(f"Eligible songs count: {len(eligible)}")
-        if not eligible:
+        if not song:
             raise NoSongsAvailable
 
-        song = random.choice(list(eligible))
-        Log.trace(f"Picked song to play: {song}")
-        song.play(shove, user)
+        shove.songs.queue.put((song, user))
+        Log.trace(f"Queued song to play: {song}")
         return
 
     if model == "pong":
@@ -220,11 +216,20 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             "latency": user.latency
         }
 
+    if model == "queue_song":
+        if not PRIVATE_KEYS_IMPORTED:  # backend host has no access to private keys
+            raise NoPrivateKeys
+
+        youtube_id = packet["youtube_id"]
+        Log.trace(f"Added youtube id to queue: {youtube_id}")
+        eventlet.spawn(process_song_task, shove, youtube_id, user)
+        return "error", error_packet("Add some success notification")  # todo impl
+
     if model == "rate_song":
         if not user.is_logged_in():
             raise UserNotLoggedIn
 
-        song = shove.latest_song
+        song = shove.songs.current_song
         if not song:
             raise NoSongPlaying
 
@@ -238,7 +243,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         else:
             raise ActionInvalid
 
-        song.broadcast_rating(shove)
+        shove.songs.broadcast_rating_of(song)
 
         return
 
@@ -259,6 +264,16 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         user.log_in_as(account)
 
         return "register", account.get_jsonable()
+
+    if model == "search_song":
+        if not PRIVATE_KEYS_IMPORTED:  # backend host has no access to private keys
+            raise NoPrivateKeys
+
+        query = packet["query"]
+
+        Log.trace(f"Got song search query: {query}")
+        eventlet.spawn(search_song_task, shove, query, user)
+        return
 
     if model == "send_message":
         message: str = packet["message"].strip()
@@ -284,6 +299,15 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
             "author": username,
             "text": message
         })
+        return
+
+    if model == "skip_song":
+        if shove.songs.current_song:
+            shove.songs.skip()
+
+        else:
+            raise NoSongPlaying
+
         return
 
     raise ModelInvalid

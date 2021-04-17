@@ -2,7 +2,7 @@ from convenience import *
 
 from shove import Shove
 from user import User
-from process_song import process_song_task
+from process_playlist_and_song import process_song_task, process_playlist_task
 
 COMMANDS = {
     "account": {
@@ -186,6 +186,15 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
         # check if user dropped a plain YT id
         if len(check_for_id_string) == YOUTUBE_ID_LENGTH:
             youtube_id = check_for_id_string
+            is_playlist = False
+            Log.trace("YouTube ID provided directly")
+
+        # check if user sent a playlist
+        elif "list" in check_for_id_string.lower():
+            parsed_url = urlparse.urlparse(check_for_id_string)
+            youtube_id = urlparse.parse_qs(parsed_url.query)["list"][0]
+            is_playlist = True
+            Log.trace(f"Got playlist ID {youtube_id}")
 
         # regex magic to find the id in some url
         else:
@@ -198,10 +207,13 @@ def handle_command(shove: Shove, user: User, message: str) -> Optional[str]:
                 raise CommandFailed(f"Couldn't find a video ID in the given link, usage: {COMMANDS['play']['usage']}")
 
             youtube_id = match.group("id")
-            Log.trace(f"Found ID using regex")
+            is_playlist = False
+            Log.trace(f"Found ID {youtube_id} using regex")
 
-        Log.trace(f"Got YouTube ID: {youtube_id}")
-        eventlet.spawn(process_song_task, shove, youtube_id, user)
+        if is_playlist:
+            eventlet.spawn(process_playlist_task, shove, youtube_id, user)
+        else:
+            eventlet.spawn(process_song_task, shove, youtube_id, user)
 
         return "Success"
 

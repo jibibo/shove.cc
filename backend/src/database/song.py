@@ -43,12 +43,6 @@ class Song(AbstractDatabaseEntry):
 
         return data_copy
 
-    def broadcast_rating(self, shove):
-        """Broadcast this song's rating to all users, and whether they liked/disliked"""
-
-        for user in shove.get_all_users():
-            shove.send_packet_to(user, "song_rating", self.get_rating_of(user))
-
     def get_dislike_count(self) -> int:
         return len(self["dislikes"])
 
@@ -86,21 +80,6 @@ class Song(AbstractDatabaseEntry):
 
     def is_popular(self) -> bool:
         return self.get_like_ratio() >= POPULAR_SONGS_RATIO_MIN
-
-    def play(self, shove, author):
-        Log.trace(f"Playing {self}")
-        self.increment_plays(shove.get_user_count())
-        shove.latest_song = self
-        shove.latest_song_author = author
-
-        shove.send_packet_to_everyone("play_song", {
-            "author": shove.latest_song_author.get_username(),
-            "name": self["name"],
-            "plays": self["plays"],
-            "song_bytes": open(f"{FILES_FOLDER}/{SONGS_FOLDER}/{self['song_id']}.mp3", "rb").read()
-        })
-
-        self.broadcast_rating(shove)
 
     def toggle_dislike(self, username):
         if username in self["likes"]:  # remove the user's like in any case

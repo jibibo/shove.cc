@@ -42,10 +42,10 @@ SOUND_NOTIFICATION_LOG_LEVELS: list = ["warning", "error", "critical"]
 
 
 # Data storage
-FILES_FOLDER = "files"  # todo add exception handlers if folder missing
-DATABASES_FOLDER = "databases"  # todo ex hndl missing
-SONGS_FOLDER = "songs"  # todo ex hand miss
-AVATARS_FOLDER = "avatars"  # todo ex hand miss
+FILES_FOLDER = "files"
+DATABASES_FOLDER = "databases"
+SONGS_FOLDER = "songs"
+AVATARS_FOLDER = "avatars"
 AVATAR_MIME_EXTENSIONS: dict = {
     "image/jpeg": "jpg",
     "image/png": "png"
@@ -55,7 +55,7 @@ AVATAR_MIME_EXTENSIONS: dict = {
 # Songs
 POPULAR_SONGS_RATIO_MIN = 0.5
 SONG_MAX_DURATION = 1200
-LOG_IN_TO_REQUEST_SONG = True  # todo impl check
+# LOG_IN_TO_REQUEST_SONG = True todo impl
 YOUTUBE_ID_CHARACTERS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_"
 YOUTUBE_ID_LENGTH = 11
 YOUTUBE_ID_REGEX_PATTERN = r"(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=|embed/|v/|.+\?v=)?(?P<id>[A-Za-z0-9\-=_]{11})"
@@ -74,7 +74,7 @@ RANDOM_MONEY_MIN = 1e3
 RANDOM_MONEY_MAX = 1e6
 
 
-# User pinging
+# User pinging (checking latency)
 PING_USERS_ENABLED = False
 PING_USERS_INTERVAL = 5
 PONG_DELAY_BEFORE_TIMEOUT = 5  # todo fix: timeout < interval should be possible

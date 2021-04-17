@@ -32,7 +32,7 @@ import colorama
 from colorama import Fore, Style
 import eventlet
 from eventlet.green import subprocess  # greenlet-friendly versions of builtin modules
-from eventlet.green.Queue import Queue
+from eventlet.green.Queue import Queue, Empty
 import eventlet.wsgi
 import socketio
 import isodate

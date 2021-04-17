@@ -1,15 +1,23 @@
 import { useState } from "react";
+import { makeStyles } from "@material-ui/core/styles";
 
 import Button from "@material-ui/core/Button";
 
 import { socket, sendPacket } from "../connection";
 
+const useStyles = makeStyles((theme) => ({
+  root: {
+    border: "1px red solid",
+  },
+}));
+
 let deaf = true;
 
 function SearchMusic() {
-  // todo impl, search and display top 5 results, click one to queue it (including thumbnails, duration, etc)
   const [results, setResults] = useState();
   const [inputValue, setInputValue] = useState("");
+
+  const classes = useStyles();
 
   if (deaf) {
     deaf = false;
@@ -29,6 +37,7 @@ function SearchMusic() {
     sendPacket("search_song", {
       query: inputValue,
     });
+    setInputValue("");
   }
 
   return (
@@ -48,11 +57,17 @@ function SearchMusic() {
 
       {results
         ? results.map((result, i) => (
-          <div key={i} onClick={() => console.log(result.youtube_id)}>
-            <img src={result.thumbnail.url} alt="youtube_thumbnail" />
-            <div>{result.name}</div>
-          </div>
-        ))
+            <div
+              className={classes.root}
+              key={i}
+              onClick={() =>
+                sendPacket("queue_song", { youtube_id: result.youtube_id })
+              }
+            >
+              <div>{result.name}</div>
+              <img src={result.thumbnail.url} alt="youtube_thumbnail" />
+            </div>
+          ))
         : null}
     </>
   );

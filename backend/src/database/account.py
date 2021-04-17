@@ -41,10 +41,12 @@ class Account(AbstractDatabaseEntry):
 
         return data_copy
 
-    def get_avatar_bytes(self) -> bytes:
-        if self["avatar_filename"]:
-            try:
-                with open(f"{FILES_FOLDER}/{AVATARS_FOLDER}/{self['avatar_filename']}", "rb") as f:
-                    return f.read()
-            except FileNotFoundError:
-                Log.warning(f"Could not find avatar file {self['avatar_filename']}")
+    def get_avatar_bytes(self) -> Optional[bytes]:
+        return
+
+        # if self["avatar_filename"]:
+        #     try:
+        #         with open(f"{FILES_FOLDER}/{AVATARS_FOLDER}/{self['avatar_filename']}", "rb") as f:
+        #             return f.read()
+        #     except FileNotFoundError:
+        #         Log.warning(f"Could not find avatar file {self['avatar_filename']}")
