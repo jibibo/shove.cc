@@ -65,6 +65,7 @@ function App() {
         return [
           ...slicedMessages,
           {
+            id: Date.now(),
             type,
             author,
             text,
@@ -75,6 +76,7 @@ function App() {
       return [
         ...currentMessages,
         {
+          id: Date.now(),
           type,
           author,
           text,

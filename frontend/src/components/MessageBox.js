@@ -38,10 +38,7 @@ function MessageBox() {
 
   function handleMinimization() {
     setNotifications(0);
-    setMessageBoxMinimized(
-      (previousMinimizedValue) => !previousMinimizedValue,
-      console.log(messageBoxMinimized)
-    );
+    setMessageBoxMinimized((previousMinimizedValue) => !previousMinimizedValue);
   }
 
   const minimizeStyle = {
@@ -54,9 +51,8 @@ function MessageBox() {
     <>
       <button
         onClick={handleMinimization}
-        className={`message-minimize ${
-          messageBoxMinimized ? "minimized" : null
-        }`}
+        className={`message-minimize ${messageBoxMinimized ? "minimized" : null
+          }`}
       >
         <div
           key={notifications}
@@ -86,12 +82,11 @@ function MessageBox() {
       </button>
       <div hidden={messageBoxMinimized}>
         <div ref={messageBox} className="messages-container">
-          {messages.map((message, i) => (
-            <div key={i} className="message-container">
+          {messages.map(message => (
+            <div key={message.id} className="message-container">
               {message.type === "message" ? (
                 <UserAvatar username={message.author} />
               ) : null}
-
               <div className="message-content">
                 <span className="message-author">{message.author}</span>
                 <br />
