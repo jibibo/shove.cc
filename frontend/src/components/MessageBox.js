@@ -51,7 +51,7 @@ function MessageBox() {
     <>
       <button
         onClick={handleMinimization}
-        className={`message-minimize ${messageBoxMinimized ? "minimized" : null
+        className={`message-minimize ${messageBoxMinimized ? "minimized" : ""
           }`}
       >
         <div
