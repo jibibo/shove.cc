@@ -31,7 +31,7 @@ def process_playlist_task(shove, playlist_id, user):
 
     items_added = 50
     total_items = response["pageInfo"]["totalResults"]
-    while items_added < total_items:
+    while items_added < total_items:  # todo test this
         Log.trace("Getting next 50 items of playlist")
         params = {  # url request parameters
             "key": YOUTUBE_API_KEY,
@@ -43,19 +43,22 @@ def process_playlist_task(shove, playlist_id, user):
         Log.trace(f"Sending YT API request")
         response = requests.get(url, params=params, timeout=1).json()
         Log.trace(f"YT API response: {response}", cutoff=True)
-        items_added += 50  # reduce the amount of items left by maximum amount of songs that were in response
 
         for item in response["items"]:
             youtube_id = item["snippet"]["resourceId"]["videoId"]
             youtube_ids.append(youtube_id)
 
+        items_added += 50  # reduce the amount of items left by maximum amount of songs that were in response
+
+    Log.trace("Got all items from playlist")
+
     for youtube_id in youtube_ids:
-        process_song_task(shove, youtube_id, user)  # todo multiple workers for this, or too slow for big playlists
+        process_song_task(shove, youtube_id, user)  # todo multiple workers/greenlets for this, otherwise too slow for big playlists
 
 
 def process_song_task(shove, youtube_id: str, user):
     set_greenlet_name(f"ProcessSong/{youtube_id}")
-    Log.trace(f"Processing ID {youtube_id}")
+    Log.debug(f"Processing ID {youtube_id}")
 
     # make sure the youtube_id is absolutely safe to prevent abuse of subprocess.Popen
     if len(youtube_id) != YOUTUBE_ID_LENGTH:
