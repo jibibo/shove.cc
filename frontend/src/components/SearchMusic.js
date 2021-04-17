@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 import Button from "@material-ui/core/Button";
 
@@ -14,43 +14,43 @@ function SearchMusic() {
   if (deaf) {
     deaf = false;
 
-    socket.on("search", (packet) => {
-      console.debug("> search", packet);
+    socket.on("search_song", (packet) => {
+      console.debug("> search_song", packet);
+      setResults(packet); // list of items
     });
+  }
 
-    // socket.on audio_data, loop enable/disable, play/pause, new url (with author)
+  function onChangeSearchText(e) {
+    setInputValue(e.target.value);
+  }
+
+  function onSubmitSearch(e) {
+    e.preventDefault();
+    sendPacket("search_song", {
+      query: inputValue,
+    });
   }
 
   return (
     <>
-      <input value={inputValue} />
-      <Button
-        variant="outlined"
-        color="secondary"
-        onClick={() => sendPacket("play_song", { category: "random" })}
-      >
-        Play random
-      </Button>
+      <form onSubmit={onSubmitSearch}>
+        <input onChange={onChangeSearchText} value={inputValue} />
+      </form>
 
       <Button
+        type="submit"
         variant="outlined"
         color="secondary"
-        onClick={() => sendPacket("play_song", { category: "popular" })}
+        onClick={onSubmitSearch}
       >
-        Play popular
+        Search
       </Button>
-
-      <Button
-        variant={"contained"}
-        color="secondary"
-        onClick={() =>
-          sendPacket("rate_song", {
-            action: "toggle_like",
-          })
-        }
-      >
-        {`Like ()`}
-      </Button>
+      
+      {results
+        ? results.map((result, i) => (
+            <div key={i}>{result.name + " " + result.thumbnail}</div>
+          ))
+        : null}
     </>
   );
 }
