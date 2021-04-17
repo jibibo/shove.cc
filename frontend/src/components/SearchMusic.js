@@ -48,7 +48,10 @@ function SearchMusic() {
 
       {results
         ? results.map((result, i) => (
-          <div key={i}>{result.name + " " + result.thumbnail}</div>
+          <div key={i} onClick={() => console.log(result.youtube_id)}>
+            <img src={result.thumbnail.url} alt="youtube_thumbnail" />
+            <div>{result.name}</div>
+          </div>
         ))
         : null}
     </>
