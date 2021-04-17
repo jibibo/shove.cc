@@ -9,7 +9,7 @@ let deaf = true;
 function SearchMusic() {
   // todo impl, search and display top 5 results, click one to queue it (including thumbnails, duration, etc)
   const [results, setResults] = useState();
-  const [inputValue, setInputValue] = useState();
+  const [inputValue, setInputValue] = useState("");
 
   if (deaf) {
     deaf = false;
@@ -45,11 +45,11 @@ function SearchMusic() {
       >
         Search
       </Button>
-      
+
       {results
         ? results.map((result, i) => (
-            <div key={i}>{result.name + " " + result.thumbnail}</div>
-          ))
+          <div key={i}>{result.name + " " + result.thumbnail}</div>
+        ))
         : null}
     </>
   );

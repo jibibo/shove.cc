@@ -286,7 +286,7 @@ function App() {
         <TabPanel value={tabIndex} index={3}>
           <AudioPlayer />
           <br />
-          {/* <SearchMusic /> */}
+          <SearchMusic />
         </TabPanel>
       </Container>
 
