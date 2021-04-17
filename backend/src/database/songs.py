@@ -36,7 +36,7 @@ class Songs(AbstractDatabase):
             return random.choice(eligible)
 
     def play(self, song, requested_by):
-        Log.trace(f"Playing {song}")
+        Log.info(f"Playing song {song}")
         song.increment_plays(self.shove.get_user_count())
         self.current_song = song
         self.current_song_time_left = int(song["duration"])
