@@ -19,7 +19,8 @@ import Header from "./components/Header";
 import TabPanel from "./components/TabPanel";
 
 import "./App.css";
-import Qwerty from "./components/games/Qwerty";
+// import Qwerty from "./components/games/Qwerty";
+import Coinflip from "./components/games/Coinflip";
 import AudioPlayer from "./components/AudioPlayer";
 import SearchMusic from "./components/SearchMusic";
 import { abbreviate } from "./formatting";
@@ -280,7 +281,7 @@ function App() {
         </TabPanel>
 
         <TabPanel value={tabIndex} index={2}>
-          {roomData ? <Qwerty /> : "join a room yh?"}
+          {roomData ? <Coinflip /> : "join a room yh?"}
         </TabPanel>
 
         <TabPanel value={tabIndex} index={3}>

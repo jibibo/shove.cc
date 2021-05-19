@@ -5,8 +5,8 @@ from database import Song, Songs
 from room import Room
 from user import User
 
-# from games.coinflip import Coinflip
-from games.qwerty import Qwerty
+from games.coinflip import Coinflip
+# from games.qwerty import Qwerty
 
 
 class Shove:
@@ -16,7 +16,7 @@ class Shove:
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
         self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, packet_number)
 
-        self._default_game = Qwerty
+        self._default_game = Coinflip
         self._last_bot_id = 0
         self._last_packet_id = 0
         self._last_room_id = 0
