@@ -12,6 +12,7 @@ class Songs(AbstractDatabase):
         self.current_song_time_left: int = 0
         self.current_song_requested_by = None
         self.queue = Queue()
+        self.paused = False  # todo implement pausing
         self.shuffle_queue = False
         eventlet.spawn(song_end_watcher_task, self)
 

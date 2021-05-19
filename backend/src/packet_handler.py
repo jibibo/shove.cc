@@ -113,7 +113,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         if not room.game:
             raise GameNotSet
 
-        return "game_data", room.game.get_data()
+        return "game_data", room.get_game_data()
 
     if model == "get_room_data":
         raise NotImplementedError
@@ -139,14 +139,9 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
 
         room.user_tries_to_join(user)  # this throws an exception if user can't join room
 
-        if room.game:
-            game_data = room.game.get_data()
-        else:
-            game_data = None
-
         return "join_room", {
             "room_data": room.get_data(),
-            "game_data": game_data
+            "game_data": room.get_game_data()
         }
 
     if model == "leave_room":
@@ -158,7 +153,7 @@ def handle_packet(shove: Shove, user: User, model: str, packet: dict) -> Optiona
         if not room:
             raise UserNotInRoom
 
-        room.user_leave(user)
+        room.user_leaves(user)
 
         return "leave_room", {
             "room_name": room.name

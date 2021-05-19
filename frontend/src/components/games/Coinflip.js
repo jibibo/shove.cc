@@ -16,14 +16,14 @@ import ListItemText from "@material-ui/core/ListItemText";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemAvatar from "@material-ui/core/ListItemAvatar";
 
-import { socket, sendPacket } from "../connection";
+import { socket, sendPacket } from "../../connection";
 
-import { GlobalContext } from "./GlobalContext";
-import UserAvatar from "./UserAvatar";
+import { GlobalContext } from "../GlobalContext";
+import UserAvatar from "../UserAvatar";
 
-import { abbreviate } from "../formatting";
+import { abbreviate } from "../../formatting";
 
-import "./CoinflipRoom.css";
+import "./Coinflip.css";
 
 let deaf = true;
 

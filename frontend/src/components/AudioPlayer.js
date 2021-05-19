@@ -12,7 +12,7 @@ let deaf = true;
 function AudioPlayer() {
   // todo reduce the amount of states, make compact
   const [source, setSource] = useState();
-  const [volume, setVolume] = useState(0.1);
+  const [volume, setVolume] = useState(0.05);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0.1); // prevents dividing by zero
@@ -43,8 +43,8 @@ function AudioPlayer() {
     });
 
     socket.on("toggle_shuffle", (packet) => {
-      console.error("implement") // todo impl
-    })
+      console.error("implement"); // todo impl
+    });
 
     socket.on("log_in", () => {
       sendPacket("get_song_rating");

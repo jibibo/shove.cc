@@ -5,7 +5,8 @@ from database import Song, Songs
 from room import Room
 from user import User
 
-from games.coinflip import Coinflip
+# from games.coinflip import Coinflip
+from games.qwerty import Qwerty
 
 
 class Shove:
@@ -15,7 +16,7 @@ class Shove:
         self.incoming_packets_queue = Queue()  # (User, model, packet, packet_number)
         self.outgoing_packets_queue = Queue()  # ([User], model, packet, skip, packet_number)
 
-        self._default_game = Coinflip
+        self._default_game = Qwerty
         self._last_bot_id = 0
         self._last_packet_id = 0
         self._last_room_id = 0
@@ -27,8 +28,6 @@ class Shove:
 
         self.reset_rooms(3)
         # self.rooms[0].add_bot(3)
-        # for i in range(1):
-        #     self.get_rooms()[0].try_to_start_game()
 
         if PRIVATE_KEYS_IMPORTED:
             Log.trace("Initializing Trello client, fetching card list")
@@ -127,7 +126,7 @@ class Shove:
 
         room = self.get_room_of_user(user)
         if room:
-            room.user_leave(user)
+            room.user_leaves(user)
 
         user.log_out()
 
@@ -180,7 +179,7 @@ class Shove:
         for room in self._rooms:
             Log.trace(f"Dropping users out of room {room}")
             for user in room.get_users():
-                room.user_leave(user, skip_list_packet=True, skip_game_event=True)
+                room.user_leaves(user, skip_list_packet=True, skip_game_event=True)
                 self.send_packet_to(user, "leave_room", {
                     "room_name": room.name
                 })

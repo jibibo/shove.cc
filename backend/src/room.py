@@ -25,6 +25,10 @@ class Room:
             "max_user_count": self.max_user_count
         }
 
+    def get_game_data(self) -> dict:
+        if self.game:
+            return self.game.get_data()
+
     def get_user_count(self) -> int:
         return len(self._users)
 
@@ -42,28 +46,13 @@ class Room:
 
         self.shove.send_packet_to(self.get_users(), model, packet, skip)
 
-    def try_to_start_game(self):
-        Log.trace(f"Trying to start game in room {self}")
-
-        try:
-            self.game.try_to_start()
-
-        except GameStartFailed as ex:
-            Log.trace(f"Game start failed: {ex.description}")
-
-        except Exception as ex:
-            Log.critical("Unhandled exception on try_to_start", ex=ex)
-
-        else:
-            Log.info(f"Game started in room {self}")
-
     def user_tries_to_join(self, user: User):
         """Tries to put user in the room, if fails, throws an exception"""
 
         Log.trace(f"Trying to let user {user} join room {self}")
 
         if not user.is_logged_in():
-            raise UserNotLoggedIn("Log in to join this room")
+            raise UserNotLoggedIn("Log in to join this room")  # todo shouldn't be necessary
 
         if self.is_full():
             raise RoomFull
@@ -78,7 +67,7 @@ class Room:
 
         Log.info(f"{user} joined room {self}")
 
-    def user_leave(self, user: User, skip_list_packet=False, skip_game_event=False):
+    def user_leaves(self, user: User, skip_list_packet=False, skip_game_event=False):
         """Method for the room to handle when a user leaves the room.
         Clears user's game data as well."""
 
@@ -89,7 +78,7 @@ class Room:
                 self.game.user_leaves_room(user, skip_event=skip_game_event)
 
             except Exception as ex:
-                Log.critical("Unhandled exception on user_left_room", ex=ex)
+                Log.critical("Unhandled exception on user_leaves_room", ex=ex)
 
             user.clear_game_data()
 
