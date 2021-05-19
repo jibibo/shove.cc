@@ -28,6 +28,14 @@ if [%1] == [https] (
     start chrome.exe http://localhost
     npm start
 
+) else if [%1] == http:shove.cc (
+    :: start localhost and with backend address: http://shove.cc
+    set REACT_APP_BACKEND_URL=http://shove.cc:777
+    set HTTPS=false
+    set PORT=80
+    start chrome.exe http://localhost
+    npm start
+
 ) else (
-    echo Usage: 'run https' OR 'run localhost' OR 'run shove.cc'
+    echo Usage: 'run https' OR 'run localhost' OR 'run shove.cc' OR 'run http:shove.cc'
 )
