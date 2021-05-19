@@ -2,6 +2,8 @@ import { useState, createContext } from "react";
 
 const GlobalContext = createContext();
 
+// this is a comment
+
 function GlobalContextProvider({ children }) {
   const [accountData, setAccountData] = useState();
   const [accountList, setAccountList] = useState([]);
