@@ -23,6 +23,7 @@ import "./App.css";
 import Coinflip from "./components/games/Coinflip";
 import AudioPlayer from "./components/AudioPlayer";
 import SearchMusic from "./components/SearchMusic";
+import Empyre from "./components/games/Empyre.js";
 import { abbreviate } from "./formatting";
 
 let deaf = true;
@@ -261,6 +262,7 @@ function App() {
             <Tab label="Room" />
             <Tab label="Music" />
             <Tab label="Settings" />
+            <Tab label="Empyre (BETA)" />
           </Tabs>
         </Container>
       </AppBar>
@@ -288,6 +290,10 @@ function App() {
           <AudioPlayer />
           <br />
           <SearchMusic />
+        </TabPanel>
+
+        <TabPanel value={tabIndex} index={5}>
+          <Empyre />
         </TabPanel>
       </Container>
 
