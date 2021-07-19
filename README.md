@@ -12,4 +12,4 @@ gamba
 - /backend: pip install -r requirements.txt
 - /frontend: npm install
 
-Hand evaluation based on deuces by Will Drevo: https://github.com/worldveil/deuces
+Hand evaluation based on https://github.com/worldveil/deuces
